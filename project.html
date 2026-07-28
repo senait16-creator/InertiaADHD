@@ -18,7 +18,7 @@
     <a href="index.html" class="back-link">‹ Back</a>
 
     <div class="project-header">
-      <div class="project-icon-large" id="project-icon-display">📁</div>
+      <div class="icon-badge-lg" id="project-icon-display" data-color="sage">📁</div>
       <h1 id="project-name-display">Project</h1>
       <p class="project-status-display" id="project-status-display"></p>
     </div>
@@ -49,6 +49,16 @@
           Status (optional)
           <input type="text" id="edit-status" maxlength="60" autocomplete="off">
         </label>
+        <div class="field">
+          <span class="field-label">Color (optional)</span>
+          <div class="color-picker" id="edit-color-picker" role="radiogroup" aria-label="Project color">
+            <button type="button" class="color-swatch" data-color="sage" role="radio" aria-checked="true" aria-label="Sage"></button>
+            <button type="button" class="color-swatch" data-color="green" role="radio" aria-checked="false" aria-label="Green"></button>
+            <button type="button" class="color-swatch" data-color="blue" role="radio" aria-checked="false" aria-label="Blue"></button>
+            <button type="button" class="color-swatch" data-color="amber" role="radio" aria-checked="false" aria-label="Amber"></button>
+            <button type="button" class="color-swatch" data-color="lavender" role="radio" aria-checked="false" aria-label="Lavender"></button>
+          </div>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="cancel-edit">Cancel</button>
           <button type="submit" class="btn-primary">Save Changes</button>

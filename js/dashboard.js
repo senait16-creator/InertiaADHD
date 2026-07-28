@@ -1,6 +1,7 @@
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
+import { DEFAULT_COLOR, initColorPicker } from "./colors.js";
 
 const greetingEl = document.getElementById("greeting");
 const gridEl = document.getElementById("project-grid");
@@ -14,6 +15,7 @@ const nameInput = document.getElementById("project-name");
 const iconInput = document.getElementById("project-icon");
 const statusInput = document.getElementById("project-status");
 const cancelBtn = document.getElementById("cancel-add");
+const colorPicker = initColorPicker(document.getElementById("project-color-picker"));
 
 let currentUserId = null;
 
@@ -35,10 +37,10 @@ function projectCardEl(project) {
   link.className = "project-card";
   link.href = `project.html?id=${encodeURIComponent(project.id)}`;
   link.innerHTML = `
-    <div class="project-icon">${escapeHtml(project.icon || "📁")}</div>
+    <div class="icon-badge" data-color="${escapeHtml(project.color || DEFAULT_COLOR)}">${escapeHtml(project.icon || "📁")}</div>
     <div class="project-info">
       <div class="project-name">${escapeHtml(project.name)}</div>
-      ${project.status ? `<div class="project-status">${escapeHtml(project.status)}</div>` : ""}
+      ${project.status ? `<div class="project-context">${escapeHtml(project.status)}</div>` : ""}
     </div>
     <div class="project-arrow">›</div>
   `;
@@ -76,6 +78,7 @@ function openModal() {
 function closeModal() {
   modal.classList.remove("open");
   addForm.reset();
+  colorPicker.set(DEFAULT_COLOR);
 }
 
 addCard.addEventListener("click", openModal);
@@ -92,12 +95,13 @@ addForm.addEventListener("submit", async (event) => {
 
   const icon = iconInput.value.trim() || null;
   const status = statusInput.value.trim() || null;
+  const color = colorPicker.get();
 
   let data;
   if (isConfigured) {
     const { data: inserted, error } = await supabase
       .from("projects")
-      .insert({ user_id: currentUserId, name, icon, status })
+      .insert({ user_id: currentUserId, name, icon, status, color })
       .select()
       .single();
 
@@ -108,7 +112,7 @@ addForm.addEventListener("submit", async (event) => {
     }
     data = inserted;
   } else {
-    data = demoStore.addProject({ name, icon, status });
+    data = demoStore.addProject({ name, icon, status, color });
   }
 
   gridEl.insertBefore(projectCardEl(data), addCard);
@@ -128,6 +132,7 @@ async function migrateDemoProjects(userId) {
     name: project.name,
     icon: project.icon,
     status: project.status,
+    color: project.color || DEFAULT_COLOR,
     sort_order: project.sort_order,
   }));
 

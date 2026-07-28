@@ -1,6 +1,7 @@
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
+import { DEFAULT_COLOR, initColorPicker } from "./colors.js";
 
 const params = new URLSearchParams(window.location.search);
 const projectId = params.get("id");
@@ -18,11 +19,13 @@ const editName = document.getElementById("edit-name");
 const editIcon = document.getElementById("edit-icon");
 const editStatus = document.getElementById("edit-status");
 const cancelBtn = document.getElementById("cancel-edit");
+const colorPicker = initColorPicker(document.getElementById("edit-color-picker"));
 
 let currentProject = null;
 
 function render(project) {
   iconEl.textContent = project.icon || "📁";
+  iconEl.dataset.color = project.color || DEFAULT_COLOR;
   nameEl.textContent = project.name;
   statusEl.textContent = project.description || project.status || "";
 }
@@ -53,6 +56,7 @@ function openEditModal() {
   editName.value = currentProject.name || "";
   editIcon.value = currentProject.icon || "";
   editStatus.value = currentProject.status || "";
+  colorPicker.set(currentProject.color || DEFAULT_COLOR);
   modal.classList.add("open");
 }
 
@@ -74,12 +78,13 @@ editForm.addEventListener("submit", async (event) => {
 
   const icon = editIcon.value.trim() || null;
   const status = editStatus.value.trim() || null;
+  const color = colorPicker.get();
 
   let data;
   if (isConfigured) {
     const { data: updated, error } = await supabase
       .from("projects")
-      .update({ name, icon, status })
+      .update({ name, icon, status, color })
       .eq("id", projectId)
       .select()
       .single();
@@ -91,7 +96,7 @@ editForm.addEventListener("submit", async (event) => {
     }
     data = updated;
   } else {
-    data = demoStore.updateProject(projectId, { name, icon, status });
+    data = demoStore.updateProject(projectId, { name, icon, status, color });
   }
 
   currentProject = data;

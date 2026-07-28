@@ -16,6 +16,14 @@
   --radius-lg: 22px;
   --radius-md: 14px;
   --shadow: 0 2px 10px rgba(43, 42, 39, 0.06);
+
+  /* Project color palette — RGB triplets so both a solid swatch and a
+     soft tinted background can be composed from the same token. */
+  --color-sage: 92, 138, 114;
+  --color-green: 107, 163, 107;
+  --color-blue: 96, 146, 196;
+  --color-amber: 199, 150, 74;
+  --color-lavender: 150, 130, 190;
 }
 
 * {
@@ -48,7 +56,7 @@ button {
 .dashboard {
   max-width: 900px;
   margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+  padding: 2rem 1rem calc(3rem + env(safe-area-inset-bottom));
 }
 
 .demo-banner {
@@ -113,21 +121,64 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  padding: 1.25rem;
+  padding: 1.1rem 1.15rem 1.15rem;
   min-height: 140px;
   cursor: pointer;
   text-align: left;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .project-card:active {
-  transform: scale(0.98);
+  transform: scale(0.965);
+  box-shadow: 0 1px 4px rgba(43, 42, 39, 0.05);
 }
 
-.project-icon {
-  font-size: 1.8rem;
-  line-height: 1;
-  margin-bottom: 0.75rem;
+@media (hover: hover) {
+  .project-card:hover {
+    box-shadow: 0 4px 16px rgba(43, 42, 39, 0.09);
+    transform: translateY(-1px);
+  }
+}
+
+/* Icon container — a fixed, softly tinted frame so mixed emoji still
+   read as one consistent grid. Color is optional per project. */
+
+.icon-badge,
+.icon-badge-lg {
+  background: rgba(var(--color-sage), 0.16);
+}
+
+.icon-badge[data-color="green"],
+.icon-badge-lg[data-color="green"] {
+  background: rgba(var(--color-green), 0.18);
+}
+
+.icon-badge[data-color="blue"],
+.icon-badge-lg[data-color="blue"] {
+  background: rgba(var(--color-blue), 0.18);
+}
+
+.icon-badge[data-color="amber"],
+.icon-badge-lg[data-color="amber"] {
+  background: rgba(var(--color-amber), 0.2);
+}
+
+.icon-badge[data-color="lavender"],
+.icon-badge-lg[data-color="lavender"] {
+  background: rgba(var(--color-lavender), 0.18);
+}
+
+.icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  margin-bottom: 0.6rem;
+  flex-shrink: 0;
 }
 
 .project-info {
@@ -137,13 +188,16 @@ button {
 .project-name {
   font-size: 1.05rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.42rem;
   word-break: break-word;
 }
 
-.project-status {
-  font-size: 0.85rem;
+.project-context {
+  font-size: 0.8rem;
+  font-weight: 400;
   color: var(--text-muted);
+  opacity: 0.68;
+  line-height: 1.3;
 }
 
 .project-arrow {
@@ -153,27 +207,29 @@ button {
   margin-top: 0.5rem;
 }
 
-/* Add-a-project card */
+/* Add-a-project card — visually secondary to real project cards */
 
 .add-project-card {
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: var(--surface-muted);
-  border: 2px dashed var(--border);
+  background: transparent;
+  border: 1.5px dashed #d8d2c5;
   box-shadow: none;
   color: var(--text-muted);
 }
 
 .add-icon {
-  font-size: 2rem;
+  font-size: 1.5rem;
   line-height: 1;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
+  opacity: 0.75;
 }
 
 .add-label {
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 400;
+  opacity: 0.75;
 }
 
 /* ---------------- Modal ---------------- */
@@ -229,6 +285,57 @@ button {
 .modal form input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+.modal form .field {
+  margin-bottom: 1rem;
+}
+
+.modal form .field-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.color-picker {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: rgb(var(--color-sage));
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.color-swatch[data-color="green"] {
+  background: rgb(var(--color-green));
+}
+
+.color-swatch[data-color="blue"] {
+  background: rgb(var(--color-blue));
+}
+
+.color-swatch[data-color="amber"] {
+  background: rgb(var(--color-amber));
+}
+
+.color-swatch[data-color="lavender"] {
+  background: rgb(var(--color-lavender));
+}
+
+.color-swatch[aria-checked="true"] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
+}
+
+.color-swatch:active {
+  transform: scale(0.9);
 }
 
 .modal-actions {
@@ -324,7 +431,7 @@ button {
 .project-page {
   max-width: 600px;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 3rem;
+  padding: 1.5rem 1.25rem calc(3rem + env(safe-area-inset-bottom));
 }
 
 .back-link {
@@ -339,9 +446,15 @@ button {
   padding: 1rem 0 2rem;
 }
 
-.project-icon-large {
-  font-size: 3rem;
-  margin-bottom: 0.75rem;
+.icon-badge-lg {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 0.75rem;
 }
 
 .project-header h1 {

@@ -14,6 +14,11 @@ create table if not exists public.projects (
   updated_at timestamptz not null default now()
 );
 
+-- Optional soft color tag for the icon container. Small fixed palette
+-- ('sage' | 'green' | 'blue' | 'amber' | 'lavender'), enforced in the app,
+-- not with a DB constraint, so this stays a single safe-to-rerun statement.
+alter table public.projects add column if not exists color text;
+
 create index if not exists projects_user_sort_idx
   on public.projects (user_id, sort_order, created_at);
 

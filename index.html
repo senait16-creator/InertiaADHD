@@ -50,6 +50,16 @@
           Status (optional)
           <input type="text" id="project-status" maxlength="60" autocomplete="off">
         </label>
+        <div class="field">
+          <span class="field-label">Color (optional)</span>
+          <div class="color-picker" id="project-color-picker" role="radiogroup" aria-label="Project color">
+            <button type="button" class="color-swatch" data-color="sage" role="radio" aria-checked="true" aria-label="Sage"></button>
+            <button type="button" class="color-swatch" data-color="green" role="radio" aria-checked="false" aria-label="Green"></button>
+            <button type="button" class="color-swatch" data-color="blue" role="radio" aria-checked="false" aria-label="Blue"></button>
+            <button type="button" class="color-swatch" data-color="amber" role="radio" aria-checked="false" aria-label="Amber"></button>
+            <button type="button" class="color-swatch" data-color="lavender" role="radio" aria-checked="false" aria-label="Lavender"></button>
+          </div>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="cancel-add">Cancel</button>
           <button type="submit" class="btn-primary">Add Project</button>

@@ -31,7 +31,7 @@ export function getProject(id) {
   return readAll().find((project) => project.id === id) || null;
 }
 
-export function addProject({ name, icon, status }) {
+export function addProject({ name, icon, status, color }) {
   const projects = readAll();
   const project = {
     id: makeId(),
@@ -39,6 +39,7 @@ export function addProject({ name, icon, status }) {
     icon: icon || null,
     status: status || null,
     description: null,
+    color: color || "sage",
     sort_order: projects.length,
     created_at: new Date().toISOString(),
   };
@@ -47,13 +48,14 @@ export function addProject({ name, icon, status }) {
   return project;
 }
 
-export function updateProject(id, { name, icon, status }) {
+export function updateProject(id, { name, icon, status, color }) {
   const projects = readAll();
   const project = projects.find((item) => item.id === id);
   if (!project) return null;
   project.name = name;
   project.icon = icon || null;
   project.status = status || null;
+  project.color = color || "sage";
   writeAll(projects);
   return project;
 }

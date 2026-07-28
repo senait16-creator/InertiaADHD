@@ -30,7 +30,9 @@ Open the SQL editor for your Supabase project and run `supabase/schema.sql`:
 https://supabase.com/dashboard/project/moiorcyltstlrhwxxuzk/sql/new
 
 This creates the `projects` table with Row Level Security so each signed-in
-user can only read and write their own rows.
+user can only read and write their own rows. Every statement in it is
+idempotent (safe to re-run), so if you already ran it once, just re-run it
+to pick up any new columns added since (e.g. the `color` column).
 
 ### 2. Add your Supabase keys
 
@@ -85,6 +87,7 @@ css/styles.css        shared styles
 js/supabaseClient.js  Supabase connection (fill in your keys)
 js/auth.js            session helpers
 js/demoStore.js        local preview data (used until Supabase is configured)
+js/colors.js            project color palette + color-picker widget
 js/dashboard.js        dashboard logic
 js/login.js            sign-in logic
 js/project.js           project detail logic
