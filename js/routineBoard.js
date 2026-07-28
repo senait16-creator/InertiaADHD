@@ -54,18 +54,18 @@ async function persistActive(project, step, turningOn) {
   }
 }
 
-async function persistComplete(step) {
+async function persistStatus(step) {
   if (!isConfigured) {
-    demoStore.setStepComplete(step.id, step.complete);
+    demoStore.setStepStatus(step.id, step.status);
     return;
   }
   try {
     await supabase
       .from("routine_steps")
-      .update({ complete: step.complete, active: step.active })
+      .update({ status: step.status, active: step.active })
       .eq("id", step.id);
   } catch (error) {
-    console.error("Failed to save completed step:", error);
+    console.error("Failed to save step status:", error);
   }
 }
 
@@ -93,7 +93,8 @@ export async function initRoutineBoard(container, project) {
 
   function updateCardClasses(el, step) {
     el.classList.toggle("is-active", !!step.active);
-    el.classList.toggle("is-complete", !!step.complete);
+    el.classList.toggle("is-inprogress", step.status === "in_progress");
+    el.classList.toggle("is-complete", step.status === "complete");
   }
 
   function renderBoard() {
@@ -150,11 +151,19 @@ export async function initRoutineBoard(container, project) {
     window.open(step.link, "_blank", "noopener,noreferrer");
   }
 
-  function toggleComplete(step) {
-    step.complete = !step.complete;
-    if (step.complete) step.active = false;
+  // not started -> in progress (yellow) -> complete (green) -> not started,
+  // cycled by double-tapping a step.
+  function nextStatus(status) {
+    if (status === "in_progress") return "complete";
+    if (status === "complete") return null;
+    return "in_progress";
+  }
+
+  function cycleStatus(step) {
+    step.status = nextStatus(step.status);
+    if (step.status) step.active = false;
     renderBoard();
-    persistComplete(step);
+    persistStatus(step);
   }
 
   let lastTap = { id: null, time: 0 };
@@ -165,7 +174,7 @@ export async function initRoutineBoard(container, project) {
     if (lastTap.id === step.id && now - lastTap.time < 320) {
       clearTimeout(pendingTap);
       lastTap = { id: null, time: 0 };
-      toggleComplete(step);
+      cycleStatus(step);
     } else {
       lastTap = { id: step.id, time: now };
       pendingTap = setTimeout(() => {

@@ -24,6 +24,11 @@
   --color-blue: 96, 146, 196;
   --color-amber: 199, 150, 74;
   --color-lavender: 150, 130, 190;
+
+  /* Routine step status — a separate namespace from the identity colors
+     above. Status tints the whole card; the icon keeps its own identity
+     color regardless of status, so you can still tell which step it is. */
+  --status-progress: 214, 165, 40;
 }
 
 * {
@@ -785,17 +790,18 @@ button {
   box-shadow: 0 0 0 2.5px var(--accent), 0 10px 24px rgba(43, 42, 39, 0.14);
 }
 
+/* First double-tap: in progress (yellow). Second: complete (green).
+   Third: back to not started. The icon keeps its own identity color
+   throughout — status tints the card, not the icon. */
+
+.routine-card.is-inprogress {
+  background: rgba(var(--status-progress), 0.16);
+  border-color: rgba(var(--status-progress), 0.45);
+}
+
 .routine-card.is-complete {
-  opacity: 0.5;
-}
-
-.routine-card.is-complete .routine-icon {
-  background: var(--bg) !important;
-  color: var(--text-muted);
-}
-
-.routine-card.is-complete.is-active {
-  box-shadow: 0 0 0 2.5px var(--text-muted), 0 6px 16px rgba(43, 42, 39, 0.08);
+  background: rgba(var(--color-green), 0.16);
+  border-color: rgba(var(--color-green), 0.45);
 }
 
 .complete-badge {
@@ -805,7 +811,7 @@ button {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--accent);
+  background: rgb(var(--color-green));
   color: #fff;
   display: none;
   align-items: center;

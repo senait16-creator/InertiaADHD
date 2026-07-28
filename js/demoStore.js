@@ -114,12 +114,12 @@ export function setActiveStep(projectId, id) {
   return turningOn;
 }
 
-export function setStepComplete(id, complete) {
+export function setStepStatus(id, status) {
   const steps = readAllSteps();
   const step = steps.find((s) => s.id === id);
   if (!step) return null;
-  step.complete = complete;
-  if (complete) step.active = false;
+  step.status = status;
+  if (status) step.active = false;
   writeAllSteps(steps);
   return step;
 }
