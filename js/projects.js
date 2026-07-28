@@ -1,14 +1,14 @@
+// Projects section — the original dashboard, now scoped under the home
+// screen. Routine-workspace projects (see js/routineBoard.js) live under
+// Routines instead, so this grid excludes them.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
 import { DEFAULT_COLOR, initColorPicker } from "./colors.js";
 import { DEFAULT_ICON, iconMarkup, initIconPicker, isKnownIcon } from "./lucideIcons.js";
 
-const greetingEl = document.getElementById("greeting");
 const gridEl = document.getElementById("project-grid");
 const addCard = document.getElementById("add-project-card");
-const demoBanner = document.getElementById("demo-banner");
-const migrationNotice = document.getElementById("migration-notice");
 
 const modal = document.getElementById("add-project-modal");
 const addForm = document.getElementById("add-project-form");
@@ -19,13 +19,6 @@ const colorPicker = initColorPicker(document.getElementById("project-color-picke
 const iconPicker = initIconPicker(document.getElementById("project-icon-picker"));
 
 let currentUserId = null;
-
-function greetingForNow() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
 
 function escapeHtml(value) {
   const div = document.createElement("div");
@@ -59,22 +52,26 @@ function projectCardEl(project) {
   return link;
 }
 
+async function fetchAllProjects(userId) {
+  if (isConfigured) {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("user_id", userId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("Failed to load projects:", error);
+      return [];
+    }
+    return data;
+  }
+  return demoStore.listProjects();
+}
+
 async function loadProjects(userId) {
-  const data = isConfigured
-    ? await (async () => {
-        const { data, error } = await supabase
-          .from("projects")
-          .select("*")
-          .eq("user_id", userId)
-          .order("sort_order", { ascending: true })
-          .order("created_at", { ascending: true });
-        if (error) {
-          console.error("Failed to load projects:", error);
-          return [];
-        }
-        return data;
-      })()
-    : demoStore.listProjects();
+  const all = await fetchAllProjects(userId);
+  const data = all.filter((project) => project.workspace_type !== "routine");
 
   gridEl.querySelectorAll(".project-card:not(.add-project-card)").forEach((el) => el.remove());
   for (const project of data) {
@@ -132,41 +129,8 @@ addForm.addEventListener("submit", async (event) => {
   closeModal();
 });
 
-// One-time: if this browser has projects saved locally from preview mode
-// (see js/demoStore.js), copy them into the signed-in account so nothing
-// created before Supabase was configured gets lost. Leaves local data
-// untouched on failure so it's retried on the next load.
-async function migrateDemoProjects(userId) {
-  const demoProjects = demoStore.listProjects();
-  if (demoProjects.length === 0) return;
-
-  const rows = demoProjects.map((project) => ({
-    user_id: userId,
-    name: project.name,
-    icon: project.icon,
-    icon_type: project.icon_type || null,
-    status: project.status,
-    color: project.color || DEFAULT_COLOR,
-    sort_order: project.sort_order,
-  }));
-
-  const { error } = await supabase.from("projects").insert(rows);
-  if (error) {
-    console.error("Failed to migrate preview projects:", error);
-    return;
-  }
-
-  demoStore.clearAll();
-  migrationNotice.textContent = `Imported ${demoProjects.length} project${
-    demoProjects.length === 1 ? "" : "s"
-  } from your preview.`;
-  migrationNotice.hidden = false;
-}
-
 (async function init() {
   if (!isConfigured) {
-    demoBanner.hidden = false;
-    greetingEl.textContent = `${greetingForNow()}, Senait`;
     await loadProjects(null);
     return;
   }
@@ -175,8 +139,5 @@ async function migrateDemoProjects(userId) {
   if (!session) return;
 
   currentUserId = session.user.id;
-  greetingEl.textContent = `${greetingForNow()}, Senait`;
-
-  await migrateDemoProjects(currentUserId);
   await loadProjects(currentUserId);
 })();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Project — InertiaADHD</title>
+  <title>Projects — InertiaADHD</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-32.png" sizes="32x32">
@@ -14,45 +14,41 @@
   <meta name="apple-mobile-web-app-title" content="InertiaADHD">
 </head>
 <body>
-  <main class="project-page">
-    <a href="projects.html" class="back-link" id="back-link">‹ Back</a>
+  <main class="dashboard">
+    <a href="index.html" class="back-link">‹ Back</a>
 
-    <div class="project-header">
-      <div class="icon-badge-lg" id="project-icon-display" data-color="sage">📁</div>
-      <h1 id="project-name-display">Project</h1>
-      <p class="project-status-display" id="project-status-display"></p>
-    </div>
+    <header class="dashboard-header">
+      <h1>Projects</h1>
+      <p class="subtitle">Continue where you left off.</p>
+    </header>
 
-    <div class="project-body" id="project-body">
-      <p class="project-placeholder">Project workspace coming next.</p>
-    </div>
-    <div id="routine-board-mount" hidden></div>
-
-    <div class="project-actions">
-      <button class="btn-secondary" id="edit-project-btn" type="button">Edit Project</button>
-      <button class="btn-danger" id="delete-project-btn" type="button">Delete Project</button>
+    <div class="project-grid" id="project-grid">
+      <button class="project-card add-project-card" id="add-project-card" type="button">
+        <div class="add-icon">+</div>
+        <div class="add-label">Add a Project</div>
+      </button>
     </div>
   </main>
 
-  <div class="modal-overlay" id="edit-project-modal">
+  <div class="modal-overlay" id="add-project-modal">
     <div class="modal">
-      <h2>Edit Project</h2>
-      <form id="edit-project-form">
+      <h2>Add a Project</h2>
+      <form id="add-project-form">
         <label>
           Project name
-          <input type="text" id="edit-name" required maxlength="80" autocomplete="off">
+          <input type="text" id="project-name" required maxlength="80" autocomplete="off">
         </label>
         <div class="field">
           <span class="field-label">Icon</span>
-          <div class="icon-picker" id="edit-icon-picker" role="radiogroup" aria-label="Project icon"></div>
+          <div class="icon-picker" id="project-icon-picker" role="radiogroup" aria-label="Project icon"></div>
         </div>
         <label>
           Status (optional)
-          <input type="text" id="edit-status" maxlength="60" autocomplete="off">
+          <input type="text" id="project-status" maxlength="60" autocomplete="off">
         </label>
         <div class="field">
           <span class="field-label">Color (optional)</span>
-          <div class="color-picker" id="edit-color-picker" role="radiogroup" aria-label="Project color">
+          <div class="color-picker" id="project-color-picker" role="radiogroup" aria-label="Project color">
             <button type="button" class="color-swatch" data-color="sage" role="radio" aria-checked="true" aria-label="Sage"></button>
             <button type="button" class="color-swatch" data-color="green" role="radio" aria-checked="false" aria-label="Green"></button>
             <button type="button" class="color-swatch" data-color="blue" role="radio" aria-checked="false" aria-label="Blue"></button>
@@ -61,13 +57,13 @@
           </div>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="cancel-edit">Cancel</button>
-          <button type="submit" class="btn-primary">Save Changes</button>
+          <button type="button" class="btn-secondary" id="cancel-add">Cancel</button>
+          <button type="submit" class="btn-primary">Add Project</button>
         </div>
       </form>
     </div>
   </div>
 
-  <script type="module" src="js/project.js"></script>
+  <script type="module" src="js/projects.js"></script>
 </body>
 </html>

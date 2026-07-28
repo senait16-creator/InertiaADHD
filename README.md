@@ -1,19 +1,39 @@
-# InertiaADHD — Personal Project Dashboard (v1)
+# InertiaADHD — Personal Visual Workspace (v1)
 
-A personal visual workspace: one consistent place to land, see your active
-projects as cards, and re-enter one. Version 1 is intentionally small — see
-`Out of scope` below.
+A personal visual workspace: a calm home screen that guides you toward
+whichever area of your life needs you right now, instead of one flat list
+of everything. Version 1 is intentionally small — see `Out of scope` below.
 
 Plain HTML/CSS/JS (no build step) + Supabase, deployed to GitHub Pages.
+
+## Information architecture
+
+The home screen (`index.html`) is five entry panels, not a project grid:
+
+```
+Home
+├─ Routines     → every routine-workspace project (Morning Routine, Night Routine, ...)
+├─ Maintenance  → calm placeholder (self-care areas, not built yet)
+├─ Projects     → the original project dashboard (everything else)
+├─ 2026 Vision  → calm placeholder
+└─ Reminders    → calm placeholder, deliberately the smallest panel
+```
+
+Mornings (roughly 5–11am) and nights (8pm–5am), the home screen features
+one large card for the relevant routine instead of showing all five panels
+with equal weight — the other four drop into a compact row underneath.
+Midday, nothing is obviously more relevant than anything else, so it's the
+plain equal grid. This uses only the two card treatments already in the
+app (big tile, slim bar); it doesn't add a third visual style.
 
 ## Preview mode
 
 Until real Supabase credentials are added to `js/supabaseClient.js`, the app
 runs entirely in the browser: no sign-in required, and projects are stored in
 `localStorage` (see `js/demoStore.js`) instead of a real account. A small
-banner on the dashboard makes this visible. This exists so the interface can
-be reviewed on a phone or desktop before any backend is wired up — once real
-keys are added, the app automatically switches to Supabase + magic-link
+banner on the home screen makes this visible. This exists so the interface
+can be reviewed on a phone or desktop before any backend is wired up — once
+real keys are added, the app automatically switches to Supabase + magic-link
 auth, and the banner disappears.
 
 Real credentials are now wired into `js/supabaseClient.js`, so this
@@ -51,7 +71,7 @@ policies in `schema.sql`, not from hiding this key.
 
 Sign-in is passwordless: enter your email, get a 6-digit code, type it in —
 no password, no leaving the app. The session persists in the browser so
-normal visits go straight to the dashboard.
+normal visits go straight to the home screen.
 
 In Supabase → Authentication → Email Templates → **Magic Link**, make sure
 the template includes `{{ .Token }}` somewhere in the body (the default
@@ -60,21 +80,26 @@ template only shows the link) so the code actually shows up in the email.
 In Supabase → Authentication → URL Configuration, set:
 - **Site URL**: your GitHub Pages URL (e.g. `https://senait16-creator.github.io/InertiaADHD/`)
 
-### 4. (Optional) Set up the Morning Routine workspace
+### 4. (Optional) Set up routine workspaces
 
 Most projects open to a blank placeholder page — that's still the default.
-One project can instead open a visual, icon-first routine board (large
-tiles: tap to focus a step, double-tap to mark it done, press-and-drag to
-reorder). To try it:
+A project can instead open a visual, icon-first routine board (large tiles:
+tap to focus a step, double-tap to mark it done, press-and-drag to
+reorder), and shows up under **Routines** on the home screen instead of
+**Projects**. To try it:
 
-1. Create a project through the normal **Add a Project** flow, named
-   exactly `Morning Routine`.
-2. Run `supabase/seed_morning_routine.sql` in the SQL editor. It flags that
-   project to use the routine workspace and seeds it with ten steps.
+1. Create a project through the normal **Add a Project** flow (from the
+   Projects panel), named exactly `Morning Routine` and/or `Night Routine`.
+2. Run `supabase/seed_morning_routine.sql` and/or
+   `supabase/seed_night_routine.sql` in the SQL editor. Each flags its
+   project to use the routine workspace and seeds its steps.
 
-There's no UI yet for creating additional routine-workspace projects or
-editing a routine's steps — this first one is meant to validate the
-interaction before that gets built out.
+The home screen looks for projects named exactly `Morning Routine` and
+`Night Routine` to decide what to feature in the morning/night hero card —
+other routine-workspace projects still appear under Routines, just without
+the time-based promotion. There's no UI yet for creating routine-workspace
+projects some other way, or for editing a routine's steps beyond the
+tap/double-tap/drag board itself.
 
 ### 5. Enable GitHub Pages
 
@@ -96,40 +121,55 @@ Then open `http://localhost:8080`.
 ## Structure
 
 ```
-index.html          dashboard (project grid + Add Project modal)
-login.html           passwordless sign-in
-project.html          single project view (edit / delete)
-css/styles.css        shared styles
-js/supabaseClient.js  Supabase connection (fill in your keys)
-js/auth.js            session helpers
-js/demoStore.js        local preview data (used until Supabase is configured)
-js/colors.js            project color palette + color-picker widget
-js/lucideIcons.js       curated Lucide icon set + icon-picker widget
-js/routineBoard.js      visual routine board (tap / double-tap / drag)
-js/dashboard.js        dashboard logic
-js/login.js            sign-in logic
-js/project.js           project detail logic
-supabase/schema.sql             database schema + RLS policies
-supabase/seed_morning_routine.sql  one-off seed for the routine workspace
+index.html            home screen (five entry panels, time-aware hero)
+login.html             passwordless sign-in
+routines.html            list of routine-workspace projects
+projects.html             the original project dashboard (Add Project modal)
+maintenance.html            calm placeholder
+vision.html                   calm placeholder
+reminders.html                  calm placeholder
+project.html                      single project view (edit / delete / routine board)
+
+css/styles.css          shared styles
+
+js/supabaseClient.js    Supabase connection (fill in your keys)
+js/auth.js               session helpers
+js/demoStore.js            local preview data (used until Supabase is configured)
+js/colors.js                 project color palette + color-picker widget
+js/lucideIcons.js              curated Lucide icon set + icon-picker widget
+js/routineBoard.js               visual routine board (tap / double-tap / drag)
+js/home.js                         home screen logic
+js/login.js                          sign-in logic
+js/routines.js                         routines list logic
+js/projects.js                           projects dashboard logic
+js/maintenance.js                          maintenance placeholder logic
+js/vision.js                                 vision placeholder logic
+js/reminders.js                                reminders placeholder logic
+js/project.js                                    project detail logic
+
+supabase/schema.sql                database schema + RLS policies
+supabase/seed_morning_routine.sql    one-off seed for Morning Routine
+supabase/seed_night_routine.sql        one-off seed for Night Routine
 ```
 
-Kept deliberately flat and framework-free so features can be layered in
-later (routines, notes, more project fields) without a rewrite.
+Kept deliberately flat and framework-free — one HTML/JS pair per screen, no
+router, no framework — so more areas can be added later the same way,
+without a rewrite.
 
 ## Credits
 
-Project icons use a curated subset of [Lucide](https://lucide.dev) (ISC
-license), self-hosted as inline SVG in `js/lucideIcons.js` — no CDN
-dependency.
+Icons use a curated subset of [Lucide](https://lucide.dev) (ISC license),
+self-hosted as inline SVG in `js/lucideIcons.js` — no CDN dependency.
 
 ## Out of scope for v1
 
 Tasks, habits, calendars, notifications, collaboration, notes, file
 uploads, AI features, progress percentages, and public profiles are all
-intentionally deferred. The dashboard itself stays a plain grid of project
-cards — no tabs, filters, or metrics there.
+intentionally deferred. The Projects dashboard itself stays a plain grid of
+project cards — no tabs, filters, or metrics there. Maintenance, 2026
+Vision, and Reminders are calm visual placeholders with no tracking,
+scheduling, or notification logic behind them yet.
 
-The one exception is the Morning Routine workspace above: a single
-hand-picked prototype of drag-and-drop reordering and a tap/double-tap
-interaction model, scoped to one project, meant to validate the feel
-before any general "workspace types" system gets built.
+The one exception is the routine workspace: a hand-picked prototype of
+drag-and-drop reordering and a tap/double-tap interaction model, meant to
+validate the feel before any general "workspace types" system gets built.

@@ -110,6 +110,227 @@ button {
   }
 }
 
+/* ---------------- Home screen: entry panels ---------------- */
+/* Reuses the icon-badge/card language everywhere else in the app — a
+   "featured" state (js/home.js, morning/night) just recomposes the same
+   two treatments (big tile vs. slim bar), it doesn't add a third. */
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+}
+
+@media (min-width: 700px) {
+  .panel-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.panel-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  aspect-ratio: 1 / 0.85;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  padding: 0.9rem;
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
+}
+
+.panel-card:active {
+  transform: scale(0.96);
+  box-shadow: 0 1px 4px rgba(43, 42, 39, 0.05);
+}
+
+@media (hover: hover) {
+  .panel-card:hover {
+    box-shadow: 0 4px 16px rgba(43, 42, 39, 0.09);
+    transform: translateY(-1px);
+  }
+}
+
+.panel-card .icon-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  margin-bottom: 0;
+}
+
+.panel-card .icon-badge svg {
+  width: 26px;
+  height: 26px;
+}
+
+.panel-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.panel-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0.95rem;
+  margin-top: 0.75rem;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: transform 0.16s ease;
+}
+
+.panel-bar:active {
+  transform: scale(0.98);
+}
+
+.panel-bar .icon-badge {
+  margin-bottom: 0;
+}
+
+.panel-bar .panel-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.panel-bar-list {
+  margin-top: 1.3rem;
+}
+
+.panel-bar-list .panel-bar:first-child {
+  margin-top: 0;
+}
+
+.panel-bar.is-reminders {
+  opacity: 0.7;
+}
+
+.bar-arrow {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+/* Time-relevant featured entry (js/home.js) — same components, more room */
+
+.hero-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  background: linear-gradient(135deg, rgba(var(--color-sage), 0.14), rgba(var(--color-sage), 0.05));
+  border: 1px solid rgba(var(--color-sage), 0.3);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1.1rem;
+  cursor: pointer;
+  margin-bottom: 1.3rem;
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
+}
+
+.hero-card:active {
+  transform: scale(0.97);
+}
+
+.hero-card .icon-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.hero-card .icon-badge svg {
+  width: 28px;
+  height: 28px;
+}
+
+.hero-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.15rem;
+}
+
+.hero-card .panel-label {
+  font-size: 1.1rem;
+  text-align: left;
+}
+
+/* ---------------- Calm placeholder screens ---------------- */
+/* Maintenance, 2026 Vision, Reminders — visual, not functional yet. */
+
+.placeholder-hero {
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+}
+
+.placeholder-hero .icon-badge-lg {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+}
+
+.placeholder-hero h2 {
+  font-size: 1.15rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.placeholder-hero p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  max-width: 32ch;
+  margin: 0 auto;
+}
+
+.preview-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: center;
+  margin-top: 1.75rem;
+}
+
+.preview-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 76px;
+  opacity: 0.8;
+}
+
+.preview-chip .icon-badge {
+  margin-bottom: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+}
+
+.preview-chip span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 /* ---------------- Project card ---------------- */
 
 .project-card {

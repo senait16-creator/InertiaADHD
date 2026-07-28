@@ -13,6 +13,7 @@ const nameEl = document.getElementById("project-name-display");
 const statusEl = document.getElementById("project-status-display");
 const bodyEl = document.getElementById("project-body");
 const routineMountEl = document.getElementById("routine-board-mount");
+const backLinkEl = document.getElementById("back-link");
 
 const editBtn = document.getElementById("edit-project-btn");
 const deleteBtn = document.getElementById("delete-project-btn");
@@ -60,6 +61,7 @@ async function loadProject() {
 
   currentProject = data;
   render(data);
+  backLinkEl.href = data.workspace_type === "routine" ? "routines.html" : "projects.html";
 
   if (data.workspace_type === "routine") {
     bodyEl.hidden = true;
@@ -134,7 +136,7 @@ deleteBtn.addEventListener("click", async () => {
     demoStore.deleteProject(projectId);
   }
 
-  window.location.href = "index.html";
+  window.location.href = backLinkEl.href;
 });
 
 (async function init() {
