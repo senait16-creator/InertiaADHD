@@ -6,6 +6,16 @@ projects as cards, and re-enter one. Version 1 is intentionally small — see
 
 Plain HTML/CSS/JS (no build step) + Supabase, deployed to GitHub Pages.
 
+## Preview mode
+
+Until real Supabase credentials are added to `js/supabaseClient.js`, the app
+runs entirely in the browser: no sign-in required, and projects are stored in
+`localStorage` (see `js/demoStore.js`) instead of a real account. A small
+banner on the dashboard makes this visible. This exists so the interface can
+be reviewed on a phone or desktop before any backend is wired up — once real
+keys are added, the app automatically switches to Supabase + magic-link
+auth, and the banner disappears.
+
 ## Setup
 
 ### 1. Run the database schema
@@ -66,6 +76,7 @@ project.html          single project view (edit / delete)
 css/styles.css        shared styles
 js/supabaseClient.js  Supabase connection (fill in your keys)
 js/auth.js            session helpers
+js/demoStore.js        local preview data (used until Supabase is configured)
 js/dashboard.js        dashboard logic
 js/login.js            sign-in logic
 js/project.js           project detail logic

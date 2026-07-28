@@ -1,5 +1,6 @@
-import { supabase } from "./supabaseClient.js";
+import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
+import * as demoStore from "./demoStore.js";
 
 const params = new URLSearchParams(window.location.search);
 const projectId = params.get("id");
@@ -27,14 +28,19 @@ function render(project) {
 }
 
 async function loadProject() {
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", projectId)
-    .single();
+  const data = isConfigured
+    ? await (async () => {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("id", projectId)
+          .single();
+        if (error) console.error("Failed to load project:", error);
+        return data;
+      })()
+    : demoStore.getProject(projectId);
 
-  if (error || !data) {
-    console.error("Failed to load project:", error);
+  if (!data) {
     window.location.href = "index.html";
     return;
   }
@@ -66,21 +72,26 @@ editForm.addEventListener("submit", async (event) => {
   const name = editName.value.trim();
   if (!name) return;
 
-  const { data, error } = await supabase
-    .from("projects")
-    .update({
-      name,
-      icon: editIcon.value.trim() || null,
-      status: editStatus.value.trim() || null,
-    })
-    .eq("id", projectId)
-    .select()
-    .single();
+  const icon = editIcon.value.trim() || null;
+  const status = editStatus.value.trim() || null;
 
-  if (error) {
-    console.error("Failed to update project:", error);
-    alert("Could not save changes.");
-    return;
+  let data;
+  if (isConfigured) {
+    const { data: updated, error } = await supabase
+      .from("projects")
+      .update({ name, icon, status })
+      .eq("id", projectId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to update project:", error);
+      alert("Could not save changes.");
+      return;
+    }
+    data = updated;
+  } else {
+    data = demoStore.updateProject(projectId, { name, icon, status });
   }
 
   currentProject = data;
@@ -91,19 +102,25 @@ editForm.addEventListener("submit", async (event) => {
 deleteBtn.addEventListener("click", async () => {
   if (!confirm(`Delete "${currentProject.name}"? This cannot be undone.`)) return;
 
-  const { error } = await supabase.from("projects").delete().eq("id", projectId);
-  if (error) {
-    console.error("Failed to delete project:", error);
-    alert("Could not delete project.");
-    return;
+  if (isConfigured) {
+    const { error } = await supabase.from("projects").delete().eq("id", projectId);
+    if (error) {
+      console.error("Failed to delete project:", error);
+      alert("Could not delete project.");
+      return;
+    }
+  } else {
+    demoStore.deleteProject(projectId);
   }
 
   window.location.href = "index.html";
 });
 
 (async function init() {
-  const session = await requireSession();
-  if (!session) return;
+  if (isConfigured) {
+    const session = await requireSession();
+    if (!session) return;
+  }
 
   if (!projectId) {
     window.location.href = "index.html";

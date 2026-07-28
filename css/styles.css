@@ -51,6 +51,22 @@ button {
   padding: 2rem 1rem 3rem;
 }
 
+.demo-banner {
+  background: #fbf1de;
+  border: 1px solid #e9d8b4;
+  color: #6b5a30;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.demo-banner code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}
+
 .dashboard-header {
   margin-bottom: 1.75rem;
 }

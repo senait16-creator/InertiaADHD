@@ -1,9 +1,11 @@
-import { supabase } from "./supabaseClient.js";
+import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
+import * as demoStore from "./demoStore.js";
 
 const greetingEl = document.getElementById("greeting");
 const gridEl = document.getElementById("project-grid");
 const addCard = document.getElementById("add-project-card");
+const demoBanner = document.getElementById("demo-banner");
 
 const modal = document.getElementById("add-project-modal");
 const addForm = document.getElementById("add-project-form");
@@ -43,17 +45,21 @@ function projectCardEl(project) {
 }
 
 async function loadProjects(userId) {
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("user_id", userId)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    console.error("Failed to load projects:", error);
-    return;
-  }
+  const data = isConfigured
+    ? await (async () => {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", userId)
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: true });
+        if (error) {
+          console.error("Failed to load projects:", error);
+          return [];
+        }
+        return data;
+      })()
+    : demoStore.listProjects();
 
   gridEl.querySelectorAll(".project-card:not(.add-project-card)").forEach((el) => el.remove());
   for (const project of data) {
@@ -83,21 +89,25 @@ addForm.addEventListener("submit", async (event) => {
   const name = nameInput.value.trim();
   if (!name) return;
 
-  const { data, error } = await supabase
-    .from("projects")
-    .insert({
-      user_id: currentUserId,
-      name,
-      icon: iconInput.value.trim() || null,
-      status: statusInput.value.trim() || null,
-    })
-    .select()
-    .single();
+  const icon = iconInput.value.trim() || null;
+  const status = statusInput.value.trim() || null;
 
-  if (error) {
-    console.error("Failed to add project:", error);
-    alert("Could not add project. Please try again.");
-    return;
+  let data;
+  if (isConfigured) {
+    const { data: inserted, error } = await supabase
+      .from("projects")
+      .insert({ user_id: currentUserId, name, icon, status })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to add project:", error);
+      alert("Could not add project. Please try again.");
+      return;
+    }
+    data = inserted;
+  } else {
+    data = demoStore.addProject({ name, icon, status });
   }
 
   gridEl.insertBefore(projectCardEl(data), addCard);
@@ -105,6 +115,13 @@ addForm.addEventListener("submit", async (event) => {
 });
 
 (async function init() {
+  if (!isConfigured) {
+    demoBanner.hidden = false;
+    greetingEl.textContent = `${greetingForNow()}, Senait`;
+    await loadProjects(null);
+    return;
+  }
+
   const session = await requireSession();
   if (!session) return;
 
