@@ -20,8 +20,8 @@ select p.id, p.user_id, v.name, v.icon, v.color, v.sort_order
 from public.projects p
 cross join (
   values
-    ('Brush teeth', 'smile-plus', 'lavender', 0),
-    ('Wash face', 'droplets', 'blue', 1),
+    ('Brush teeth', 'smile', 'lavender', 0),
+    ('Wash face', 'smile-plus', 'blue', 1),
     ('Shower', 'shower-head', 'sage', 2),
     ('Do hair', 'crown', 'green', 3),
     ('Put on pajamas', 'shirt', 'amber', 4),
@@ -33,14 +33,23 @@ where p.name = 'Night Routine'
     select 1 from public.routine_steps rs where rs.project_id = p.id
   );
 
--- Updates the Brush teeth icon even if it was already seeded with the
--- older 'brush-cleaning' icon. Safe to re-run.
+-- Updates the Brush teeth icon even if it was already seeded with an
+-- older icon ('brush-cleaning', then 'smile-plus'). Safe to re-run.
+update public.routine_steps rs
+set icon = 'smile'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Night Routine'
+  and rs.name = 'Brush teeth';
+
+-- Updates the Wash face icon even if it was already seeded with the
+-- older 'droplets' icon. Safe to re-run.
 update public.routine_steps rs
 set icon = 'smile-plus'
 from public.projects p
 where rs.project_id = p.id
   and p.name = 'Night Routine'
-  and rs.name = 'Brush teeth';
+  and rs.name = 'Wash face';
 
 -- Updates the Do hair icon even if it was already seeded with the older
 -- 'wind' icon. Safe to re-run.

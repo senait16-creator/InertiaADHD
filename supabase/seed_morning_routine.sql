@@ -19,8 +19,8 @@ cross join (
     ('Audiobook', 'headphones', 'blue', 1, null),
     ('Fidel Classroom', 'graduation-cap', 'amber', 2, null),
     ('10K Steps', 'footprints', 'green', 3, null),
-    ('Brush teeth', 'smile-plus', 'lavender', 4, null),
-    ('Wash face', 'droplets', 'blue', 5, null),
+    ('Brush teeth', 'smile', 'lavender', 4, null),
+    ('Wash face', 'smile-plus', 'blue', 5, null),
     ('Shower', 'shower-head', 'sage', 6, null),
     ('Stretch', 'activity', 'green', 7, null),
     ('Exercise', 'dumbbell', 'amber', 8, null),
@@ -40,14 +40,23 @@ where rs.project_id = p.id
   and p.name = 'Morning Routine'
   and rs.name = 'Morning video';
 
--- Updates the Brush teeth icon even if it was already seeded with the
--- older 'brush-cleaning' icon. Safe to re-run.
+-- Updates the Brush teeth icon even if it was already seeded with an
+-- older icon ('brush-cleaning', then 'smile-plus'). Safe to re-run.
+update public.routine_steps rs
+set icon = 'smile'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Morning Routine'
+  and rs.name = 'Brush teeth';
+
+-- Updates the Wash face icon even if it was already seeded with the
+-- older 'droplets' icon. Safe to re-run.
 update public.routine_steps rs
 set icon = 'smile-plus'
 from public.projects p
 where rs.project_id = p.id
   and p.name = 'Morning Routine'
-  and rs.name = 'Brush teeth';
+  and rs.name = 'Wash face';
 
 -- Six more steps, added after the original ten. A separate insert (rather
 -- than adding to the values list above) because that first insert only
