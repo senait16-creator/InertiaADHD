@@ -214,3 +214,66 @@ drop policy if exists "Users can delete their own maintenance items" on public.m
 create policy "Users can delete their own maintenance items"
   on public.maintenance_items for delete
   using (auth.uid() = user_id);
+
+-- Navigation-hub workspace (see js/navBoard.js): a project with
+-- workspace_type = 'nav' shows a tree of folder/link panels instead of
+-- the plain placeholder. A 'folder' item opens another screen of panels
+-- (client-side, no page reload); a 'link' item opens an external URL in
+-- a new tab. Nesting is via parent_id (null = the project's root level).
+-- Deliberately no task lists, notes, or progress tracking — pure
+-- navigation, same spirit as the routine board and Maintenance boards.
+create table if not exists public.nav_items (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references public.projects(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  parent_id uuid references public.nav_items(id) on delete cascade,
+  kind text not null,
+  title text not null,
+  icon text,
+  color text,
+  url text,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists nav_items_project_parent_sort_idx
+  on public.nav_items (project_id, parent_id, sort_order);
+
+create or replace function public.set_nav_items_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_nav_items_updated_at on public.nav_items;
+create trigger set_nav_items_updated_at
+  before update on public.nav_items
+  for each row
+  execute function public.set_nav_items_updated_at();
+
+alter table public.nav_items enable row level security;
+
+drop policy if exists "Users can view their own nav items" on public.nav_items;
+create policy "Users can view their own nav items"
+  on public.nav_items for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own nav items" on public.nav_items;
+create policy "Users can insert their own nav items"
+  on public.nav_items for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own nav items" on public.nav_items;
+create policy "Users can update their own nav items"
+  on public.nav_items for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own nav items" on public.nav_items;
+create policy "Users can delete their own nav items"
+  on public.nav_items for delete
+  using (auth.uid() = user_id);

@@ -192,3 +192,25 @@ export function reorderMaintenanceItems(category, section, orderedIds) {
   });
   writeAllMaintenance(items);
 }
+
+// ---------------- Navigation-hub items (see js/navBoard.js) ----------------
+// No in-app creation flow yet (seeded via SQL against the real project),
+// so this is read-only parity — a demo-mode project never actually gets
+// workspace_type 'nav' set, same as 'routine' above.
+
+const NAV_ITEMS_KEY = "inertiaadhd_demo_nav_items";
+
+function readAllNavItems() {
+  try {
+    const raw = localStorage.getItem(NAV_ITEMS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function listNavItems(projectId) {
+  return readAllNavItems()
+    .filter((item) => item.project_id === projectId)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}

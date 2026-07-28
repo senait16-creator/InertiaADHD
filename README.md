@@ -122,7 +122,32 @@ edit form. Deliberately no scheduling, streaks, history, or reminders —
 it's a reference list, not a tracker, so Maintenance stays exactly as
 lightweight as everything is meant to add or edit through it.
 
-### 6. Enable GitHub Pages
+### 6. Navigation-hub projects (e.g. Fidel Classroom)
+
+A project can instead open a tree of folder/link panels (see
+`js/navBoard.js`) — a `folder` panel opens another screen of panels
+in-page; a `link` panel opens an external URL in a new tab. It's generic:
+any project can use it, nesting is arbitrary, and it's just a calm
+navigation hub — no task lists, notes, or progress tracking live inside
+it. To try the first real example:
+
+1. Create a project through **Add a Project**, named exactly
+   `Fidel Classroom`.
+2. Run `supabase/seed_fidel_classroom.sql` in the SQL editor. It flags the
+   project to use this workspace and seeds:
+   ```
+   Fidel Classroom (project)
+   ├── Fidel Classroom (folder)
+   │   ├── Teacher Dashboard  → external link
+   │   └── Project Notes      → Notion link
+   └── My Amharic Path        → external link
+   ```
+
+There's no in-app editor for this yet — change a label, icon, color, or
+URL by updating the `nav_items` row directly in the SQL editor (e.g.
+`update public.nav_items set url = '...' where title = 'Teacher Dashboard';`).
+
+### 7. Enable GitHub Pages
 
 `.github/workflows/deploy.yml` deploys the site automatically on every push
 to `main` via GitHub Actions. In the repo, go to **Settings → Pages** and set
@@ -161,7 +186,8 @@ js/demoStore.js            local preview data (used until Supabase is configured
 js/colors.js                 project color palette + color-picker widget
 js/lucideIcons.js              curated Lucide icon set + icon-picker widget
 js/routineBoard.js               visual routine board (tap / double-tap / drag)
-js/maintenanceAreas.js             fixed list of maintenance areas
+js/navBoard.js                     navigation-hub board (folder / link panels)
+js/maintenanceAreas.js               fixed list of maintenance areas
 js/home.js                           home screen logic
 js/login.js                            sign-in logic
 js/setPassword.js                        set/change password logic
@@ -176,6 +202,7 @@ js/project.js                                          project detail logic
 supabase/schema.sql                database schema + RLS policies
 supabase/seed_morning_routine.sql    one-off seed for Morning Routine
 supabase/seed_night_routine.sql        one-off seed for Night Routine
+supabase/seed_fidel_classroom.sql        one-off seed for Fidel Classroom
 ```
 
 Kept deliberately flat and framework-free — one HTML/JS pair per screen, no
@@ -196,10 +223,12 @@ cards — no tabs, filters, or metrics there. 2026 Vision and Reminders are
 calm visual placeholders with no tracking, scheduling, or notification
 logic behind them yet.
 
-Two exceptions so far: the routine workspace (a hand-picked prototype of
-drag-and-drop reordering and a tap/double-tap interaction model) and the
-Maintenance/Hair board (add/edit/delete/reorder text entries) — both meant
-to validate a feel before any general system gets built around them.
-Maintenance deliberately stops at plain text + optional links: no
+Three exceptions so far: the routine workspace (a hand-picked prototype of
+drag-and-drop reordering and a tap/double-tap interaction model), the
+Maintenance/Hair board (add/edit/delete/reorder text entries), and the
+navigation-hub workspace (folder/link panels, first used for Fidel
+Classroom) — all meant to validate a feel before any general system gets
+built around them. Maintenance deliberately stops at plain text + optional
+links: no
 scheduling, streaks, history, or reminders, so it stays a reference list
 rather than another tracker.

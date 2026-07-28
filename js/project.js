@@ -4,6 +4,7 @@ import * as demoStore from "./demoStore.js";
 import { DEFAULT_COLOR, initColorPicker } from "./colors.js";
 import { DEFAULT_ICON, iconMarkup, initIconPicker, isKnownIcon } from "./lucideIcons.js";
 import { initRoutineBoard } from "./routineBoard.js";
+import { initNavBoard } from "./navBoard.js";
 
 const params = new URLSearchParams(window.location.search);
 const projectId = params.get("id");
@@ -13,6 +14,7 @@ const nameEl = document.getElementById("project-name-display");
 const statusEl = document.getElementById("project-status-display");
 const bodyEl = document.getElementById("project-body");
 const routineMountEl = document.getElementById("routine-board-mount");
+const navMountEl = document.getElementById("nav-board-mount");
 const backLinkEl = document.getElementById("back-link");
 
 const editBtn = document.getElementById("edit-project-btn");
@@ -67,6 +69,10 @@ async function loadProject() {
     bodyEl.hidden = true;
     routineMountEl.hidden = false;
     await initRoutineBoard(routineMountEl, data);
+  } else if (data.workspace_type === "nav") {
+    bodyEl.hidden = true;
+    navMountEl.hidden = false;
+    await initNavBoard(navMountEl, data);
   }
 }
 
