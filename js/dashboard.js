@@ -6,6 +6,7 @@ const greetingEl = document.getElementById("greeting");
 const gridEl = document.getElementById("project-grid");
 const addCard = document.getElementById("add-project-card");
 const demoBanner = document.getElementById("demo-banner");
+const migrationNotice = document.getElementById("migration-notice");
 
 const modal = document.getElementById("add-project-modal");
 const addForm = document.getElementById("add-project-form");
@@ -114,6 +115,35 @@ addForm.addEventListener("submit", async (event) => {
   closeModal();
 });
 
+// One-time: if this browser has projects saved locally from preview mode
+// (see js/demoStore.js), copy them into the signed-in account so nothing
+// created before Supabase was configured gets lost. Leaves local data
+// untouched on failure so it's retried on the next load.
+async function migrateDemoProjects(userId) {
+  const demoProjects = demoStore.listProjects();
+  if (demoProjects.length === 0) return;
+
+  const rows = demoProjects.map((project) => ({
+    user_id: userId,
+    name: project.name,
+    icon: project.icon,
+    status: project.status,
+    sort_order: project.sort_order,
+  }));
+
+  const { error } = await supabase.from("projects").insert(rows);
+  if (error) {
+    console.error("Failed to migrate preview projects:", error);
+    return;
+  }
+
+  demoStore.clearAll();
+  migrationNotice.textContent = `Imported ${demoProjects.length} project${
+    demoProjects.length === 1 ? "" : "s"
+  } from your preview.`;
+  migrationNotice.hidden = false;
+}
+
 (async function init() {
   if (!isConfigured) {
     demoBanner.hidden = false;
@@ -128,5 +158,6 @@ addForm.addEventListener("submit", async (event) => {
   currentUserId = session.user.id;
   greetingEl.textContent = `${greetingForNow()}, Senait`;
 
+  await migrateDemoProjects(currentUserId);
   await loadProjects(currentUserId);
 })();

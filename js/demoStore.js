@@ -61,3 +61,7 @@ export function updateProject(id, { name, icon, status }) {
 export function deleteProject(id) {
   writeAll(readAll().filter((project) => project.id !== id));
 }
+
+export function clearAll() {
+  localStorage.removeItem(STORAGE_KEY);
+}

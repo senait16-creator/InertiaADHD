@@ -16,6 +16,12 @@ be reviewed on a phone or desktop before any backend is wired up — once real
 keys are added, the app automatically switches to Supabase + magic-link
 auth, and the banner disappears.
 
+Real credentials are now wired into `js/supabaseClient.js`, so this
+deployment runs in normal (signed-in) mode. The first time you sign in on a
+device that had preview-mode data saved, any leftover local projects are
+copied into your account automatically and the local copies are cleared —
+you'll see a brief "Imported N projects" note the one time this happens.
+
 ## Setup
 
 ### 1. Run the database schema
