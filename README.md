@@ -47,14 +47,16 @@ policies in `schema.sql`, not from hiding this key.
 
 ### 3. Configure auth
 
-Sign-in uses Supabase's passwordless email link (magic link) — the smallest
-secure option for a single user, and the session persists in the browser so
+Sign-in is passwordless: enter your email, get a 6-digit code, type it in —
+no password, no leaving the app. The session persists in the browser so
 normal visits go straight to the dashboard.
 
+In Supabase → Authentication → Email Templates → **Magic Link**, make sure
+the template includes `{{ .Token }}` somewhere in the body (the default
+template only shows the link) so the code actually shows up in the email.
+
 In Supabase → Authentication → URL Configuration, set:
-- **Site URL**: your GitHub Pages URL (e.g. `https://senait16-creator.github.io/inertiaadhd/`)
-- **Redirect URLs**: add the same URL plus `index.html`, e.g.
-  `https://senait16-creator.github.io/inertiaadhd/index.html`
+- **Site URL**: your GitHub Pages URL (e.g. `https://senait16-creator.github.io/InertiaADHD/`)
 
 ### 4. Enable GitHub Pages
 

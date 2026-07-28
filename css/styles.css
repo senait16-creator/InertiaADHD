@@ -308,6 +308,10 @@ button {
   width: 100%;
 }
 
+.auth-form button + button {
+  margin-top: 0.6rem;
+}
+
 .auth-status {
   margin-top: 1rem;
   color: var(--text-muted);

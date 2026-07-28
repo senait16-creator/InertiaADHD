@@ -1,7 +1,10 @@
 import { supabase, isConfigured } from "./supabaseClient.js";
 
-const form = document.getElementById("login-form");
+const emailForm = document.getElementById("email-form");
 const emailInput = document.getElementById("email");
+const codeForm = document.getElementById("code-form");
+const codeInput = document.getElementById("code");
+const resendBtn = document.getElementById("resend-code");
 const statusEl = document.getElementById("status");
 
 if (!isConfigured) {
@@ -16,25 +19,49 @@ if (!isConfigured) {
     }
   })();
 
-  form.addEventListener("submit", async (event) => {
+  let pendingEmail = "";
+
+  emailForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    statusEl.textContent = "Sending link...";
+    pendingEmail = emailInput.value.trim();
+    statusEl.textContent = "Sending code...";
 
-    const redirectTo = new URL("index.html", window.location.href).toString();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: emailInput.value.trim(),
-      options: { emailRedirectTo: redirectTo },
-    });
+    const { error } = await supabase.auth.signInWithOtp({ email: pendingEmail });
 
-    statusEl.textContent = error
-      ? `Error: ${error.message}`
-      : "Check your email for a sign-in link.";
+    if (error) {
+      statusEl.textContent = `Error: ${error.message}`;
+      return;
+    }
+
+    statusEl.textContent = `Enter the code sent to ${pendingEmail}.`;
+    emailForm.hidden = true;
+    codeForm.hidden = false;
+    codeInput.focus();
   });
 
-  // If the magic link callback arrives on this page, move to the dashboard.
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (session) {
-      window.location.href = "index.html";
+  codeForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    statusEl.textContent = "Verifying...";
+
+    const { error } = await supabase.auth.verifyOtp({
+      email: pendingEmail,
+      token: codeInput.value.trim(),
+      type: "email",
+    });
+
+    if (error) {
+      statusEl.textContent = `Error: ${error.message}`;
+      return;
     }
+
+    window.location.href = "index.html";
+  });
+
+  resendBtn.addEventListener("click", () => {
+    codeForm.hidden = true;
+    codeForm.reset();
+    emailForm.hidden = false;
+    statusEl.textContent = "";
+    emailInput.focus();
   });
 }
