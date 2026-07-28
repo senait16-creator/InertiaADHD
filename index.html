@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="dashboard">
+    <p class="demo-banner" id="demo-banner" hidden>
+      Preview mode — sample data stored only on this device. Add your Supabase keys in
+      <code>js/supabaseClient.js</code> to connect a real account.
+    </p>
+
+    <header class="dashboard-header">
+      <h1 id="greeting">Good morning, Senait</h1>
+      <p class="subtitle">Where do you want to continue?</p>
+    </header>
+
+    <div class="project-grid" id="project-grid">
+      <button class="project-card add-project-card" id="add-project-card" type="button">
+        <div class="add-icon">+</div>
+        <div class="add-label">Add a Project</div>
+      </button>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="add-project-modal">
+    <div class="modal">
+      <h2>Add a Project</h2>
+      <form id="add-project-form">
+        <label>
+          Project name
+          <input type="text" id="project-name" required maxlength="80" autocomplete="off">
+        </label>
+        <label>
+          Icon or emoji (optional)
+          <input type="text" id="project-icon" maxlength="4" autocomplete="off">
+        </label>
+        <label>
+          Status (optional)
+          <input type="text" id="project-status" maxlength="60" autocomplete="off">
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="cancel-add">Cancel</button>
+          <button type="submit" class="btn-primary">Add Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
