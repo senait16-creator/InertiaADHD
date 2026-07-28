@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Projects — InertiaADHD</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="manifest" href="manifest.json">
@@ -18,8 +18,8 @@
     <a href="index.html" class="back-link">‹ Back</a>
 
     <header class="dashboard-header">
-      <h1>Projects</h1>
-      <p class="subtitle">Continue where you left off.</p>
+      <h1>Projects 2026</h1>
+      <p class="subtitle">Stewardship + Consistency</p>
     </header>
 
     <div class="project-grid" id="project-grid">
@@ -29,6 +29,23 @@
       </button>
     </div>
   </main>
+
+  <div class="modal-overlay" id="project-action-modal">
+    <div class="modal action-modal">
+      <div id="action-menu-view">
+        <h2 id="action-menu-title">Project</h2>
+        <button type="button" class="action-menu-item" id="action-delete-btn">Delete Project</button>
+        <button type="button" class="btn-secondary action-cancel" id="action-cancel-btn-1">Cancel</button>
+      </div>
+      <div id="action-confirm-view" hidden>
+        <p class="confirm-text" id="confirm-text">Delete this project?</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="action-cancel-btn-2">Cancel</button>
+          <button type="button" class="btn-danger" id="action-confirm-delete-btn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-overlay" id="add-project-modal">
     <div class="modal">

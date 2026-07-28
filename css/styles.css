@@ -61,7 +61,7 @@ button {
 .dashboard {
   max-width: 900px;
   margin: 0 auto;
-  padding: 2rem 1rem calc(3rem + env(safe-area-inset-bottom));
+  padding: 2rem 1rem calc(4rem + env(safe-area-inset-bottom));
 }
 
 .demo-banner {
@@ -290,7 +290,17 @@ button {
   text-align: left;
   transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
 }
+
+/* Outline each card in a deeper version of its own icon tint, so cards
+   read as distinct without adding visual weight. */
+.project-card[data-color="sage"] { border-color: rgba(var(--color-sage), 0.4); }
+.project-card[data-color="green"] { border-color: rgba(var(--color-green), 0.4); }
+.project-card[data-color="blue"] { border-color: rgba(var(--color-blue), 0.4); }
+.project-card[data-color="amber"] { border-color: rgba(var(--color-amber), 0.4); }
+.project-card[data-color="lavender"] { border-color: rgba(var(--color-lavender), 0.4); }
 
 .project-card:active {
   transform: scale(0.965);
@@ -560,6 +570,51 @@ button {
   justify-content: flex-end;
   gap: 0.6rem;
   margin-top: 0.5rem;
+}
+
+/* ---------------- Project card action menu ---------------- */
+/* Long-press a project card → this small menu, deliberately one step away
+   from an actual native browser confirm() so an accidental long-press
+   can't delete anything by itself. */
+
+.action-modal {
+  max-width: 300px;
+  text-align: center;
+}
+
+.action-modal h2 {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+
+.action-menu-item {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  padding: 0.85rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.action-cancel {
+  display: block;
+  width: 100%;
+  margin-top: 0.6rem;
+}
+
+.confirm-text {
+  font-size: 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.action-modal .modal-actions {
+  justify-content: center;
 }
 
 /* ---------------- Buttons ---------------- */

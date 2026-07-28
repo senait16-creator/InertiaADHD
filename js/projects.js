@@ -18,7 +18,112 @@ const cancelBtn = document.getElementById("cancel-add");
 const colorPicker = initColorPicker(document.getElementById("project-color-picker"));
 const iconPicker = initIconPicker(document.getElementById("project-icon-picker"));
 
+const actionModal = document.getElementById("project-action-modal");
+const actionMenuView = document.getElementById("action-menu-view");
+const actionConfirmView = document.getElementById("action-confirm-view");
+const actionMenuTitle = document.getElementById("action-menu-title");
+const actionDeleteBtn = document.getElementById("action-delete-btn");
+const actionCancelBtn1 = document.getElementById("action-cancel-btn-1");
+const actionCancelBtn2 = document.getElementById("action-cancel-btn-2");
+const confirmText = document.getElementById("confirm-text");
+const actionConfirmDeleteBtn = document.getElementById("action-confirm-delete-btn");
+
 let currentUserId = null;
+let actionTarget = null;
+
+const LONG_PRESS_MS = 500;
+const LONG_PRESS_CANCEL_PX = 10;
+
+function attachLongPress(el, project) {
+  let timer = null;
+  let startX = 0;
+  let startY = 0;
+  let fired = false;
+
+  function clearTimer() {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  }
+
+  el.addEventListener("pointerdown", (e) => {
+    if (e.button !== undefined && e.button > 0) return;
+    fired = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    timer = setTimeout(() => {
+      fired = true;
+      timer = null;
+      openActionMenu(project, el);
+    }, LONG_PRESS_MS);
+  });
+
+  el.addEventListener("pointermove", (e) => {
+    if (!timer) return;
+    if (Math.hypot(e.clientX - startX, e.clientY - startY) > LONG_PRESS_CANCEL_PX) {
+      clearTimer();
+    }
+  });
+
+  el.addEventListener("pointerup", clearTimer);
+  el.addEventListener("pointercancel", clearTimer);
+  el.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // A long press that opened the menu shouldn't also navigate — the click
+  // event still fires on release, so swallow it once.
+  el.addEventListener("click", (e) => {
+    if (fired) {
+      e.preventDefault();
+      fired = false;
+    }
+  });
+}
+
+function openActionMenu(project, cardEl) {
+  actionTarget = { project, cardEl };
+  actionMenuTitle.textContent = project.name;
+  actionMenuView.hidden = false;
+  actionConfirmView.hidden = true;
+  actionModal.classList.add("open");
+}
+
+function closeActionModal() {
+  actionModal.classList.remove("open");
+  actionTarget = null;
+}
+
+actionCancelBtn1.addEventListener("click", closeActionModal);
+actionCancelBtn2.addEventListener("click", closeActionModal);
+actionModal.addEventListener("click", (event) => {
+  if (event.target === actionModal) closeActionModal();
+});
+
+actionDeleteBtn.addEventListener("click", () => {
+  if (!actionTarget) return;
+  confirmText.textContent = `Delete "${actionTarget.project.name}"?`;
+  actionMenuView.hidden = true;
+  actionConfirmView.hidden = false;
+});
+
+actionConfirmDeleteBtn.addEventListener("click", async () => {
+  if (!actionTarget) return;
+  const { project, cardEl } = actionTarget;
+
+  if (isConfigured) {
+    const { error } = await supabase.from("projects").delete().eq("id", project.id);
+    if (error) {
+      console.error("Failed to delete project:", error);
+      alert("Could not delete project.");
+      return;
+    }
+  } else {
+    demoStore.deleteProject(project.id);
+  }
+
+  cardEl.remove();
+  closeActionModal();
+});
 
 function escapeHtml(value) {
   const div = document.createElement("div");
@@ -41,6 +146,7 @@ function projectCardEl(project) {
   const link = document.createElement("a");
   link.className = "project-card";
   link.href = `project.html?id=${encodeURIComponent(project.id)}`;
+  link.dataset.color = project.color || DEFAULT_COLOR;
   link.innerHTML = `
     ${iconBadgeMarkup(project)}
     <div class="project-info">
@@ -49,6 +155,7 @@ function projectCardEl(project) {
     </div>
     <div class="project-arrow">›</div>
   `;
+  attachLongPress(link, project);
   return link;
 }
 
