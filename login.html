@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="auth-screen">
+    <h1>InertiaADHD</h1>
+    <p class="subtitle">Sign in to open your dashboard.</p>
+
+    <form id="login-form" class="auth-form">
+      <label>
+        Email
+        <input type="email" id="email" required autocomplete="email">
+      </label>
+      <button type="submit" class="btn-primary">Send sign-in link</button>
+    </form>
+
+    <p id="status" class="auth-status"></p>
+  </main>
+
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

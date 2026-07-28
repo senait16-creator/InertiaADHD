@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="project-page">
+    <a href="index.html" class="back-link">‹ Back</a>
+
+    <div class="project-header">
+      <div class="project-icon-large" id="project-icon-display">📁</div>
+      <h1 id="project-name-display">Project</h1>
+      <p class="project-status-display" id="project-status-display"></p>
+    </div>
+
+    <div class="project-body">
+      <p class="project-placeholder">Project workspace coming next.</p>
+    </div>
+
+    <div class="project-actions">
+      <button class="btn-secondary" id="edit-project-btn" type="button">Edit Project</button>
+      <button class="btn-danger" id="delete-project-btn" type="button">Delete Project</button>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="edit-project-modal">
+    <div class="modal">
+      <h2>Edit Project</h2>
+      <form id="edit-project-form">
+        <label>
+          Project name
+          <input type="text" id="edit-name" required maxlength="80" autocomplete="off">
+        </label>
+        <label>
+          Icon or emoji (optional)
+          <input type="text" id="edit-icon" maxlength="4" autocomplete="off">
+        </label>
+        <label>
+          Status (optional)
+          <input type="text" id="edit-status" maxlength="60" autocomplete="off">
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="cancel-edit">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/project.js"></script>
+</body>
+</html>
