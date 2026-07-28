@@ -83,6 +83,7 @@ export async function initRoutineBoard(container, project) {
     el.dataset.id = step.id;
     el.innerHTML = `
       <span class="complete-badge">${iconMarkup("check")}</span>
+      ${step.link ? `<span class="link-badge">${iconMarkup("external-link")}</span>` : ""}
       <div class="routine-icon" data-color="${step.color || "sage"}">${iconMarkup(step.icon)}</div>
       <div class="routine-label">${step.name}</div>
     `;
@@ -138,6 +139,17 @@ export async function initRoutineBoard(container, project) {
     persistActive(project, step, turningOn);
   }
 
+  // Steps with a link always focus (not toggle) and open it — tapping a
+  // "go do this elsewhere" tile should reliably take you there, not
+  // sometimes un-focus it instead.
+  function focusAndOpen(step) {
+    for (const s of steps) s.active = false;
+    step.active = true;
+    renderBoard();
+    persistActive(project, step, true);
+    window.open(step.link, "_blank", "noopener,noreferrer");
+  }
+
   function toggleComplete(step) {
     step.complete = !step.complete;
     if (step.complete) step.active = false;
@@ -156,7 +168,13 @@ export async function initRoutineBoard(container, project) {
       toggleComplete(step);
     } else {
       lastTap = { id: step.id, time: now };
-      pendingTap = setTimeout(() => setActive(step), 320);
+      pendingTap = setTimeout(() => {
+        if (step.link) {
+          focusAndOpen(step);
+        } else {
+          setActive(step);
+        }
+      }, 320);
     }
   }
 

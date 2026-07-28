@@ -10,23 +10,32 @@ update public.projects
 set workspace_type = 'routine'
 where name = 'Morning Routine';
 
-insert into public.routine_steps (project_id, user_id, name, icon, color, sort_order)
-select p.id, p.user_id, v.name, v.icon, v.color, v.sort_order
+insert into public.routine_steps (project_id, user_id, name, icon, color, sort_order, link)
+select p.id, p.user_id, v.name, v.icon, v.color, v.sort_order, v.link
 from public.projects p
 cross join (
   values
-    ('Morning video', 'monitor-play', 'sage', 0),
-    ('Audiobook', 'headphones', 'blue', 1),
-    ('Fidel Classroom', 'graduation-cap', 'amber', 2),
-    ('10K Steps', 'footprints', 'green', 3),
-    ('Brush teeth', 'brush-cleaning', 'lavender', 4),
-    ('Wash face', 'droplets', 'blue', 5),
-    ('Shower', 'shower-head', 'sage', 6),
-    ('Stretch', 'activity', 'green', 7),
-    ('Exercise', 'dumbbell', 'amber', 8),
-    ('Bible Study', 'book-heart', 'lavender', 9)
-) as v(name, icon, color, sort_order)
+    ('Morning video', 'monitor-play', 'sage', 0, 'https://www.youtube.com/watch?v=UAZJC-yirR0&list=PL7E_dGgQuBhAxYVfdb2v9p_KgdyXWWykT&index=2'),
+    ('Audiobook', 'headphones', 'blue', 1, null),
+    ('Fidel Classroom', 'graduation-cap', 'amber', 2, null),
+    ('10K Steps', 'footprints', 'green', 3, null),
+    ('Brush teeth', 'brush-cleaning', 'lavender', 4, null),
+    ('Wash face', 'droplets', 'blue', 5, null),
+    ('Shower', 'shower-head', 'sage', 6, null),
+    ('Stretch', 'activity', 'green', 7, null),
+    ('Exercise', 'dumbbell', 'amber', 8, null),
+    ('Bible Study', 'book-heart', 'lavender', 9, null)
+) as v(name, icon, color, sort_order, link)
 where p.name = 'Morning Routine'
   and not exists (
     select 1 from public.routine_steps rs where rs.project_id = p.id
   );
+
+-- Sets/updates the Morning video link even if the steps above were already
+-- seeded before this column existed. Safe to re-run.
+update public.routine_steps rs
+set link = 'https://www.youtube.com/watch?v=UAZJC-yirR0&list=PL7E_dGgQuBhAxYVfdb2v9p_KgdyXWWykT&index=2'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Morning Routine'
+  and rs.name = 'Morning video';

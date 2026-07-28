@@ -90,9 +90,15 @@ create table if not exists public.routine_steps (
   sort_order integer not null default 0,
   active boolean not null default false,
   complete boolean not null default false,
+  link text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Optional URL. When set, tapping the step opens it (in a new tab) instead
+-- of only focusing it. Added separately for databases where routine_steps
+-- already existed before this column did.
+alter table public.routine_steps add column if not exists link text;
 
 create index if not exists routine_steps_project_sort_idx
   on public.routine_steps (project_id, sort_order);
