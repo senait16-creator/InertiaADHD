@@ -56,6 +56,17 @@ function attachLongPress(el, project) {
       fired = true;
       timer = null;
       openActionMenu(project, el);
+
+      // The finger/mouse is still down when the menu appears. Its
+      // eventual release lands wherever the menu now renders (often
+      // right on top of "Cancel"), which would otherwise register as a
+      // tap on that button. Swallow just that one trailing release so it
+      // takes a deliberate second tap to actually choose something.
+      const swallowRelease = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      };
+      window.addEventListener("pointerup", swallowRelease, { capture: true, once: true });
     }, LONG_PRESS_MS);
   });
 
