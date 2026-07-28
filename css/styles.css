@@ -25,6 +25,10 @@
   --color-amber: 199, 150, 74;
   --color-lavender: 150, 130, 190;
 
+  /* Routine step status — a separate namespace from the identity colors
+     above. Status tints the whole card; the icon keeps its own identity
+     color regardless of status, so you can still tell which step it is. */
+  --status-progress: 214, 165, 40;
 }
 
 * {
@@ -837,13 +841,22 @@ button {
   max-width: 100%;
 }
 
+/* Single tap: selected, shown as a green border/ring (no fill — that's
+   what keeps it visually distinct from is-complete's filled tint below). */
 .routine-card.is-active {
   transform: scale(1.05);
-  box-shadow: 0 0 0 2.5px var(--accent), 0 10px 24px rgba(43, 42, 39, 0.14);
+  border-color: rgb(var(--color-green));
+  box-shadow: 0 0 0 2.5px rgba(var(--color-green), 0.6), 0 10px 24px rgba(43, 42, 39, 0.14);
 }
 
-/* Double-tap toggles done. The icon keeps its own identity color either
-   way — status tints the card, not the icon. */
+/* Double-tap cycles: in progress (yellow) -> complete (green) -> not
+   started. The icon keeps its own identity color throughout — status
+   tints the card, not the icon. */
+
+.routine-card.is-inprogress {
+  background: rgba(var(--status-progress), 0.16);
+  border-color: rgba(var(--status-progress), 0.45);
+}
 
 .routine-card.is-complete {
   background: rgba(var(--color-green), 0.16);

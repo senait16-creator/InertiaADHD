@@ -1,8 +1,10 @@
-// Visual, icon-first routine board: large tiles, tap to focus, double-tap
-// to mark done, press-and-drag to reorder. Used by project.js for any
-// project with workspace_type === 'routine'. Deliberately no due dates,
-// priorities, or counts — see supabase/seed_morning_routine.sql for how a
-// project gets set up with this workspace.
+// Visual, icon-first routine board: large tiles, tap to select (green
+// border), double-tap to cycle in progress (yellow) -> complete (green),
+// press-and-drag to reorder within the board's own bounds. Used by
+// project.js for any project with workspace_type === 'routine'.
+// Deliberately no due dates, priorities, or counts — see
+// supabase/seed_morning_routine.sql for how a project gets set up with
+// this workspace.
 //
 // Two behaviors are deliberately automatic, not manual: done steps sink
 // below not-done ones (see displaySteps), and any step still marked done
@@ -17,6 +19,14 @@ function isSameLocalDay(isoString) {
   if (!isoString) return false;
   return new Date(isoString).toDateString() === new Date().toDateString();
 }
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), Math.max(max, min));
+}
+
+// Breathing room between a dragged card and the board's edge — keeps it
+// from feeling flush against the wall and leaves room for a scrollbar.
+const DRAG_EDGE_MARGIN = 12;
 
 async function fetchSteps(projectId) {
   if (!isConfigured) return demoStore.listSteps(projectId);
@@ -115,6 +125,7 @@ export async function initRoutineBoard(container, project) {
 
   function updateCardClasses(el, step) {
     el.classList.toggle("is-active", !!step.active);
+    el.classList.toggle("is-inprogress", step.status === "in_progress");
     el.classList.toggle("is-complete", step.status === "complete");
   }
 
@@ -182,12 +193,17 @@ export async function initRoutineBoard(container, project) {
     window.open(step.link, "_blank", "noopener,noreferrer");
   }
 
-  // Not done <-> done, toggled by double-tapping a step. Routines rarely
-  // have a meaningful "in progress" — you either haven't done it yet or
-  // you have — so this stays a plain toggle rather than a longer cycle.
-  function toggleStatus(step) {
+  // Not started -> in progress (yellow) -> complete (green) -> not
+  // started, cycled by double-tapping a step.
+  function nextStatus(status) {
+    if (status === "in_progress") return "complete";
+    if (status === "complete") return null;
+    return "in_progress";
+  }
+
+  function cycleStatus(step) {
     flip(() => {
-      step.status = step.status === "complete" ? null : "complete";
+      step.status = nextStatus(step.status);
       if (step.status) step.active = false;
       renderBoard();
     });
@@ -202,7 +218,7 @@ export async function initRoutineBoard(container, project) {
     if (lastTap.id === step.id && now - lastTap.time < 320) {
       clearTimeout(pendingTap);
       lastTap = { id: null, time: 0 };
-      toggleStatus(step);
+      cycleStatus(step);
     } else {
       lastTap = { id: step.id, time: now };
       pendingTap = setTimeout(() => {
@@ -249,6 +265,7 @@ export async function initRoutineBoard(container, project) {
       // shouldn't accidentally start a drag.
       if (Math.hypot(dx, dy) < 16) return;
       drag.dragging = true;
+      drag.boardRect = board.getBoundingClientRect();
       drag.el.classList.add("is-dragging");
       drag.el.style.position = "fixed";
       drag.el.style.width = `${drag.width}px`;
@@ -256,8 +273,23 @@ export async function initRoutineBoard(container, project) {
       drag.el.style.margin = "0";
     }
 
-    drag.el.style.left = `${drag.originLeft + dx}px`;
-    drag.el.style.top = `${drag.originTop + dy}px`;
+    // Keep the dragged card inside the board's own bounds — it can be
+    // pushed around within the grid, not lifted out over the header or
+    // buttons below it. A small margin so it doesn't feel flush against
+    // the edge, and so it doesn't cover a scrollbar if the board is
+    // taller than the screen.
+    const left = clamp(
+      drag.originLeft + dx,
+      drag.boardRect.left + DRAG_EDGE_MARGIN,
+      drag.boardRect.right - drag.width - DRAG_EDGE_MARGIN
+    );
+    const top = clamp(
+      drag.originTop + dy,
+      drag.boardRect.top + DRAG_EDGE_MARGIN,
+      drag.boardRect.bottom - drag.height - DRAG_EDGE_MARGIN
+    );
+    drag.el.style.left = `${left}px`;
+    drag.el.style.top = `${top}px`;
 
     drag.el.style.pointerEvents = "none";
     const under = document.elementFromPoint(e.clientX, e.clientY);
