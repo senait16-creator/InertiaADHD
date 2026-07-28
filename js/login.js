@@ -1,10 +1,8 @@
 import { supabase, isConfigured } from "./supabaseClient.js";
 
-const emailForm = document.getElementById("email-form");
+const loginForm = document.getElementById("login-form");
 const emailInput = document.getElementById("email");
-const codeForm = document.getElementById("code-form");
-const codeInput = document.getElementById("code");
-const resendBtn = document.getElementById("resend-code");
+const passwordInput = document.getElementById("password");
 const statusEl = document.getElementById("status");
 
 if (!isConfigured) {
@@ -19,34 +17,13 @@ if (!isConfigured) {
     }
   })();
 
-  let pendingEmail = "";
-
-  emailForm.addEventListener("submit", async (event) => {
+  loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    pendingEmail = emailInput.value.trim();
-    statusEl.textContent = "Sending code...";
+    statusEl.textContent = "Signing in...";
 
-    const { error } = await supabase.auth.signInWithOtp({ email: pendingEmail });
-
-    if (error) {
-      statusEl.textContent = `Error: ${error.message}`;
-      return;
-    }
-
-    statusEl.textContent = `Enter the code sent to ${pendingEmail}.`;
-    emailForm.hidden = true;
-    codeForm.hidden = false;
-    codeInput.focus();
-  });
-
-  codeForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    statusEl.textContent = "Verifying...";
-
-    const { error } = await supabase.auth.verifyOtp({
-      email: pendingEmail,
-      token: codeInput.value.trim(),
-      type: "email",
+    const { error } = await supabase.auth.signInWithPassword({
+      email: emailInput.value.trim(),
+      password: passwordInput.value,
     });
 
     if (error) {
@@ -55,13 +32,5 @@ if (!isConfigured) {
     }
 
     window.location.href = "index.html";
-  });
-
-  resendBtn.addEventListener("click", () => {
-    codeForm.hidden = true;
-    codeForm.reset();
-    emailForm.hidden = false;
-    statusEl.textContent = "";
-    emailInput.focus();
   });
 }

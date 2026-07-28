@@ -75,13 +75,12 @@ policies in `schema.sql`, not from hiding this key.
 
 ### 3. Configure auth
 
-Sign-in is passwordless: enter your email, get a 6-digit code, type it in —
-no password, no leaving the app. The session persists in the browser so
+Sign-in is plain email + password. The session persists in the browser so
 normal visits go straight to the home screen.
 
-In Supabase → Authentication → Email Templates → **Magic Link**, make sure
-the template includes `{{ .Token }}` somewhere in the body (the default
-template only shows the link) so the code actually shows up in the email.
+Create the account once in Supabase → Authentication → Users (or sign up
+through Supabase directly), then set a password for it. `set-password.html`
+in this app also works for setting/changing a password once signed in.
 
 In Supabase → Authentication → URL Configuration, set:
 - **Site URL**: your GitHub Pages URL (e.g. `https://senait16-creator.github.io/InertiaADHD/`)
@@ -90,9 +89,9 @@ In Supabase → Authentication → URL Configuration, set:
 
 Most projects open to a blank placeholder page — that's still the default.
 A project can instead open a visual, icon-first routine board (large tiles:
-tap to focus a step, double-tap to mark it done, press-and-drag to
-reorder), and shows up under **Routines** on the home screen instead of
-**Projects**. To try it:
+tap to focus a step, double-tap to cycle it through in progress (yellow)
+and complete (green), press-and-drag to reorder), and shows up under
+**Routines** on the home screen instead of **Projects**. To try it:
 
 1. Create a project through the normal **Add a Project** flow (from the
    Projects panel), named exactly `Morning Routine` and/or `Night Routine`.

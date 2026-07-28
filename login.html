@@ -18,21 +18,16 @@
     <h1>InertiaADHD</h1>
     <p class="subtitle">Sign in to open your dashboard.</p>
 
-    <form id="email-form" class="auth-form">
+    <form id="login-form" class="auth-form">
       <label>
         Email
         <input type="email" id="email" required autocomplete="email">
       </label>
-      <button type="submit" class="btn-primary">Send code</button>
-    </form>
-
-    <form id="code-form" class="auth-form" hidden>
       <label>
-        6-digit code
-        <input type="text" id="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required>
+        Password
+        <input type="password" id="password" required autocomplete="current-password">
       </label>
-      <button type="submit" class="btn-primary">Verify</button>
-      <button type="button" id="resend-code" class="btn-secondary">Use a different email</button>
+      <button type="submit" class="btn-primary">Sign in</button>
     </form>
 
     <p id="status" class="auth-status"></p>
