@@ -8,23 +8,29 @@ Plain HTML/CSS/JS (no build step) + Supabase, deployed to GitHub Pages.
 
 ## Information architecture
 
-The home screen (`index.html`) is five entry panels, not a project grid:
+The home screen (`index.html`) is five entry panels, not a project grid,
+and has no subtitle — the layout is meant to communicate what's relevant
+by itself rather than a line of text explaining it:
 
 ```
 Home
-├─ Routines     → every routine-workspace project (Morning Routine, Night Routine, ...)
-├─ Maintenance  → calm placeholder (self-care areas, not built yet)
-├─ Projects     → the original project dashboard (everything else)
-├─ 2026 Vision  → calm placeholder
-└─ Reminders    → calm placeholder, deliberately the smallest panel
+├─ Morning / Night / Routines  → dynamic, see below
+├─ Maintenance                 → calm placeholder (self-care areas, not built yet)
+├─ Projects                    → the original project dashboard (everything else)
+├─ 2026 Vision                 → calm placeholder
+└─ Reminders                   → calm placeholder, deliberately the smallest panel
 ```
 
-Mornings (roughly 5–11am) and nights (8pm–5am), the home screen features
-one large card for the relevant routine instead of showing all five panels
-with equal weight — the other four drop into a compact row underneath.
-Midday, nothing is obviously more relevant than anything else, so it's the
-plain equal grid. This uses only the two card treatments already in the
-app (big tile, slim bar); it doesn't add a third visual style.
+The first panel is dynamic rather than always "Routines": mornings
+(roughly 5–11am) it becomes a direct **Morning** shortcut straight into
+the Morning Routine board, skipping the routines list entirely; nights
+(8pm–5am) it becomes **Night** the same way. Outside those hours — or if
+the relevant routine project doesn't exist yet — it falls back to a
+generic **Routines** card pointing at the full list (`routines.html`),
+which is also where any additional routines (Sunday Reset, Travel, etc.)
+would live rather than cluttering the home screen. Every other panel and
+the tile treatment itself stay exactly the same either way — only this
+one tile's content and link change.
 
 ## Preview mode
 
@@ -95,9 +101,9 @@ reorder), and shows up under **Routines** on the home screen instead of
    project to use the routine workspace and seeds its steps.
 
 The home screen looks for projects named exactly `Morning Routine` and
-`Night Routine` to decide what to feature in the morning/night hero card —
-other routine-workspace projects still appear under Routines, just without
-the time-based promotion. There's no UI yet for creating routine-workspace
+`Night Routine` to decide what the dynamic panel links to — other
+routine-workspace projects still appear under Routines, just without a
+home-screen shortcut. There's no UI yet for creating routine-workspace
 projects some other way, or for editing a routine's steps beyond the
 tap/double-tap/drag board itself.
 
@@ -121,7 +127,7 @@ Then open `http://localhost:8080`.
 ## Structure
 
 ```
-index.html            home screen (five entry panels, time-aware hero)
+index.html            home screen (five entry panels, one time-aware)
 login.html             passwordless sign-in
 routines.html            list of routine-workspace projects
 projects.html             the original project dashboard (Add Project modal)

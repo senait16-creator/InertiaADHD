@@ -1,6 +1,13 @@
-// Home screen — five entry panels, with a time-of-day featured routine
-// (morning/night) instead of everything shown with equal weight. See
-// README for the information architecture this replaced.
+// Home screen — five entry panels. No subtitle: the layout itself (which
+// panel a tap lands on) is meant to communicate what's relevant, not a
+// line of text explaining it.
+//
+// The first panel is dynamic instead of a static "Routines" link: in the
+// morning it becomes a direct "Morning" shortcut into the Morning Routine
+// board, at night a "Night" shortcut into Night Routine — skipping the
+// Routines list for the two routines used constantly. Midday, or if the
+// relevant routine doesn't exist yet, it falls back to a generic
+// "Routines" card pointing at the full list.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
@@ -8,7 +15,6 @@ import { DEFAULT_COLOR } from "./colors.js";
 import { iconMarkup } from "./lucideIcons.js";
 
 const greetingEl = document.getElementById("greeting");
-const subtitleEl = document.getElementById("home-subtitle");
 const demoBanner = document.getElementById("demo-banner");
 const migrationNotice = document.getElementById("migration-notice");
 const contentEl = document.getElementById("home-content");
@@ -20,8 +26,9 @@ function greetingForNow() {
   return "Good evening";
 }
 
-// Morning/night get a featured routine because there's an unambiguous
-// answer; the hours between don't get a guessed-at "default" panel.
+// Morning/night get a direct shortcut because there's an unambiguous
+// answer; the hours between fall back to the plain Routines list rather
+// than guessing at a "default" routine.
 function timeState() {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 11) return "morning";
@@ -35,8 +42,8 @@ function escapeHtml(value) {
   return div.innerHTML;
 }
 
-const PANELS = [
-  { href: "routines.html", icon: "repeat", color: "sage", label: "Routines" },
+const ROUTINES_FALLBACK = { href: "routines.html", icon: "repeat", color: "sage", label: "Routines" };
+const OTHER_PANELS = [
   { href: "maintenance.html", icon: "sparkles", color: "lavender", label: "Maintenance" },
   { href: "projects.html", icon: "layout-grid", color: "blue", label: "Projects" },
   { href: "vision.html", icon: "compass", color: "amber", label: "2026 Vision" },
@@ -47,44 +54,25 @@ function panelCardHtml(p) {
   return `
     <a class="panel-card" href="${p.href}">
       <div class="icon-badge" data-color="${p.color}">${iconMarkup(p.icon)}</div>
-      <div class="panel-label">${p.label}</div>
+      <div class="panel-label">${escapeHtml(p.label)}</div>
     </a>
   `;
 }
 
-function panelBarHtml(p, extraClass = "") {
+function panelBarHtml(p) {
   return `
-    <a class="panel-bar ${extraClass}" href="${p.href}">
+    <a class="panel-bar" href="${p.href}">
       <div class="icon-badge" data-color="${p.color}">${iconMarkup(p.icon)}</div>
-      <div class="panel-label">${p.label}</div>
+      <div class="panel-label">${escapeHtml(p.label)}</div>
       <span class="bar-arrow">›</span>
     </a>
   `;
 }
 
-function renderNeutral() {
-  subtitleEl.textContent = "Where do you want to go?";
+function renderHome(routinesPanel) {
   contentEl.innerHTML = `
-    <div class="panel-grid">${PANELS.map(panelCardHtml).join("")}</div>
+    <div class="panel-grid">${[routinesPanel, ...OTHER_PANELS].map(panelCardHtml).join("")}</div>
     ${panelBarHtml(REMINDERS_PANEL)}
-  `;
-}
-
-function renderFeatured(routineProject, isMorning) {
-  subtitleEl.textContent = isMorning ? "Time for your morning routine." : "Time to wind down.";
-  contentEl.innerHTML = `
-    <a class="hero-card" href="project.html?id=${encodeURIComponent(routineProject.id)}">
-      <div class="icon-badge" data-color="${isMorning ? "amber" : "lavender"}">${iconMarkup(isMorning ? "sunrise" : "moon-star")}</div>
-      <div class="hero-text">
-        <div class="hero-eyebrow">Right now</div>
-        <div class="panel-label">${escapeHtml(routineProject.name)}</div>
-      </div>
-      <span class="bar-arrow">›</span>
-    </a>
-    <div class="panel-bar-list">
-      ${PANELS.map((p) => panelBarHtml(p)).join("")}
-      ${panelBarHtml(REMINDERS_PANEL, "is-reminders")}
-    </div>
   `;
 }
 
@@ -100,6 +88,22 @@ async function fetchRoutineProjects(userId) {
       })()
     : demoStore.listProjects();
   return all.filter((p) => p.workspace_type === "routine");
+}
+
+async function resolveRoutinesPanel(userId, state) {
+  if (state === "neutral") return ROUTINES_FALLBACK;
+
+  const routineProjects = await fetchRoutineProjects(userId);
+  const targetName = state === "morning" ? "Morning Routine" : "Night Routine";
+  const target = routineProjects.find((p) => p.name === targetName);
+  if (!target) return ROUTINES_FALLBACK;
+
+  return {
+    href: `project.html?id=${encodeURIComponent(target.id)}`,
+    icon: state === "morning" ? "sunrise" : "moon-star",
+    color: state === "morning" ? "amber" : "lavender",
+    label: state === "morning" ? "Morning" : "Night",
+  };
 }
 
 // One-time: if this browser has projects saved locally from preview mode
@@ -137,7 +141,7 @@ async function migrateDemoProjects(userId) {
   if (!isConfigured) {
     demoBanner.hidden = false;
     greetingEl.textContent = `${greetingForNow()}, Senait`;
-    renderNeutral();
+    renderHome(ROUTINES_FALLBACK);
     return;
   }
 
@@ -149,21 +153,6 @@ async function migrateDemoProjects(userId) {
 
   await migrateDemoProjects(userId);
 
-  const state = timeState();
-  if (state === "neutral") {
-    renderNeutral();
-    return;
-  }
-
-  const routineProjects = await fetchRoutineProjects(userId);
-  const target = routineProjects.find(
-    (p) => p.name === (state === "morning" ? "Morning Routine" : "Night Routine")
-  );
-
-  if (!target) {
-    renderNeutral();
-    return;
-  }
-
-  renderFeatured(target, state === "morning");
+  const routinesPanel = await resolveRoutinesPanel(userId, timeState());
+  renderHome(routinesPanel);
 })();

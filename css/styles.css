@@ -111,9 +111,10 @@ button {
 }
 
 /* ---------------- Home screen: entry panels ---------------- */
-/* Reuses the icon-badge/card language everywhere else in the app — a
-   "featured" state (js/home.js, morning/night) just recomposes the same
-   two treatments (big tile vs. slim bar), it doesn't add a third. */
+/* Reuses the icon-badge/card language everywhere else in the app. The
+   first tile is dynamic (js/home.js): a direct shortcut into Morning or
+   Night Routine when relevant, otherwise a generic Routines card — same
+   tile treatment either way, just different content. */
 
 .panel-grid {
   display: grid;
@@ -202,76 +203,11 @@ button {
   font-weight: 500;
 }
 
-.panel-bar-list {
-  margin-top: 1.3rem;
-}
-
-.panel-bar-list .panel-bar:first-child {
-  margin-top: 0;
-}
-
-.panel-bar.is-reminders {
-  opacity: 0.7;
-}
-
 .bar-arrow {
   margin-left: auto;
   color: var(--text-muted);
   font-size: 1.2rem;
   flex-shrink: 0;
-}
-
-/* Time-relevant featured entry (js/home.js) — same components, more room */
-
-.hero-card {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  width: 100%;
-  background: linear-gradient(135deg, rgba(var(--color-sage), 0.14), rgba(var(--color-sage), 0.05));
-  border: 1px solid rgba(var(--color-sage), 0.3);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  padding: 1.1rem;
-  cursor: pointer;
-  margin-bottom: 1.3rem;
-  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
-}
-
-.hero-card:active {
-  transform: scale(0.97);
-}
-
-.hero-card .icon-badge {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  margin-bottom: 0;
-  flex-shrink: 0;
-}
-
-.hero-card .icon-badge svg {
-  width: 28px;
-  height: 28px;
-}
-
-.hero-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.hero-eyebrow {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 0.15rem;
-}
-
-.hero-card .panel-label {
-  font-size: 1.1rem;
-  text-align: left;
 }
 
 /* ---------------- Calm placeholder screens ---------------- */
