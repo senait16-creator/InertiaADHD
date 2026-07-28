@@ -1,10 +1,13 @@
-// Visual, icon-first routine board: large tiles, tap to select (green
-// border), double-tap to cycle in progress (yellow) -> complete (green),
-// press-and-drag to reorder within the board's own bounds. Used by
-// project.js for any project with workspace_type === 'routine'.
-// Deliberately no due dates, priorities, or counts — see
-// supabase/seed_morning_routine.sql for how a project gets set up with
-// this workspace.
+// Visual, icon-first routine board: large tiles that step through a
+// state on every plain tap — 1st: selected (green border), 2nd: in
+// progress (yellow), 3rd: complete (green, sinks to the bottom), 4th:
+// back to not started — plus press-and-drag to reorder within the
+// board's own bounds. Deliberately plain taps rather than double-taps:
+// no timing window to fight with the phone's own double-tap-zoom
+// gesture. Used by project.js for any project with
+// workspace_type === 'routine'. Deliberately no due dates, priorities,
+// or counts — see supabase/seed_morning_routine.sql for how a project
+// gets set up with this workspace.
 //
 // Two behaviors are deliberately automatic, not manual: done steps sink
 // below not-done ones (see displaySteps), and any step still marked done
@@ -174,60 +177,39 @@ export async function initRoutineBoard(container, project) {
     }
   }
 
-  function setActive(step) {
-    const turningOn = !step.active;
-    for (const s of steps) s.active = false;
-    step.active = turningOn;
-    renderBoard();
-    persistActive(project, step, turningOn);
-  }
+  // Every tap advances a step one step further — no double-tap timing
+  // involved, so there's no fight with the phone's own double-tap-zoom
+  // gesture:
+  //   1st tap: selected (green border) — exclusive, clears any other
+  //            step's selection; opens the link too, if there is one.
+  //   2nd tap: in progress (yellow)
+  //   3rd tap: complete (green) — sinks to the bottom
+  //   4th tap: back to not started
+  function advanceState(step) {
+    const wasIdle = !step.active && !step.status;
 
-  // Steps with a link always focus (not toggle) and open it — tapping a
-  // "go do this elsewhere" tile should reliably take you there, not
-  // sometimes un-focus it instead.
-  function focusAndOpen(step) {
-    for (const s of steps) s.active = false;
-    step.active = true;
-    renderBoard();
-    persistActive(project, step, true);
-    window.open(step.link, "_blank", "noopener,noreferrer");
-  }
-
-  // Not started -> in progress (yellow) -> complete (green) -> not
-  // started, cycled by double-tapping a step.
-  function nextStatus(status) {
-    if (status === "in_progress") return "complete";
-    if (status === "complete") return null;
-    return "in_progress";
-  }
-
-  function cycleStatus(step) {
     flip(() => {
-      step.status = nextStatus(step.status);
-      if (step.status) step.active = false;
+      if (wasIdle) {
+        for (const s of steps) s.active = false;
+        step.active = true;
+      } else if (step.active) {
+        step.active = false;
+        step.status = "in_progress";
+      } else if (step.status === "in_progress") {
+        step.status = "complete";
+      } else {
+        step.status = null;
+      }
       renderBoard();
     });
-    persistStatus(step);
-  }
 
-  let lastTap = { id: null, time: 0 };
-  let pendingTap = null;
-
-  function handleTap(step) {
-    const now = Date.now();
-    if (lastTap.id === step.id && now - lastTap.time < 320) {
-      clearTimeout(pendingTap);
-      lastTap = { id: null, time: 0 };
-      cycleStatus(step);
+    if (wasIdle) {
+      persistActive(project, step, true);
+      if (step.link) {
+        window.open(step.link, "_blank", "noopener,noreferrer");
+      }
     } else {
-      lastTap = { id: step.id, time: now };
-      pendingTap = setTimeout(() => {
-        if (step.link) {
-          focusAndOpen(step);
-        } else {
-          setActive(step);
-        }
-      }, 320);
+      persistStatus(step);
     }
   }
 
@@ -332,7 +314,7 @@ export async function initRoutineBoard(container, project) {
       flip(() => renderBoard());
       persistReorder(project, steps);
     } else {
-      handleTap(step);
+      advanceState(step);
     }
     drag = null;
   }

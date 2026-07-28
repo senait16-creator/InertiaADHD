@@ -89,15 +89,17 @@ In Supabase → Authentication → URL Configuration, set:
 
 Most projects open to a blank placeholder page — that's still the default.
 A project can instead open a visual, icon-first routine board (large
-tiles: tap once to select a step — shown with a green border —
-double-tap to cycle it through in progress (yellow) and complete
-(green), press-and-drag to reorder within the board itself), and shows
-up under **Routines** on the home screen instead of **Projects**. Done
-steps automatically sink below not-done ones — no manual reordering
-needed to keep today's remaining steps visible — and any step still
-marked done from an earlier day resets back to not-done the next time
-the board loads, so the board always reflects today, not a running
-history. To try it:
+tiles that step through a state on every plain tap — 1st: selected,
+green border; 2nd: in progress, yellow; 3rd: complete, green, sinks to
+the bottom; 4th: back to not started — plus press-and-drag to reorder
+within the board itself), and shows up under **Routines** on the home
+screen instead of **Projects**. Deliberately plain taps rather than
+double-taps, so there's no timing window to fight with the phone's own
+double-tap-zoom gesture. Done steps automatically sink below not-done
+ones — no manual reordering needed to keep today's remaining steps
+visible — and any step still marked done from an earlier day resets back
+to not-done the next time the board loads, so the board always reflects
+today, not a running history. To try it:
 
 1. Create a project through the normal **Add a Project** flow (from the
    Projects panel), named exactly `Morning Routine` and/or `Night Routine`.
@@ -110,7 +112,7 @@ The home screen looks for projects named exactly `Morning Routine` and
 routine-workspace projects still appear under Routines, just without a
 home-screen shortcut. There's no UI yet for creating routine-workspace
 projects some other way, or for editing a routine's steps beyond the
-tap/double-tap/drag board itself.
+tap/drag board itself.
 
 ### 5. Maintenance
 
@@ -191,7 +193,7 @@ js/auth.js               session helpers
 js/demoStore.js            local preview data (used until Supabase is configured)
 js/colors.js                 project color palette + color-picker widget
 js/lucideIcons.js              curated Lucide icon set + icon-picker widget
-js/routineBoard.js               visual routine board (tap / double-tap / drag)
+js/routineBoard.js               visual routine board (tap-to-advance / drag)
 js/navBoard.js                     navigation-hub board (folder / link panels)
 js/maintenanceAreas.js               fixed list of maintenance areas
 js/home.js                           home screen logic
@@ -230,8 +232,8 @@ calm visual placeholders with no tracking, scheduling, or notification
 logic behind them yet.
 
 Three exceptions so far: the routine workspace (a hand-picked prototype of
-drag-and-drop reordering and a tap/double-tap interaction model), the
-Maintenance/Hair board (add/edit/delete/reorder text entries), and the
+drag-and-drop reordering and a tap-to-advance-state interaction model),
+the Maintenance/Hair board (add/edit/delete/reorder text entries), and the
 navigation-hub workspace (folder/link panels, first used for Fidel
 Classroom) — all meant to validate a feel before any general system gets
 built around them. Maintenance deliberately stops at plain text + optional
