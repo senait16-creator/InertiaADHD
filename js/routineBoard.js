@@ -208,7 +208,9 @@ export async function initRoutineBoard(container, project) {
     const dy = e.clientY - drag.startY;
 
     if (!drag.dragging) {
-      if (Math.hypot(dx, dy) < 9) return;
+      // Deliberately not too sensitive — a small wobble while tapping
+      // shouldn't accidentally start a drag.
+      if (Math.hypot(dx, dy) < 16) return;
       drag.dragging = true;
       drag.el.classList.add("is-dragging");
       drag.el.style.position = "fixed";

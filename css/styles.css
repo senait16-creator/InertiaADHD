@@ -846,6 +846,7 @@ button {
 
 .routine-card.is-dragging {
   z-index: 100;
-  box-shadow: 0 18px 34px rgba(43, 42, 39, 0.22);
+  transform: scale(0.97);
+  box-shadow: 0 4px 10px rgba(43, 42, 39, 0.16);
   cursor: grabbing;
 }
