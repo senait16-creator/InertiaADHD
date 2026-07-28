@@ -42,7 +42,7 @@ function escapeHtml(value) {
   return div.innerHTML;
 }
 
-const ROUTINES_FALLBACK = { href: "routines.html", icon: "repeat", color: "sage", label: "Routines" };
+const ROUTINES_FALLBACK = { href: "routines.html", icon: "repeat-2", color: "sage", label: "Routines" };
 const OTHER_PANELS = [
   { href: "maintenance.html", icon: "sparkles", color: "lavender", label: "Maintenance" },
   { href: "projects.html", icon: "layout-grid", color: "blue", label: "Projects" },
