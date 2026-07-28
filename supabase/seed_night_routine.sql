@@ -23,7 +23,7 @@ cross join (
     ('Brush teeth', 'smile-plus', 'lavender', 0),
     ('Wash face', 'droplets', 'blue', 1),
     ('Shower', 'shower-head', 'sage', 2),
-    ('Do hair', 'wind', 'green', 3),
+    ('Do hair', 'crown', 'green', 3),
     ('Put on pajamas', 'shirt', 'amber', 4),
     ('Outline tomorrow', 'notebook-pen', 'sage', 5),
     ('Review the 2026 Vision', 'compass', 'amber', 6)
@@ -41,3 +41,12 @@ from public.projects p
 where rs.project_id = p.id
   and p.name = 'Night Routine'
   and rs.name = 'Brush teeth';
+
+-- Updates the Do hair icon even if it was already seeded with the older
+-- 'wind' icon. Safe to re-run.
+update public.routine_steps rs
+set icon = 'crown'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Night Routine'
+  and rs.name = 'Do hair';
