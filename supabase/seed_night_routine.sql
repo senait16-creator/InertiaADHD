@@ -20,7 +20,7 @@ select p.id, p.user_id, v.name, v.icon, v.color, v.sort_order
 from public.projects p
 cross join (
   values
-    ('Brush teeth', 'brush-cleaning', 'lavender', 0),
+    ('Brush teeth', 'smile-plus', 'lavender', 0),
     ('Wash face', 'droplets', 'blue', 1),
     ('Shower', 'shower-head', 'sage', 2),
     ('Do hair', 'wind', 'green', 3),
@@ -32,3 +32,12 @@ where p.name = 'Night Routine'
   and not exists (
     select 1 from public.routine_steps rs where rs.project_id = p.id
   );
+
+-- Updates the Brush teeth icon even if it was already seeded with the
+-- older 'brush-cleaning' icon. Safe to re-run.
+update public.routine_steps rs
+set icon = 'smile-plus'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Night Routine'
+  and rs.name = 'Brush teeth';
