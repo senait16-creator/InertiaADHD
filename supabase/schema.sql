@@ -19,6 +19,13 @@ create table if not exists public.projects (
 -- not with a DB constraint, so this stays a single safe-to-rerun statement.
 alter table public.projects add column if not exists color text;
 
+-- Distinguishes how `icon` should be rendered: 'lucide' means `icon` holds
+-- a Lucide icon name (see js/lucideIcons.js); anything else (including the
+-- existing null rows from before this column existed) is treated as a raw
+-- emoji/text glyph. Deliberately no default, so projects created before
+-- the icon picker existed keep rendering their original emoji untouched.
+alter table public.projects add column if not exists icon_type text;
+
 create index if not exists projects_user_sort_idx
   on public.projects (user_id, sort_order, created_at);
 

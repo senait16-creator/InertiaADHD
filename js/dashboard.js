@@ -2,6 +2,7 @@ import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
 import { DEFAULT_COLOR, initColorPicker } from "./colors.js";
+import { DEFAULT_ICON, iconMarkup, initIconPicker, isKnownIcon } from "./lucideIcons.js";
 
 const greetingEl = document.getElementById("greeting");
 const gridEl = document.getElementById("project-grid");
@@ -12,10 +13,10 @@ const migrationNotice = document.getElementById("migration-notice");
 const modal = document.getElementById("add-project-modal");
 const addForm = document.getElementById("add-project-form");
 const nameInput = document.getElementById("project-name");
-const iconInput = document.getElementById("project-icon");
 const statusInput = document.getElementById("project-status");
 const cancelBtn = document.getElementById("cancel-add");
 const colorPicker = initColorPicker(document.getElementById("project-color-picker"));
+const iconPicker = initIconPicker(document.getElementById("project-icon-picker"));
 
 let currentUserId = null;
 
@@ -32,12 +33,23 @@ function escapeHtml(value) {
   return div.innerHTML;
 }
 
+function iconBadgeMarkup(project) {
+  const color = escapeHtml(project.color || DEFAULT_COLOR);
+  // Legacy or explicitly-emoji rows (no icon_type) still render as text so
+  // nothing created before the icon picker existed changes appearance.
+  const inner =
+    project.icon_type === "lucide"
+      ? iconMarkup(isKnownIcon(project.icon) ? project.icon : DEFAULT_ICON)
+      : escapeHtml(project.icon || "📁");
+  return `<div class="icon-badge" data-color="${color}">${inner}</div>`;
+}
+
 function projectCardEl(project) {
   const link = document.createElement("a");
   link.className = "project-card";
   link.href = `project.html?id=${encodeURIComponent(project.id)}`;
   link.innerHTML = `
-    <div class="icon-badge" data-color="${escapeHtml(project.color || DEFAULT_COLOR)}">${escapeHtml(project.icon || "📁")}</div>
+    ${iconBadgeMarkup(project)}
     <div class="project-info">
       <div class="project-name">${escapeHtml(project.name)}</div>
       ${project.status ? `<div class="project-context">${escapeHtml(project.status)}</div>` : ""}
@@ -79,6 +91,7 @@ function closeModal() {
   modal.classList.remove("open");
   addForm.reset();
   colorPicker.set(DEFAULT_COLOR);
+  iconPicker.set(DEFAULT_ICON);
 }
 
 addCard.addEventListener("click", openModal);
@@ -93,7 +106,7 @@ addForm.addEventListener("submit", async (event) => {
   const name = nameInput.value.trim();
   if (!name) return;
 
-  const icon = iconInput.value.trim() || null;
+  const icon = iconPicker.get();
   const status = statusInput.value.trim() || null;
   const color = colorPicker.get();
 
@@ -101,7 +114,7 @@ addForm.addEventListener("submit", async (event) => {
   if (isConfigured) {
     const { data: inserted, error } = await supabase
       .from("projects")
-      .insert({ user_id: currentUserId, name, icon, status, color })
+      .insert({ user_id: currentUserId, name, icon, icon_type: "lucide", status, color })
       .select()
       .single();
 
@@ -112,7 +125,7 @@ addForm.addEventListener("submit", async (event) => {
     }
     data = inserted;
   } else {
-    data = demoStore.addProject({ name, icon, status, color });
+    data = demoStore.addProject({ name, icon, icon_type: "lucide", status, color });
   }
 
   gridEl.insertBefore(projectCardEl(data), addCard);
@@ -131,6 +144,7 @@ async function migrateDemoProjects(userId) {
     user_id: userId,
     name: project.name,
     icon: project.icon,
+    icon_type: project.icon_type || null,
     status: project.status,
     color: project.color || DEFAULT_COLOR,
     sort_order: project.sort_order,

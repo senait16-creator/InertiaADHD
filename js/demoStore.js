@@ -31,12 +31,13 @@ export function getProject(id) {
   return readAll().find((project) => project.id === id) || null;
 }
 
-export function addProject({ name, icon, status, color }) {
+export function addProject({ name, icon, icon_type, status, color }) {
   const projects = readAll();
   const project = {
     id: makeId(),
     name,
     icon: icon || null,
+    icon_type: icon_type || null,
     status: status || null,
     description: null,
     color: color || "sage",
@@ -48,12 +49,13 @@ export function addProject({ name, icon, status, color }) {
   return project;
 }
 
-export function updateProject(id, { name, icon, status, color }) {
+export function updateProject(id, { name, icon, icon_type, status, color }) {
   const projects = readAll();
   const project = projects.find((item) => item.id === id);
   if (!project) return null;
   project.name = name;
   project.icon = icon || null;
+  project.icon_type = icon_type || null;
   project.status = status || null;
   project.color = color || "sage";
   writeAll(projects);

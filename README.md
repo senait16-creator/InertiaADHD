@@ -32,7 +32,8 @@ https://supabase.com/dashboard/project/moiorcyltstlrhwxxuzk/sql/new
 This creates the `projects` table with Row Level Security so each signed-in
 user can only read and write their own rows. Every statement in it is
 idempotent (safe to re-run), so if you already ran it once, just re-run it
-to pick up any new columns added since (e.g. the `color` column).
+to pick up any new columns added since (e.g. the `color` and `icon_type`
+columns).
 
 ### 2. Add your Supabase keys
 
@@ -88,6 +89,7 @@ js/supabaseClient.js  Supabase connection (fill in your keys)
 js/auth.js            session helpers
 js/demoStore.js        local preview data (used until Supabase is configured)
 js/colors.js            project color palette + color-picker widget
+js/lucideIcons.js       curated Lucide icon set + icon-picker widget
 js/dashboard.js        dashboard logic
 js/login.js            sign-in logic
 js/project.js           project detail logic
@@ -96,6 +98,12 @@ supabase/schema.sql     database schema + RLS policies
 
 Kept deliberately flat and framework-free so features can be layered in
 later (routines, notes, more project fields) without a rewrite.
+
+## Credits
+
+Project icons use a curated subset of [Lucide](https://lucide.dev) (ISC
+license), self-hosted as inline SVG in `js/lucideIcons.js` — no CDN
+dependency.
 
 ## Out of scope for v1
 

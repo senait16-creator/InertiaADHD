@@ -42,10 +42,10 @@
           Project name
           <input type="text" id="project-name" required maxlength="80" autocomplete="off">
         </label>
-        <label>
-          Icon or emoji (optional)
-          <input type="text" id="project-icon" maxlength="4" autocomplete="off">
-        </label>
+        <div class="field">
+          <span class="field-label">Icon</span>
+          <div class="icon-picker" id="project-icon-picker" role="radiogroup" aria-label="Project icon"></div>
+        </div>
         <label>
           Status (optional)
           <input type="text" id="project-status" maxlength="60" autocomplete="off">

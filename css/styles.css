@@ -147,6 +147,22 @@ button {
 .icon-badge,
 .icon-badge-lg {
   background: rgba(var(--color-sage), 0.16);
+  color: var(--text);
+}
+
+.icon-badge svg,
+.icon-badge-lg svg {
+  display: block;
+}
+
+.icon-badge svg {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-badge-lg svg {
+  width: 32px;
+  height: 32px;
 }
 
 .icon-badge[data-color="green"],
@@ -255,6 +271,8 @@ button {
   padding: 1.5rem;
   width: 100%;
   max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 12px 40px rgba(43, 42, 39, 0.2);
 }
 
@@ -336,6 +354,42 @@ button {
 
 .color-swatch:active {
   transform: scale(0.9);
+}
+
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.4rem;
+}
+
+.icon-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.icon-option svg {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-option[aria-checked="true"] {
+  background: rgba(var(--color-sage), 0.16);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.icon-option:active {
+  transform: scale(0.94);
 }
 
 .modal-actions {
