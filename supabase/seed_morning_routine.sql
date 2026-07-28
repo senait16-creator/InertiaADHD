@@ -48,3 +48,25 @@ from public.projects p
 where rs.project_id = p.id
   and p.name = 'Morning Routine'
   and rs.name = 'Brush teeth';
+
+-- Six more steps, added after the original ten. A separate insert (rather
+-- than adding to the values list above) because that first insert only
+-- fires for a project with zero steps — this one checks per-step-name
+-- instead, so it still adds these to an already-seeded project. Safe to
+-- re-run either way.
+insert into public.routine_steps (project_id, user_id, name, icon, color, sort_order, link)
+select p.id, p.user_id, v.name, v.icon, v.color, v.sort_order, v.link
+from public.projects p
+cross join (
+  values
+    ('Drink Water', 'droplets', 'blue', 10, null),
+    ('Make Bed', 'bed', 'sage', 11, null),
+    ('Get Dressed', 'shirt', 'lavender', 12, null),
+    ('Tea / Coffee', 'coffee', 'amber', 13, null),
+    ('Medication', 'pill', 'green', 14, null),
+    ('One Productive Task', 'zap', 'lavender', 15, null)
+) as v(name, icon, color, sort_order, link)
+where p.name = 'Morning Routine'
+  and not exists (
+    select 1 from public.routine_steps rs where rs.project_id = p.id and rs.name = v.name
+  );

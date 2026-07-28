@@ -78,9 +78,10 @@ create policy "Users can delete their own projects"
 
 -- Steps for a 'routine' workspace_type project (see js/routineBoard.js).
 -- One flat list per project: icon-forward, drag-reorderable, with an
--- "active" (current step) flag and a not-started/in-progress/complete
--- status (see the `status` column added below) — deliberately no due
--- dates, priorities, or other metadata.
+-- "active" (current step) flag and a not-done/done status (see the
+-- `status` column added below, which resets to not-done automatically
+-- each day) — deliberately no due dates, priorities, streaks, or other
+-- tracking metadata.
 create table if not exists public.routine_steps (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects(id) on delete cascade,
@@ -101,12 +102,12 @@ create table if not exists public.routine_steps (
 -- already existed before this column did.
 alter table public.routine_steps add column if not exists link text;
 
--- Replaces the old `complete` boolean with a small progress status:
--- null (not started) -> 'in_progress' -> 'complete' -> back to null,
--- cycled by double-tapping a step. `complete` is left in place unused
--- rather than dropped (this file only ever adds columns), and existing
--- true values are carried over below so nothing already marked done
--- reverts to not-started.
+-- Replaces the old `complete` boolean with a status column: null (not
+-- done) or 'complete' (done), toggled by double-tapping a step, and reset
+-- back to null automatically the next day (see js/routineBoard.js).
+-- `complete` is left in place unused rather than dropped (this file only
+-- ever adds columns), and existing true values are carried over below so
+-- nothing already marked done reverts to not-done.
 alter table public.routine_steps add column if not exists status text;
 
 update public.routine_steps

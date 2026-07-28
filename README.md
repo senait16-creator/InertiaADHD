@@ -88,10 +88,14 @@ In Supabase → Authentication → URL Configuration, set:
 ### 4. (Optional) Set up routine workspaces
 
 Most projects open to a blank placeholder page — that's still the default.
-A project can instead open a visual, icon-first routine board (large tiles:
-tap to focus a step, double-tap to cycle it through in progress (yellow)
-and complete (green), press-and-drag to reorder), and shows up under
-**Routines** on the home screen instead of **Projects**. To try it:
+A project can instead open a visual, icon-first routine board (large
+tiles: tap to focus a step, double-tap to mark it done, press-and-drag to
+reorder), and shows up under **Routines** on the home screen instead of
+**Projects**. Done steps automatically sink below not-done ones — no
+manual reordering needed to keep today's remaining steps visible — and
+any step still marked done from an earlier day resets back to not-done
+the next time the board loads, so the board always reflects today, not a
+running history. To try it:
 
 1. Create a project through the normal **Add a Project** flow (from the
    Projects panel), named exactly `Morning Routine` and/or `Night Routine`.

@@ -119,6 +119,7 @@ export function setStepStatus(id, status) {
   const step = steps.find((s) => s.id === id);
   if (!step) return null;
   step.status = status;
+  step.updated_at = new Date().toISOString();
   if (status) step.active = false;
   writeAllSteps(steps);
   return step;

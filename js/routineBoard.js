@@ -1,11 +1,22 @@
 // Visual, icon-first routine board: large tiles, tap to focus, double-tap
-// to complete, press-and-drag to reorder. Used by project.js for any
+// to mark done, press-and-drag to reorder. Used by project.js for any
 // project with workspace_type === 'routine'. Deliberately no due dates,
 // priorities, or counts — see supabase/seed_morning_routine.sql for how a
 // project gets set up with this workspace.
+//
+// Two behaviors are deliberately automatic, not manual: done steps sink
+// below not-done ones (see displaySteps), and any step still marked done
+// from a previous calendar day resets back to not-done the next time the
+// board loads (see the daily-reset pass in initRoutineBoard) — routines
+// describe today, not a running history.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import * as demoStore from "./demoStore.js";
 import { iconMarkup } from "./lucideIcons.js";
+
+function isSameLocalDay(isoString) {
+  if (!isoString) return false;
+  return new Date(isoString).toDateString() === new Date().toDateString();
+}
 
 async function fetchSteps(projectId) {
   if (!isConfigured) return demoStore.listSteps(projectId);
@@ -73,6 +84,17 @@ export async function initRoutineBoard(container, project) {
   let steps = await fetchSteps(project.id);
   const nodeById = new Map();
 
+  // Daily reset: a step still marked done from an earlier calendar day
+  // goes back to not-done, so the board reflects today rather than
+  // carrying over yesterday's completions.
+  const stale = steps.filter(
+    (step) => step.status === "complete" && !isSameLocalDay(step.updated_at)
+  );
+  for (const step of stale) step.status = null;
+  if (stale.length) {
+    await Promise.all(stale.map((step) => persistStatus(step)));
+  }
+
   const board = document.createElement("div");
   board.className = "routine-board";
   container.appendChild(board);
@@ -93,12 +115,21 @@ export async function initRoutineBoard(container, project) {
 
   function updateCardClasses(el, step) {
     el.classList.toggle("is-active", !!step.active);
-    el.classList.toggle("is-inprogress", step.status === "in_progress");
     el.classList.toggle("is-complete", step.status === "complete");
   }
 
+  // Not-done steps first, done steps last — automatic, so an unfinished
+  // step never gets lost below ones you've already handled. Both groups
+  // otherwise keep their normal (manually reorderable) relative order.
+  function displaySteps() {
+    return [
+      ...steps.filter((step) => step.status !== "complete"),
+      ...steps.filter((step) => step.status === "complete"),
+    ];
+  }
+
   function renderBoard() {
-    for (const step of steps) {
+    for (const step of displaySteps()) {
       let el = nodeById.get(step.id);
       if (!el) {
         el = cardEl(step);
@@ -151,18 +182,15 @@ export async function initRoutineBoard(container, project) {
     window.open(step.link, "_blank", "noopener,noreferrer");
   }
 
-  // not started -> in progress (yellow) -> complete (green) -> not started,
-  // cycled by double-tapping a step.
-  function nextStatus(status) {
-    if (status === "in_progress") return "complete";
-    if (status === "complete") return null;
-    return "in_progress";
-  }
-
-  function cycleStatus(step) {
-    step.status = nextStatus(step.status);
-    if (step.status) step.active = false;
-    renderBoard();
+  // Not done <-> done, toggled by double-tapping a step. Routines rarely
+  // have a meaningful "in progress" — you either haven't done it yet or
+  // you have — so this stays a plain toggle rather than a longer cycle.
+  function toggleStatus(step) {
+    flip(() => {
+      step.status = step.status === "complete" ? null : "complete";
+      if (step.status) step.active = false;
+      renderBoard();
+    });
     persistStatus(step);
   }
 
@@ -174,7 +202,7 @@ export async function initRoutineBoard(container, project) {
     if (lastTap.id === step.id && now - lastTap.time < 320) {
       clearTimeout(pendingTap);
       lastTap = { id: null, time: 0 };
-      cycleStatus(step);
+      toggleStatus(step);
     } else {
       lastTap = { id: step.id, time: now };
       pendingTap = setTimeout(() => {
