@@ -541,3 +541,132 @@ button {
   gap: 0.75rem;
   justify-content: center;
 }
+
+/* ---------------- Routine board ---------------- */
+/* Icon-first, minimal-text: tap to focus, double-tap to complete, press
+   and drag to reorder. See js/routineBoard.js. */
+
+.routine-board {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 480px) {
+  .routine-board {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.routine-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  aspect-ratio: 1 / 0.92;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.75rem;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.routine-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--color-sage), 0.16);
+  color: var(--text);
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.routine-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.routine-icon[data-color="green"] {
+  background: rgba(var(--color-green), 0.18);
+}
+
+.routine-icon[data-color="blue"] {
+  background: rgba(var(--color-blue), 0.18);
+}
+
+.routine-icon[data-color="amber"] {
+  background: rgba(var(--color-amber), 0.2);
+}
+
+.routine-icon[data-color="lavender"] {
+  background: rgba(var(--color-lavender), 0.18);
+}
+
+.routine-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.25;
+  color: var(--text);
+  max-width: 100%;
+}
+
+.routine-card.is-active {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2.5px var(--accent), 0 10px 24px rgba(43, 42, 39, 0.14);
+}
+
+.routine-card.is-complete {
+  opacity: 0.5;
+}
+
+.routine-card.is-complete .routine-icon {
+  background: var(--bg) !important;
+  color: var(--text-muted);
+}
+
+.routine-card.is-complete.is-active {
+  box-shadow: 0 0 0 2.5px var(--text-muted), 0 6px 16px rgba(43, 42, 39, 0.08);
+}
+
+.complete-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(43, 42, 39, 0.25);
+}
+
+.complete-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.routine-card.is-complete .complete-badge {
+  display: flex;
+}
+
+.routine-card.is-dragging {
+  z-index: 100;
+  box-shadow: 0 18px 34px rgba(43, 42, 39, 0.22);
+  cursor: grabbing;
+}

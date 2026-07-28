@@ -3,6 +3,7 @@ import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
 import { DEFAULT_COLOR, initColorPicker } from "./colors.js";
 import { DEFAULT_ICON, iconMarkup, initIconPicker, isKnownIcon } from "./lucideIcons.js";
+import { initRoutineBoard } from "./routineBoard.js";
 
 const params = new URLSearchParams(window.location.search);
 const projectId = params.get("id");
@@ -10,6 +11,8 @@ const projectId = params.get("id");
 const iconEl = document.getElementById("project-icon-display");
 const nameEl = document.getElementById("project-name-display");
 const statusEl = document.getElementById("project-status-display");
+const bodyEl = document.getElementById("project-body");
+const routineMountEl = document.getElementById("routine-board-mount");
 
 const editBtn = document.getElementById("edit-project-btn");
 const deleteBtn = document.getElementById("delete-project-btn");
@@ -57,6 +60,12 @@ async function loadProject() {
 
   currentProject = data;
   render(data);
+
+  if (data.workspace_type === "routine") {
+    bodyEl.hidden = true;
+    routineMountEl.hidden = false;
+    await initRoutineBoard(routineMountEl, data);
+  }
 }
 
 function openEditModal() {

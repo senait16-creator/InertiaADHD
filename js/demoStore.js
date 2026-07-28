@@ -69,3 +69,57 @@ export function deleteProject(id) {
 export function clearAll() {
   localStorage.removeItem(STORAGE_KEY);
 }
+
+// ---------------- Routine steps (see js/routineBoard.js) ----------------
+
+const STEPS_KEY = "inertiaadhd_demo_routine_steps";
+
+function readAllSteps() {
+  try {
+    const raw = localStorage.getItem(STEPS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAllSteps(steps) {
+  localStorage.setItem(STEPS_KEY, JSON.stringify(steps));
+}
+
+export function listSteps(projectId) {
+  return readAllSteps()
+    .filter((step) => step.project_id === projectId)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function reorderSteps(projectId, orderedIds) {
+  const steps = readAllSteps();
+  orderedIds.forEach((id, index) => {
+    const step = steps.find((s) => s.id === id && s.project_id === projectId);
+    if (step) step.sort_order = index;
+  });
+  writeAllSteps(steps);
+}
+
+export function setActiveStep(projectId, id) {
+  const steps = readAllSteps();
+  const target = steps.find((s) => s.id === id && s.project_id === projectId);
+  const turningOn = target ? !target.active : false;
+  for (const step of steps) {
+    if (step.project_id === projectId) step.active = false;
+  }
+  if (target) target.active = turningOn;
+  writeAllSteps(steps);
+  return turningOn;
+}
+
+export function setStepComplete(id, complete) {
+  const steps = readAllSteps();
+  const step = steps.find((s) => s.id === id);
+  if (!step) return null;
+  step.complete = complete;
+  if (complete) step.active = false;
+  writeAllSteps(steps);
+  return step;
+}
