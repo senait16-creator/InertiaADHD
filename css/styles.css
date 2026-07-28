@@ -216,7 +216,8 @@ button {
 }
 
 /* ---------------- Calm placeholder screens ---------------- */
-/* Maintenance, 2026 Vision, Reminders — visual, not functional yet. */
+/* 2026 Vision, Reminders — visual, not functional yet. Maintenance used to
+   be one of these too, but now has its own real board (see below). */
 
 .placeholder-hero {
   text-align: center;
@@ -855,4 +856,221 @@ button {
   transform: scale(0.97);
   box-shadow: 0 4px 10px rgba(43, 42, 39, 0.16);
   cursor: grabbing;
+}
+
+/* ---------------- Maintenance ---------------- */
+/* Home: full-width panels (one per area) instead of small icon chips —
+   only "real" areas (Hair, for now) link anywhere; the rest are dimmed
+   with a "soon" tag until each gets its own board. */
+
+.entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.entry-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.14s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.14s ease;
+}
+
+.entry-panel:active {
+  transform: scale(0.98);
+}
+
+.entry-panel .entry-text {
+  min-width: 0;
+}
+
+.entry-panel .entry-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.2rem;
+  color: var(--text);
+}
+
+.entry-panel .entry-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry-arrow {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.entry-panel.dim {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.entry-panel .soon {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  margin-left: 0.4rem;
+  flex-shrink: 0;
+}
+
+/* Category board (e.g. Hair): four sections, each a reorderable list of
+   short text entries. Deliberately no dates, streaks, or completion
+   state — this is a reference list, not a tracker. */
+
+.maint-section {
+  margin-bottom: 1.9rem;
+}
+
+.maint-section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.maint-section-head .maint-sec-icon {
+  color: var(--text-muted);
+  display: flex;
+}
+
+.maint-section-head .maint-sec-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.maint-section-head h2 {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.maint-row-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.maint-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.maint-row-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.maint-row-title {
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.maint-row-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.15rem;
+}
+
+.maint-row-link {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  display: flex;
+}
+
+.maint-row-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+.maint-row-edit {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  opacity: 0.55;
+  padding: 0.2rem;
+  cursor: pointer;
+  touch-action: auto;
+}
+
+.maint-row-edit svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.maint-row.is-dragging {
+  z-index: 100;
+  transform: scale(0.97);
+  box-shadow: 0 4px 10px rgba(43, 42, 39, 0.16);
+  cursor: grabbing;
+}
+
+.maint-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1.5px dashed #d8d2c5;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.maint-add-row .add-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.modal form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 4.5rem;
+  resize: vertical;
 }

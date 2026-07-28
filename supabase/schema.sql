@@ -153,3 +153,64 @@ drop policy if exists "Users can delete their own routine steps" on public.routi
 create policy "Users can delete their own routine steps"
   on public.routine_steps for delete
   using (auth.uid() = user_id);
+
+-- Maintenance category boards (see js/category.js). Each row is one piece
+-- of content in one of a category's four sections (care/learn/products/
+-- what_i_know). Categories themselves (Hair, Skin, ...) are a fixed list
+-- defined in js/maintenanceAreas.js, not user-created rows, so there's no
+-- separate categories table — just a `category` key here. Deliberately no
+-- scheduling, streak, or history fields: Maintenance is a reference list
+-- the user edits directly, not a tracker.
+create table if not exists public.maintenance_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  category text not null,
+  section text not null,
+  title text not null,
+  body text,
+  url text,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists maintenance_items_user_cat_section_idx
+  on public.maintenance_items (user_id, category, section, sort_order);
+
+create or replace function public.set_maintenance_items_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_maintenance_items_updated_at on public.maintenance_items;
+create trigger set_maintenance_items_updated_at
+  before update on public.maintenance_items
+  for each row
+  execute function public.set_maintenance_items_updated_at();
+
+alter table public.maintenance_items enable row level security;
+
+drop policy if exists "Users can view their own maintenance items" on public.maintenance_items;
+create policy "Users can view their own maintenance items"
+  on public.maintenance_items for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own maintenance items" on public.maintenance_items;
+create policy "Users can insert their own maintenance items"
+  on public.maintenance_items for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own maintenance items" on public.maintenance_items;
+create policy "Users can update their own maintenance items"
+  on public.maintenance_items for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own maintenance items" on public.maintenance_items;
+create policy "Users can delete their own maintenance items"
+  on public.maintenance_items for delete
+  using (auth.uid() = user_id);

@@ -123,3 +123,72 @@ export function setStepStatus(id, status) {
   writeAllSteps(steps);
   return step;
 }
+
+// ---------------- Maintenance items (see js/category.js) ----------------
+
+const MAINTENANCE_KEY = "inertiaadhd_demo_maintenance_items";
+
+function readAllMaintenance() {
+  try {
+    const raw = localStorage.getItem(MAINTENANCE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAllMaintenance(items) {
+  localStorage.setItem(MAINTENANCE_KEY, JSON.stringify(items));
+}
+
+export function listMaintenanceItems(category) {
+  return readAllMaintenance()
+    .filter((item) => item.category === category)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function addMaintenanceItem({ category, section, title, body, url }) {
+  const items = readAllMaintenance();
+  const sectionCount = items.filter(
+    (item) => item.category === category && item.section === section
+  ).length;
+  const item = {
+    id: makeId(),
+    category,
+    section,
+    title,
+    body: body || null,
+    url: url || null,
+    sort_order: sectionCount,
+    created_at: new Date().toISOString(),
+  };
+  items.push(item);
+  writeAllMaintenance(items);
+  return item;
+}
+
+export function updateMaintenanceItem(id, { title, body, url }) {
+  const items = readAllMaintenance();
+  const item = items.find((i) => i.id === id);
+  if (!item) return null;
+  item.title = title;
+  item.body = body || null;
+  item.url = url || null;
+  writeAllMaintenance(items);
+  return item;
+}
+
+export function deleteMaintenanceItem(id) {
+  writeAllMaintenance(readAllMaintenance().filter((item) => item.id !== id));
+}
+
+export function reorderMaintenanceItems(category, section, orderedIds) {
+  const items = readAllMaintenance();
+  orderedIds.forEach((id, index) => {
+    const item = items.find(
+      (i) => i.id === id && i.category === category && i.section === section
+    );
+    if (item) item.sort_order = index;
+  });
+  writeAllMaintenance(items);
+}

@@ -1,26 +1,28 @@
-// Calm placeholder — a visual preview only, no tracking or reminders yet.
+// Maintenance home — a full-width panel per area, matching Routines'
+// large-panel treatment rather than the old small icon chips. Only "real"
+// areas link anywhere; the rest are dimmed with a "soon" tag until each
+// gets its own board (see js/maintenanceBoard.js).
 import { isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import { iconMarkup } from "./lucideIcons.js";
+import { MAINTENANCE_AREAS } from "./maintenanceAreas.js";
 
-const AREAS = [
-  { name: "Hair", icon: "wind", color: "lavender" },
-  { name: "Nails", icon: "sparkles", color: "blue" },
-  { name: "Toes", icon: "sparkles", color: "green" },
-  { name: "Skin", icon: "droplets", color: "sage" },
-  { name: "Ears", icon: "sparkles", color: "amber" },
-  { name: "Shaving", icon: "scissors", color: "lavender" },
-];
+const listEl = document.getElementById("entry-list");
 
-document.getElementById("hero-icon").innerHTML = iconMarkup("sparkles");
-document.getElementById("preview-row").innerHTML = AREAS.map(
-  (area) => `
-    <div class="preview-chip">
-      <div class="icon-badge" data-color="${area.color}">${iconMarkup(area.icon)}</div>
-      <span>${area.name}</span>
+listEl.innerHTML = MAINTENANCE_AREAS.map((area) => {
+  const inner = `
+    <div class="icon-badge" data-color="${area.color}">${iconMarkup(area.icon)}</div>
+    <div class="entry-text">
+      <p class="entry-name">${area.name}</p>
+      <p class="entry-sub">${area.sub}</p>
     </div>
-  `
-).join("");
+    ${area.real ? "" : `<span class="soon">soon</span>`}
+    <span class="entry-arrow">›</span>
+  `;
+  return area.real
+    ? `<a class="entry-panel" href="category.html?id=${area.key}">${inner}</a>`
+    : `<div class="entry-panel dim">${inner}</div>`;
+}).join("");
 
 (async function init() {
   if (isConfigured) {

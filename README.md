@@ -15,7 +15,7 @@ by itself rather than a line of text explaining it:
 ```
 Home
 ├─ Morning / Night / Routines  → dynamic, see below
-├─ Maintenance                 → calm placeholder (self-care areas, not built yet)
+├─ Maintenance                 → self-care areas; Hair is real, the rest are "soon"
 ├─ Projects                    → the original project dashboard (everything else)
 ├─ 2026 Vision                 → calm placeholder
 └─ Reminders                   → calm placeholder, deliberately the smallest panel
@@ -106,7 +106,23 @@ home-screen shortcut. There's no UI yet for creating routine-workspace
 projects some other way, or for editing a routine's steps beyond the
 tap/double-tap/drag board itself.
 
-### 5. Enable GitHub Pages
+### 5. Maintenance
+
+Maintenance (`maintenance.html`) is a list of self-care areas (Hair, Skin,
+Nails, Feet, Body, Hygiene — see `js/maintenanceAreas.js`). Only **Hair** is
+wired up to a real board for now; the rest show a dimmed "soon" row until
+each gets built the same way.
+
+A category board (`category.html?id=hair`) has four sections — Care, Learn
+/ Links, Products, What I Know — each a plain list you add/edit/delete/
+reorder yourself (tap a row's pencil to edit, press-and-drag to reorder,
+"+ Add" to create). An item is just a title, optional notes, and an
+optional link; tapping a row with a link opens it, otherwise it opens the
+edit form. Deliberately no scheduling, streaks, history, or reminders —
+it's a reference list, not a tracker, so Maintenance stays exactly as
+lightweight as everything is meant to add or edit through it.
+
+### 6. Enable GitHub Pages
 
 `.github/workflows/deploy.yml` deploys the site automatically on every push
 to `main` via GitHub Actions. In the repo, go to **Settings → Pages** and set
@@ -127,13 +143,15 @@ Then open `http://localhost:8080`.
 
 ```
 index.html            home screen (five entry panels, one time-aware)
-login.html             passwordless sign-in
+login.html             email + password sign-in
+set-password.html       set/change the account password
 routines.html            list of routine-workspace projects
 projects.html             the original project dashboard (Add Project modal)
-maintenance.html            calm placeholder
-vision.html                   calm placeholder
-reminders.html                  calm placeholder
-project.html                      single project view (edit / delete / routine board)
+maintenance.html            list of self-care areas (Hair is real, rest "soon")
+category.html                 a maintenance area's board (e.g. Hair)
+vision.html                     calm placeholder
+reminders.html                    calm placeholder
+project.html                       single project view (edit / delete / routine board)
 
 css/styles.css          shared styles
 
@@ -143,14 +161,17 @@ js/demoStore.js            local preview data (used until Supabase is configured
 js/colors.js                 project color palette + color-picker widget
 js/lucideIcons.js              curated Lucide icon set + icon-picker widget
 js/routineBoard.js               visual routine board (tap / double-tap / drag)
-js/home.js                         home screen logic
-js/login.js                          sign-in logic
-js/routines.js                         routines list logic
-js/projects.js                           projects dashboard logic
-js/maintenance.js                          maintenance placeholder logic
-js/vision.js                                 vision placeholder logic
-js/reminders.js                                reminders placeholder logic
-js/project.js                                    project detail logic
+js/maintenanceAreas.js             fixed list of maintenance areas
+js/home.js                           home screen logic
+js/login.js                            sign-in logic
+js/setPassword.js                        set/change password logic
+js/routines.js                             routines list logic
+js/projects.js                               projects dashboard logic
+js/maintenance.js                              maintenance areas list logic
+js/category.js                                   maintenance board (add/edit/delete/reorder)
+js/vision.js                                       vision placeholder logic
+js/reminders.js                                      reminders placeholder logic
+js/project.js                                          project detail logic
 
 supabase/schema.sql                database schema + RLS policies
 supabase/seed_morning_routine.sql    one-off seed for Morning Routine
@@ -168,13 +189,17 @@ self-hosted as inline SVG in `js/lucideIcons.js` — no CDN dependency.
 
 ## Out of scope for v1
 
-Tasks, habits, calendars, notifications, collaboration, notes, file
-uploads, AI features, progress percentages, and public profiles are all
-intentionally deferred. The Projects dashboard itself stays a plain grid of
-project cards — no tabs, filters, or metrics there. Maintenance, 2026
-Vision, and Reminders are calm visual placeholders with no tracking,
-scheduling, or notification logic behind them yet.
+Tasks, habits, calendars, notifications, collaboration, file uploads, AI
+features, progress percentages, and public profiles are all intentionally
+deferred. The Projects dashboard itself stays a plain grid of project
+cards — no tabs, filters, or metrics there. 2026 Vision and Reminders are
+calm visual placeholders with no tracking, scheduling, or notification
+logic behind them yet.
 
-The one exception is the routine workspace: a hand-picked prototype of
-drag-and-drop reordering and a tap/double-tap interaction model, meant to
-validate the feel before any general "workspace types" system gets built.
+Two exceptions so far: the routine workspace (a hand-picked prototype of
+drag-and-drop reordering and a tap/double-tap interaction model) and the
+Maintenance/Hair board (add/edit/delete/reorder text entries) — both meant
+to validate a feel before any general system gets built around them.
+Maintenance deliberately stops at plain text + optional links: no
+scheduling, streaks, history, or reminders, so it stays a reference list
+rather than another tracker.

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maintenance — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="project-page">
+    <a href="maintenance.html" class="back-link">‹ Maintenance</a>
+
+    <div class="project-header">
+      <div class="icon-badge-lg" id="category-icon" data-color="sage"></div>
+      <h1 id="category-name">Category</h1>
+    </div>
+
+    <div id="maintenance-board-mount"></div>
+  </main>
+
+  <div class="modal-overlay" id="item-modal">
+    <div class="modal">
+      <h2 id="item-modal-title">Add item</h2>
+      <form id="item-form">
+        <label>
+          Title
+          <input type="text" id="item-title" required maxlength="120" autocomplete="off">
+        </label>
+        <label>
+          Notes (optional)
+          <textarea id="item-body" maxlength="600"></textarea>
+        </label>
+        <label>
+          Link (optional)
+          <input type="url" id="item-url" maxlength="500" autocomplete="off" placeholder="https://…">
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-danger" id="delete-item-btn" hidden>Delete</button>
+          <button type="button" class="btn-secondary" id="cancel-item">Cancel</button>
+          <button type="submit" class="btn-primary" id="save-item-btn">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/category.js"></script>
+</body>
+</html>
