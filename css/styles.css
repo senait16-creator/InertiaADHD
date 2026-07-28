@@ -45,6 +45,12 @@ body {
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* Routine cards already opt out of double-tap-zoom individually
+     (touch-action: none, needed for drag); this does the same
+     everywhere else so double-tapping near a card — not squarely on
+     it — doesn't zoom the page either. Scrolling and pinch-zoom still
+     work fine; only the double-tap-to-zoom gesture is affected. */
+  touch-action: manipulation;
 }
 
 a {
