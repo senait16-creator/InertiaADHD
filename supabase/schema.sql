@@ -177,6 +177,51 @@ create policy "Users can delete their own routine steps"
   on public.routine_steps for delete
   using (auth.uid() = user_id);
 
+-- A permanent log of every time a routine step was tapped complete (see
+-- js/routineBoard.js's recordCompletion) — separate from routine_steps
+-- itself, which only reflects *today's* live state and resets daily.
+-- This is what the Insights page (js/insights.js) reads history from.
+-- step_id deliberately has no foreign key (and step_name/color/icon are
+-- a snapshot, not a live join), so a later rename or delete of the step
+-- never rewrites or removes its history. duration_seconds is only set
+-- when the step had track_duration on at the moment it was completed.
+create table if not exists public.routine_completions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  project_id uuid not null references public.projects(id) on delete cascade,
+  step_id uuid not null,
+  step_name text not null,
+  icon text,
+  color text,
+  in_progress_at timestamptz,
+  completed_at timestamptz not null,
+  duration_seconds integer,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists routine_completions_user_completed_idx
+  on public.routine_completions (user_id, completed_at);
+
+create index if not exists routine_completions_project_completed_idx
+  on public.routine_completions (project_id, completed_at);
+
+alter table public.routine_completions enable row level security;
+
+drop policy if exists "Users can view their own routine completions" on public.routine_completions;
+create policy "Users can view their own routine completions"
+  on public.routine_completions for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own routine completions" on public.routine_completions;
+create policy "Users can insert their own routine completions"
+  on public.routine_completions for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own routine completions" on public.routine_completions;
+create policy "Users can delete their own routine completions"
+  on public.routine_completions for delete
+  using (auth.uid() = user_id);
+
 -- Maintenance category boards (see js/category.js). Each row is one piece
 -- of content in one of a category's four sections (care/learn/products/
 -- what_i_know). Categories themselves (Hair, Skin, ...) are a fixed list

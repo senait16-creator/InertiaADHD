@@ -24,6 +24,13 @@
 // previous calendar day resets back to not-done the next time the
 // board loads (see the daily-reset pass in initRoutineBoard) — routines
 // describe today, not a running history.
+//
+// The board itself never looks backward — but every completion is
+// quietly logged to a separate, permanent table (see recordCompletion
+// and supabase/routine_completions) for the Insights page
+// (js/insights.js, reachable from routines.html) to read later. The
+// board answers "what do I want to do next"; Insights answers "what
+// patterns am I noticing" — the two stay deliberately separate.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import * as demoStore from "./demoStore.js";
 import { iconMarkup } from "./lucideIcons.js";
@@ -117,6 +124,35 @@ async function persistStatus(step) {
     await supabase.from("routine_steps").update(updates).eq("id", step.id);
   } catch (error) {
     console.error("Failed to save step status:", error);
+  }
+}
+
+// Logs a permanent history row every time a step is tapped complete —
+// this is what the Insights page reads from (see js/insights.js). Kept
+// separate from routine_steps' own status/timestamps, which reset daily.
+async function recordCompletion(project, step, completedAt) {
+  const durationSeconds =
+    step.track_duration && step.in_progress_at
+      ? Math.round((new Date(completedAt) - new Date(step.in_progress_at)) / 1000)
+      : null;
+  const entry = {
+    project_id: project.id,
+    step_id: step.id,
+    step_name: step.name,
+    icon: step.icon || null,
+    color: step.color || null,
+    in_progress_at: step.track_duration ? step.in_progress_at ?? null : null,
+    completed_at: completedAt,
+    duration_seconds: durationSeconds != null && durationSeconds >= 0 ? durationSeconds : null,
+  };
+  if (!isConfigured) {
+    demoStore.addRoutineCompletion(entry);
+    return;
+  }
+  try {
+    await supabase.from("routine_completions").insert(entry);
+  } catch (error) {
+    console.error("Failed to record routine completion:", error);
   }
 }
 
@@ -317,6 +353,7 @@ export async function initRoutineBoard(container, project) {
   //   4th tap: back to Available (not started)
   function advanceState(step) {
     const wasIdle = !step.active && !step.status;
+    let justCompletedAt = null;
 
     flip(() => {
       if (wasIdle) {
@@ -326,8 +363,9 @@ export async function initRoutineBoard(container, project) {
         step.status = "in_progress";
         if (step.track_duration) step.in_progress_at = new Date().toISOString();
       } else if (step.status === "in_progress") {
+        justCompletedAt = new Date().toISOString();
         step.status = "complete";
-        if (step.track_duration) step.completed_at = new Date().toISOString();
+        if (step.track_duration) step.completed_at = justCompletedAt;
       } else {
         step.status = null;
         step.in_progress_at = null;
@@ -343,6 +381,7 @@ export async function initRoutineBoard(container, project) {
       }
     } else {
       persistStatus(step);
+      if (justCompletedAt) recordCompletion(project, step, justCompletedAt);
     }
   }
 

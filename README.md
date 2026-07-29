@@ -128,7 +128,38 @@ home-screen shortcut. There's no UI yet for creating routine-workspace
 projects some other way, or for editing a routine's steps beyond the
 tap/drag board itself.
 
-### 5. Maintenance
+### 5. Routine Insights
+
+Every routine board quietly logs a permanent history row each time a
+step is tapped Complete (see `recordCompletion` in `js/routineBoard.js`
+and the `routine_completions` table) — separate from the board's own
+state, which only reflects today and resets daily. The routine board
+answers "what do I want to do next"; Insights (`insights.html`, opened
+from the small chart icon at the top right of the Routines page)
+answers "what patterns am I noticing" — the two stay deliberately
+separate, and the board never reads its own history back.
+
+Insights is reflection, not motivation: no streaks, badges, progress
+rings, or red "missed day" warnings — just plain counts, averages, and
+small single-color charts, switchable between **Days** / **Weeks** /
+**Months** / **Years** (like Apple Health, this changes both the
+chart's bucket size and the underlying averaging window). It shows:
+
+- **Routine Flow** — a few plain-language observations, only once
+  there's enough data behind them (e.g. "Your average morning routine
+  starts at 7:42 AM and takes 46 minutes," "You almost always complete
+  Water before Medication").
+- **Overall** — for a project named exactly `Morning Routine` or
+  `Night Routine`: how many days it was fully completed, and the
+  average start/completion time and duration.
+- **Individual Routine Items** — every step across every routine
+  project: how often it's done, its average time of day, and (if
+  tracked) its average duration.
+- **Track Time** — just the steps with duration tracking on (see
+  section 4): average/shortest/longest duration and total time spent
+  in the selected range.
+
+### 6. Maintenance
 
 Maintenance (`maintenance.html`) is a list of self-care areas (Hair, Skin,
 Nails, Feet, Body, Hygiene — see `js/maintenanceAreas.js`). Only **Hair** is
@@ -144,7 +175,7 @@ edit form. Deliberately no scheduling, streaks, history, or reminders —
 it's a reference list, not a tracker, so Maintenance stays exactly as
 lightweight as everything is meant to add or edit through it.
 
-### 6. Navigation-hub projects (e.g. Fidel Classroom)
+### 7. Navigation-hub projects (e.g. Fidel Classroom)
 
 A project can instead open a flat set of panels (see `js/navBoard.js`),
 three kinds: a `link` panel opens an external URL in a new tab; a
@@ -188,7 +219,7 @@ There's no in-app editor for this yet — change a label, icon, color, or
 URL by updating the `nav_items` row directly in the SQL editor (e.g.
 `update public.nav_items set url = '...' where title = 'Teacher Dashboard';`).
 
-### 7. Enable GitHub Pages
+### 8. Enable GitHub Pages
 
 `.github/workflows/deploy.yml` deploys the site automatically on every push
 to `main` via GitHub Actions. In the repo, go to **Settings → Pages** and set
@@ -212,12 +243,13 @@ index.html            home screen (five entry panels, one time-aware)
 login.html             email + password sign-in
 set-password.html       set/change the account password
 routines.html            list of routine-workspace projects
-projects.html             the original project dashboard (Add Project modal)
-maintenance.html            list of self-care areas (Hair is real, rest "soon")
-category.html                 a maintenance area's board (e.g. Hair)
-vision.html                     calm placeholder
-reminders.html                    calm placeholder
-project.html                       single project view (edit / delete / routine board)
+insights.html             Routine Insights (reflection, not motivation)
+projects.html               the original project dashboard (Add Project modal)
+maintenance.html              list of self-care areas (Hair is real, rest "soon")
+category.html                    a maintenance area's board (e.g. Hair)
+vision.html                        calm placeholder
+reminders.html                       calm placeholder
+project.html                            single project view (edit / delete / routine board)
 
 css/styles.css          shared styles
 
@@ -227,18 +259,19 @@ js/demoStore.js            local preview data (used until Supabase is configured
 js/colors.js                 project color palette + color-picker widget
 js/lucideIcons.js              curated Lucide icon set + icon-picker widget
 js/routineBoard.js               visual routine board (tap-to-advance / drag)
-js/navBoard.js                     navigation-hub board (folder / link panels)
-js/maintenanceAreas.js               fixed list of maintenance areas
-js/home.js                           home screen logic
-js/login.js                            sign-in logic
-js/setPassword.js                        set/change password logic
-js/routines.js                             routines list logic
-js/projects.js                               projects dashboard logic
-js/maintenance.js                              maintenance areas list logic
-js/category.js                                   maintenance board (add/edit/delete/reorder)
-js/vision.js                                       vision placeholder logic
-js/reminders.js                                      reminders placeholder logic
-js/project.js                                          project detail logic
+js/insights.js                     Routine Insights — reads routine_completions only
+js/navBoard.js                        navigation-hub board (folder / link panels)
+js/maintenanceAreas.js                   fixed list of maintenance areas
+js/home.js                                 home screen logic
+js/login.js                                  sign-in logic
+js/setPassword.js                              set/change password logic
+js/routines.js                                   routines list logic
+js/projects.js                                     projects dashboard logic
+js/maintenance.js                                    maintenance areas list logic
+js/category.js                                         maintenance board (add/edit/delete/reorder)
+js/vision.js                                             vision placeholder logic
+js/reminders.js                                            reminders placeholder logic
+js/project.js                                                project detail logic
 
 supabase/schema.sql                database schema + RLS policies
 supabase/seed_morning_routine.sql    one-off seed for Morning Routine
@@ -259,12 +292,15 @@ for import compatibility) — no CDN dependency.
 
 ## Out of scope for v1
 
-Tasks, habits, calendars, notifications, collaboration, file uploads, AI
-features, progress percentages, and public profiles are all intentionally
-deferred. The Projects dashboard itself stays a plain grid of project
-cards, border colored by identity, same as any other project. 2026
-Vision and Reminders are calm visual placeholders with no tracking,
-scheduling, or notification logic behind them yet.
+Tasks, habits, calendars, real push notifications, collaboration, file
+uploads, AI features, progress percentages, and public profiles are all
+intentionally deferred. The Projects dashboard itself stays a plain grid
+of project cards, border colored by identity, same as any other project.
+2026 Vision and Reminders are calm visual placeholders with no tracking,
+scheduling, or notification logic behind them yet. Routine Insights'
+"occasional encouraging summaries" (see section 5) are read in-page
+rather than pushed — this is a static site with no server to send an
+actual notification from.
 
 Edit/Delete for a project live behind the ⋯ button at the top of its
 page (or long-press the card from the list) — kept off the page itself

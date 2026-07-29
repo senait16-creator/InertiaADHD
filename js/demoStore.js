@@ -93,6 +93,12 @@ export function listSteps(projectId) {
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
+// Every step across every routine project — used by js/insights.js,
+// which reports across all routines at once rather than one at a time.
+export function listAllSteps() {
+  return readAllSteps();
+}
+
 export function reorderSteps(projectId, orderedIds) {
   const steps = readAllSteps();
   orderedIds.forEach((id, index) => {
@@ -131,6 +137,36 @@ export function setStepTrackDuration(id, trackDuration) {
   step.track_duration = trackDuration;
   writeAllSteps(steps);
   return step;
+}
+
+// ---------------- Routine completions (see js/insights.js) ----------------
+// A permanent log of every time a step was tapped complete — unlike
+// routine_steps itself (today's live state, reset daily), this never
+// resets, so the Insights page has history to read.
+
+const COMPLETIONS_KEY = "inertiaadhd_demo_routine_completions";
+
+function readAllCompletions() {
+  try {
+    const raw = localStorage.getItem(COMPLETIONS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAllCompletions(rows) {
+  localStorage.setItem(COMPLETIONS_KEY, JSON.stringify(rows));
+}
+
+export function addRoutineCompletion(entry) {
+  const rows = readAllCompletions();
+  rows.push({ id: makeId(), created_at: new Date().toISOString(), ...entry });
+  writeAllCompletions(rows);
+}
+
+export function listRoutineCompletions() {
+  return readAllCompletions();
 }
 
 // ---------------- Maintenance items (see js/category.js) ----------------

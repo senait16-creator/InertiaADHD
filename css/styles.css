@@ -770,6 +770,9 @@ button {
 }
 
 .overflow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   color: var(--text-muted);
@@ -784,6 +787,12 @@ button {
 
 .overflow-btn:active {
   background: var(--surface-muted);
+}
+
+.overflow-btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .project-header {
@@ -1335,4 +1344,201 @@ button {
 .nav-panel.is-complete {
   background: rgba(var(--color-green), 0.16);
   border-color: rgba(var(--color-green), 0.45);
+}
+
+/* ---------------- Insights page (see js/insights.js) ----------------
+   Reflection, not motivation: no streaks, badges, rings, or red
+   "missed" days anywhere below. Charts stay single-hue (the app's own
+   accent) rather than a rainbow per category — see the dataviz notes
+   in js/insights.js for why. */
+
+.filter-tabs {
+  display: flex;
+  gap: 0.3rem;
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+  padding: 0.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.filter-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 0.4rem;
+  border-radius: calc(var(--radius-md) - 4px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-tab[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.insight-section {
+  margin-bottom: 2.25rem;
+}
+
+.insight-section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.9rem;
+}
+
+.insight-section-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: -0.6rem 0 0.9rem;
+}
+
+.flow-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.flow-card:last-child {
+  margin-bottom: 0;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+}
+
+.stat-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-bottom: 0.3rem;
+}
+
+.stat-value {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.insight-chart {
+  display: block;
+  margin-top: 0.6rem;
+}
+
+.insight-chart rect {
+  transition: opacity 0.15s ease;
+}
+
+.overall-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.9rem;
+}
+
+.overall-card:last-child {
+  margin-bottom: 0;
+}
+
+.overall-card h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.7rem;
+}
+
+.overall-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.overall-stat-label {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.overall-stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0.9rem;
+}
+
+.item-row .icon-badge {
+  flex-shrink: 0;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.item-project {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.item-meta {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+
+.item-chart {
+  flex-shrink: 0;
+  width: 90px;
+}
+
+.item-chart .insight-chart {
+  margin-top: 0;
+}
+
+@media (max-width: 480px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .item-chart {
+    display: none;
+  }
 }

@@ -9,6 +9,8 @@ import { DEFAULT_COLOR } from "./colors.js";
 import { DEFAULT_ICON, iconMarkup, isKnownIcon } from "./lucideIcons.js";
 
 const gridEl = document.getElementById("routines-grid");
+const insightsLinkEl = document.getElementById("insights-link");
+if (insightsLinkEl) insightsLinkEl.innerHTML = iconMarkup("chart-bar");
 
 function escapeHtml(value) {
   const div = document.createElement("div");
