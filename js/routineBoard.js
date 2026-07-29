@@ -115,6 +115,18 @@ function stepDuration(step) {
   return ms >= 0 ? formatDuration(ms) : null;
 }
 
+function formatClockTime(isoString) {
+  return new Date(isoString).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+// "done in 6 min · 7:42 AM" — how long a step took plus when it finished.
+function completionSummary(step) {
+  const duration = stepDuration(step);
+  const clock = step.completed_at ? formatClockTime(step.completed_at) : null;
+  if (duration && clock) return `${duration} · ${clock}`;
+  return clock ? `done at ${clock}` : duration || "";
+}
+
 export async function initRoutineBoard(container, project) {
   let steps = await fetchSteps(project.id);
   const nodeById = new Map();
@@ -158,7 +170,7 @@ export async function initRoutineBoard(container, project) {
     el.classList.toggle("is-inprogress", step.status === "in_progress");
     el.classList.toggle("is-complete", step.status === "complete");
     el.querySelector(".routine-duration").textContent =
-      step.status === "complete" ? stepDuration(step) || "" : "";
+      step.status === "complete" ? completionSummary(step) : "";
   }
 
   // In progress steps rise to the top (what you're doing right now),
