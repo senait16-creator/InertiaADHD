@@ -108,12 +108,13 @@ still marked done from an earlier day resets back to not-done the next
 time the board loads, so the board always reflects today, not a
 running history.
 
-Duration tracking is opt-in per step, not automatic — long-press a step
-for "Edit Routine Item" and turn on **Track duration**. A tracked step
-shows a small clock badge, and once complete shows how long it took and
-when it finished, e.g. "done in 6 min · 7:42 AM" — the gap between the
-tap that turned it In Progress and the tap that turned it Complete,
-plus that second tap's clock time. To try it:
+Every step shows a completion timestamp once it turns Complete, e.g.
+"Done 8:14 AM" — that part isn't gated by anything. Duration tracking
+is a separate, opt-in-per-step addition on top of that: long-press a
+step for "Edit Routine Item" and turn on **Track duration**. A tracked
+step shows a small clock badge, and once complete also shows how long
+it took, e.g. "Done 8:22 AM · 7 min" — the gap between the tap that
+turned it In Progress and the tap that turned it Complete. To try it:
 
 1. Create a project through the normal **Add a Project** flow (from the
    Projects panel), named exactly `Morning Routine` and/or `Night Routine`.

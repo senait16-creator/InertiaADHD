@@ -917,9 +917,9 @@ button {
   max-width: 100%;
 }
 
-/* How long a step took, yellow to green (see stepDuration in
-   js/routineBoard.js). Only ever has text on a completed card, so an
-   empty one takes up no space at all. */
+/* "Done 8:14 AM" on every completed card, plus "· 6 min" if the step
+   tracks duration (see completionSummary in js/routineBoard.js). Only
+   ever has text once complete, so an empty one takes up no space. */
 .routine-duration {
   font-size: 0.66rem;
   color: var(--text-muted);

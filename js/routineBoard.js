@@ -11,12 +11,14 @@
 // or counts — see supabase/seed_morning_routine.sql for how a project
 // gets set up with this workspace.
 //
-// Duration tracking is opt-in per step (see track_duration), not
-// automatic — toggled from the long-press edit modal. When on, the tap
-// that turns a step In Progress and the tap that turns it Complete each
-// stamp a timestamp (see persistStatus), a small clock badge shows on
-// the card, and a completed step displays how long it took and when it
-// finished, e.g. "done in 6 min · 7:42 AM" (see completionSummary).
+// Every step, tracked or not, shows a completion timestamp once it
+// turns Complete, e.g. "Done 8:14 AM" (see completionSummary) — that
+// part is not gated by anything. Duration tracking is a separate,
+// opt-in-per-step addition on top of that (see track_duration, toggled
+// from the long-press edit modal): when on, a small clock badge shows
+// on the card, the tap that turns the step In Progress stamps a start
+// time, and a completed step then also shows how long it took, e.g.
+// "Done 8:22 AM · 7 min".
 //
 // Two other behaviors are deliberately automatic, not manual: in
 // progress steps rise to the top and complete steps sink to the bottom
@@ -156,18 +158,21 @@ async function recordCompletion(project, step, completedAt) {
   }
 }
 
-// "Done in 6 min" — the gap between a step turning in progress and
-// turning complete, so a completed step shows roughly how long it took.
+// "6 min" — the gap between a step turning in progress and turning
+// complete, so a completed step shows roughly how long it took.
 function formatDuration(ms) {
   const minutes = Math.round(ms / 60000);
-  if (minutes < 1) return "done in under a min";
-  if (minutes === 1) return "done in 1 min";
-  if (minutes < 60) return `done in ${minutes} min`;
+  if (minutes < 1) return "under a min";
+  if (minutes === 1) return "1 min";
+  if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
-  return remainder ? `done in ${hours}h ${remainder}m` : `done in ${hours}h`;
+  return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
 }
 
+// Only meaningful when the step was tracking duration at the moment it
+// turned in progress — untracked steps never get an in_progress_at, so
+// this stays null for them regardless of what completionSummary shows.
 function stepDuration(step) {
   if (!step.in_progress_at || !step.completed_at) return null;
   const ms = new Date(step.completed_at) - new Date(step.in_progress_at);
@@ -178,12 +183,14 @@ function formatClockTime(isoString) {
   return new Date(isoString).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-// "done in 6 min · 7:42 AM" — how long a step took plus when it finished.
+// Every completed step shows when it finished — "Done 8:14 AM" — whether
+// or not it tracks duration. Only a step that was tracking duration (and
+// so has an in_progress_at to measure from) also gets "· 6 min" appended.
 function completionSummary(step) {
+  if (!step.completed_at) return "";
+  const clock = formatClockTime(step.completed_at);
   const duration = stepDuration(step);
-  const clock = step.completed_at ? formatClockTime(step.completed_at) : null;
-  if (duration && clock) return `${duration} · ${clock}`;
-  return clock ? `done at ${clock}` : duration || "";
+  return duration ? `Done ${clock} · ${duration}` : `Done ${clock}`;
 }
 
 export async function initRoutineBoard(container, project) {
@@ -349,7 +356,9 @@ export async function initRoutineBoard(container, project) {
   //            can be Ready at once; opens the link too, if there is one.
   //   2nd tap: In Progress (yellow) — rises to the top; starts the timer
   //            if this step has duration tracking on.
-  //   3rd tap: Complete (green) — sinks to the bottom; stops the timer.
+  //   3rd tap: Complete (green) — sinks to the bottom; always records a
+  //            completion timestamp, and stops the timer too if this
+  //            step has duration tracking on.
   //   4th tap: back to Available (not started)
   function advanceState(step) {
     const wasIdle = !step.active && !step.status;
@@ -365,7 +374,7 @@ export async function initRoutineBoard(container, project) {
       } else if (step.status === "in_progress") {
         justCompletedAt = new Date().toISOString();
         step.status = "complete";
-        if (step.track_duration) step.completed_at = justCompletedAt;
+        step.completed_at = justCompletedAt;
       } else {
         step.status = null;
         step.in_progress_at = null;
