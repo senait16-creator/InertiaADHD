@@ -1,17 +1,26 @@
 // Visual, icon-first routine board: large tiles that step through a
-// state on every plain tap — 1st: selected (green border), 2nd: in
-// progress (yellow, rises to the top), 3rd: complete (green, sinks to
-// the bottom), 4th: back to not started — plus press-and-drag to
-// reorder within the board's own bounds. Deliberately plain taps rather
-// than double-taps: no timing window to fight with the phone's own
+// state on every plain tap — ⚪ Available -> ⚫ Ready (up next; several
+// steps can be Ready at once, not exclusive) -> 🟡 In Progress (rises to
+// the top) -> 🟢 Complete (sinks to the bottom) -> back to Available —
+// plus press-and-drag to reorder within the board's own bounds, and
+// long-press for "Edit Routine Item" (currently just the duration-
+// tracking toggle below). Deliberately plain taps rather than
+// double-taps: no timing window to fight with the phone's own
 // double-tap-zoom gesture. Used by project.js for any project with
 // workspace_type === 'routine'. Deliberately no due dates, priorities,
 // or counts — see supabase/seed_morning_routine.sql for how a project
 // gets set up with this workspace.
 //
-// Three behaviors are deliberately automatic, not manual: in-progress
-// steps rise to the top and complete steps sink to the bottom (see
-// displaySteps/statusRank), and any step still marked done from a
+// Duration tracking is opt-in per step (see track_duration), not
+// automatic — toggled from the long-press edit modal. When on, the tap
+// that turns a step In Progress and the tap that turns it Complete each
+// stamp a timestamp (see persistStatus), a small clock badge shows on
+// the card, and a completed step displays how long it took and when it
+// finished, e.g. "done in 6 min · 7:42 AM" (see completionSummary).
+//
+// Two other behaviors are deliberately automatic, not manual: in
+// progress steps rise to the top and complete steps sink to the bottom
+// (see displaySteps/statusRank), and any step still marked done from a
 // previous calendar day resets back to not-done the next time the
 // board loads (see the daily-reset pass in initRoutineBoard) — routines
 // describe today, not a running history.
@@ -64,18 +73,32 @@ async function persistReorder(project, steps) {
   }
 }
 
-async function persistActive(project, step, turningOn) {
+// Marks a step Ready — not exclusive, so this only ever touches the one
+// step, never its siblings (several steps can be Ready at once).
+async function persistActive(step) {
   if (!isConfigured) {
-    demoStore.setActiveStep(project.id, step.id);
+    demoStore.setActiveStep(step.id);
     return;
   }
   try {
-    await supabase.from("routine_steps").update({ active: false }).eq("project_id", project.id);
-    if (turningOn) {
-      await supabase.from("routine_steps").update({ active: true }).eq("id", step.id);
-    }
+    await supabase.from("routine_steps").update({ active: true }).eq("id", step.id);
   } catch (error) {
-    console.error("Failed to save focused step:", error);
+    console.error("Failed to save ready step:", error);
+  }
+}
+
+async function persistTrackDuration(step) {
+  if (!isConfigured) {
+    demoStore.setStepTrackDuration(step.id, step.track_duration);
+    return;
+  }
+  try {
+    await supabase
+      .from("routine_steps")
+      .update({ track_duration: step.track_duration })
+      .eq("id", step.id);
+  } catch (error) {
+    console.error("Failed to save duration-tracking preference:", error);
   }
 }
 
@@ -150,12 +173,69 @@ export async function initRoutineBoard(container, project) {
   board.className = "routine-board";
   container.appendChild(board);
 
+  // Long-press a step for this modal — currently just the duration-
+  // tracking toggle, built once per board and reused across steps.
+  const editModal = document.createElement("div");
+  editModal.className = "modal-overlay";
+  editModal.innerHTML = `
+    <div class="modal">
+      <h2 id="routine-edit-title">Edit Routine Item</h2>
+      <form id="routine-edit-form">
+        <div class="field">
+          <label class="field-checkbox">
+            <input type="checkbox" id="routine-edit-track-duration">
+            <span>Track duration — show a timer badge and record how long this step takes</span>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="routine-edit-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(editModal);
+
+  const editTitleEl = editModal.querySelector("#routine-edit-title");
+  const editFormEl = editModal.querySelector("#routine-edit-form");
+  const editTrackDurationInput = editModal.querySelector("#routine-edit-track-duration");
+  const editCancelBtn = editModal.querySelector("#routine-edit-cancel");
+
+  let editingStep = null;
+
+  function openEditModal(step) {
+    editingStep = step;
+    editTitleEl.textContent = `Edit "${step.name}"`;
+    editTrackDurationInput.checked = !!step.track_duration;
+    editModal.classList.add("open");
+  }
+
+  function closeEditModal() {
+    editModal.classList.remove("open");
+    editingStep = null;
+  }
+
+  editCancelBtn.addEventListener("click", closeEditModal);
+  editModal.addEventListener("click", (e) => {
+    if (e.target === editModal) closeEditModal();
+  });
+  editFormEl.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!editingStep) return;
+    editingStep.track_duration = editTrackDurationInput.checked;
+    persistTrackDuration(editingStep);
+    const el = nodeById.get(editingStep.id);
+    if (el) updateCardClasses(el, editingStep);
+    closeEditModal();
+  });
+
   function cardEl(step) {
     const el = document.createElement("div");
     el.className = "routine-card";
     el.dataset.id = step.id;
     el.innerHTML = `
       <span class="complete-badge">${iconMarkup("check")}</span>
+      <span class="duration-badge">${iconMarkup("clock")}</span>
       ${step.link ? `<span class="link-badge">${iconMarkup("external-link")}</span>` : ""}
       <div class="routine-icon" data-color="${step.color || "sage"}">${iconMarkup(step.icon)}</div>
       <div class="routine-label">${step.name}</div>
@@ -166,22 +246,25 @@ export async function initRoutineBoard(container, project) {
   }
 
   function updateCardClasses(el, step) {
-    el.classList.toggle("is-active", !!step.active);
+    el.classList.toggle("is-ready", !!step.active);
     el.classList.toggle("is-inprogress", step.status === "in_progress");
     el.classList.toggle("is-complete", step.status === "complete");
+    el.classList.toggle("tracks-duration", !!step.track_duration);
     el.querySelector(".routine-duration").textContent =
       step.status === "complete" ? completionSummary(step) : "";
   }
 
   // In progress steps rise to the top (what you're doing right now),
-  // complete steps sink to the bottom (out of the way), everything else
-  // (not started, or just selected) keeps its normal, manually
-  // reorderable relative order in between — automatic, so what's
-  // in progress or still unfinished never gets lost.
+  // Ready steps come next (up next, so you can see at a glance which
+  // few you've queued up), Available (untouched) steps keep their
+  // normal, manually reorderable order after that, and complete steps
+  // sink to the bottom — automatic, so what's in progress or still
+  // unfinished never gets lost.
   function statusRank(step) {
-    if (step.status === "complete") return 2;
+    if (step.status === "complete") return 3;
     if (step.status === "in_progress") return 0;
-    return 1;
+    if (step.active) return 1;
+    return 2;
   }
 
   function displaySteps() {
@@ -226,25 +309,25 @@ export async function initRoutineBoard(container, project) {
   // Every tap advances a step one step further — no double-tap timing
   // involved, so there's no fight with the phone's own double-tap-zoom
   // gesture:
-  //   1st tap: selected (green border) — exclusive, clears any other
-  //            step's selection; opens the link too, if there is one.
-  //   2nd tap: in progress (yellow) — rises to the top
-  //   3rd tap: complete (green) — sinks to the bottom
-  //   4th tap: back to not started
+  //   1st tap: Ready (gray) — up next; not exclusive, so several steps
+  //            can be Ready at once; opens the link too, if there is one.
+  //   2nd tap: In Progress (yellow) — rises to the top; starts the timer
+  //            if this step has duration tracking on.
+  //   3rd tap: Complete (green) — sinks to the bottom; stops the timer.
+  //   4th tap: back to Available (not started)
   function advanceState(step) {
     const wasIdle = !step.active && !step.status;
 
     flip(() => {
       if (wasIdle) {
-        for (const s of steps) s.active = false;
         step.active = true;
       } else if (step.active) {
         step.active = false;
         step.status = "in_progress";
-        step.in_progress_at = new Date().toISOString();
+        if (step.track_duration) step.in_progress_at = new Date().toISOString();
       } else if (step.status === "in_progress") {
         step.status = "complete";
-        step.completed_at = new Date().toISOString();
+        if (step.track_duration) step.completed_at = new Date().toISOString();
       } else {
         step.status = null;
         step.in_progress_at = null;
@@ -254,7 +337,7 @@ export async function initRoutineBoard(container, project) {
     });
 
     if (wasIdle) {
-      persistActive(project, step, true);
+      persistActive(step);
       if (step.link) {
         window.open(step.link, "_blank", "noopener,noreferrer");
       }
@@ -263,6 +346,7 @@ export async function initRoutineBoard(container, project) {
     }
   }
 
+  const LONG_PRESS_MS = 500;
   let drag = null;
 
   function onPointerDown(e, step) {
@@ -281,6 +365,12 @@ export async function initRoutineBoard(container, project) {
       width: rect.width,
       height: rect.height,
       dragging: false,
+      longPressFired: false,
+      longPressTimer: setTimeout(() => {
+        drag.longPressTimer = null;
+        drag.longPressFired = true;
+        openEditModal(step);
+      }, LONG_PRESS_MS),
     };
     el.addEventListener("pointermove", onPointerMove);
     el.addEventListener("pointerup", onPointerUp);
@@ -296,6 +386,10 @@ export async function initRoutineBoard(container, project) {
       // Deliberately not too sensitive — a small wobble while tapping
       // shouldn't accidentally start a drag.
       if (Math.hypot(dx, dy) < 16) return;
+      if (drag.longPressTimer) {
+        clearTimeout(drag.longPressTimer);
+        drag.longPressTimer = null;
+      }
       drag.dragging = true;
       drag.boardRect = board.getBoundingClientRect();
       drag.el.classList.add("is-dragging");
@@ -343,7 +437,8 @@ export async function initRoutineBoard(container, project) {
 
   function onPointerUp(e) {
     if (!drag || e.pointerId !== drag.pointerId) return;
-    const { el, step, dragging } = drag;
+    const { el, step, dragging, longPressFired } = drag;
+    if (drag.longPressTimer) clearTimeout(drag.longPressTimer);
     el.removeEventListener("pointermove", onPointerMove);
     el.removeEventListener("pointerup", onPointerUp);
     el.removeEventListener("pointercancel", onPointerUp);
@@ -363,7 +458,7 @@ export async function initRoutineBoard(container, project) {
       el.style.margin = "";
       flip(() => renderBoard());
       persistReorder(project, steps);
-    } else {
+    } else if (!longPressFired) {
       advanceState(step);
     }
     drag = null;

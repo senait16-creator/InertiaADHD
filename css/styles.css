@@ -31,6 +31,10 @@
      Also reused for a nav board's 'status' panel kind (in progress) —
      same meaning (currently being worked on), same color. */
   --status-progress: 214, 165, 40;
+  /* Ready (up next, 1st tap) — reuses --text-muted's own color so it
+     reads as a neutral "queued" cue, distinct from the yellow/green that
+     follow it. */
+  --status-ready: 107, 104, 98;
 }
 
 * {
@@ -502,6 +506,24 @@ button {
   margin-bottom: 1rem;
 }
 
+.modal form .field-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.modal form .field-checkbox input[type="checkbox"] {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
 .modal form .field-label {
   display: block;
   font-size: 0.85rem;
@@ -899,17 +921,14 @@ button {
   display: none;
 }
 
-/* Single tap: selected, shown as a green border/ring (no fill — that's
-   what keeps it visually distinct from is-complete's filled tint below). */
-.routine-card.is-active {
-  transform: scale(1.05);
-  border-color: rgb(var(--color-green));
-  box-shadow: 0 0 0 2.5px rgba(var(--color-green), 0.6), 0 10px 24px rgba(43, 42, 39, 0.14);
+/* Ready (1st tap) -> In Progress (2nd tap, yellow) -> Complete (3rd tap,
+   green) -> back to Available. Same tinted-background treatment for all
+   three so they read as one family of states; the icon keeps its own
+   identity color throughout — status tints the card, not the icon. */
+.routine-card.is-ready {
+  background: rgba(var(--status-ready), 0.14);
+  border-color: rgba(var(--status-ready), 0.4);
 }
-
-/* Double-tap cycles: in progress (yellow) -> complete (green) -> not
-   started. The icon keeps its own identity color throughout — status
-   tints the card, not the icon. */
 
 .routine-card.is-inprogress {
   background: rgba(var(--status-progress), 0.16);
@@ -942,6 +961,31 @@ button {
 }
 
 .routine-card.is-complete .complete-badge {
+  display: flex;
+}
+
+/* Only shown on a step with duration tracking turned on (see the
+   long-press "Edit Routine Item" modal) — top-left so it never collides
+   with the link/complete badges, which both sit top-right. */
+.duration-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 18px;
+  height: 18px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.duration-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.routine-card.tracks-duration .duration-badge {
   display: flex;
 }
 

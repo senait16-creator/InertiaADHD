@@ -125,9 +125,16 @@ where complete = true and status is null;
 -- that caused it stamps the matching column here — see advanceState in
 -- js/routineBoard.js. Lets a completed step show how long it took (the
 -- gap between the two), and both get cleared when a step resets back to
--- not-done (a fourth tap, or the next day's automatic reset).
+-- not-done (a fourth tap, or the next day's automatic reset). Only
+-- stamped at all when the step opts into it — see track_duration below.
 alter table public.routine_steps add column if not exists in_progress_at timestamptz;
 alter table public.routine_steps add column if not exists completed_at timestamptz;
+
+-- Per-step opt-in for the timestamps above, toggled from the "Edit
+-- Routine Item" modal (long-press a step). Off by default — most steps
+-- don't need a timer, so a step has to ask for one rather than every
+-- step tracking duration automatically.
+alter table public.routine_steps add column if not exists track_duration boolean not null default false;
 
 create index if not exists routine_steps_project_sort_idx
   on public.routine_steps (project_id, sort_order);

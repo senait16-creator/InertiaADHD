@@ -102,16 +102,15 @@ export function reorderSteps(projectId, orderedIds) {
   writeAllSteps(steps);
 }
 
-export function setActiveStep(projectId, id) {
+// Marks a step "Ready" (up next). Not exclusive — several steps can be
+// Ready at once, so this only ever touches the one step, not its siblings.
+export function setActiveStep(id) {
   const steps = readAllSteps();
-  const target = steps.find((s) => s.id === id && s.project_id === projectId);
-  const turningOn = target ? !target.active : false;
-  for (const step of steps) {
-    if (step.project_id === projectId) step.active = false;
-  }
-  if (target) target.active = turningOn;
+  const step = steps.find((s) => s.id === id);
+  if (!step) return null;
+  step.active = true;
   writeAllSteps(steps);
-  return turningOn;
+  return step;
 }
 
 export function setStepStatus(id, updates) {
@@ -121,6 +120,15 @@ export function setStepStatus(id, updates) {
   Object.assign(step, updates);
   step.updated_at = new Date().toISOString();
   if (updates.status) step.active = false;
+  writeAllSteps(steps);
+  return step;
+}
+
+export function setStepTrackDuration(id, trackDuration) {
+  const steps = readAllSteps();
+  const step = steps.find((s) => s.id === id);
+  if (!step) return null;
+  step.track_duration = trackDuration;
   writeAllSteps(steps);
   return step;
 }

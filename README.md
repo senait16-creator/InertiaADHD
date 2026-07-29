@@ -95,21 +95,25 @@ In Supabase → Authentication → URL Configuration, set:
 
 Most projects open to a blank placeholder page — that's still the default.
 A project can instead open a visual, icon-first routine board (large
-tiles that step through a state on every plain tap — 1st: selected,
-green border; 2nd: in progress, yellow, rises to the top; 3rd: complete,
-green, sinks to the bottom; 4th: back to not started — plus
-press-and-drag to reorder within the board itself), and shows up under
-**Routines** on the home screen instead of **Projects**. Deliberately
-plain taps rather than double-taps, so there's no timing window to
-fight with the phone's own double-tap-zoom gesture. In-progress steps
-rise to the top and done steps sink to the bottom automatically — no
-manual reordering needed to keep what you're doing right now visible —
-and any step still marked done from an earlier day resets back to
-not-done the next time the board loads, so the board always reflects
-today, not a running history. A completed step also shows how long it
-took and when it finished, e.g. "done in 6 min · 7:42 AM" — the gap
-between the tap that turned it yellow and the tap that turned it
-green, plus that second tap's clock time. To try it:
+tiles that step through a state on every plain tap — ⚪ Available → ⚫
+Ready (up next; not exclusive, so a few steps can be Ready at once) →
+🟡 In Progress (rises to the top) → 🟢 Complete (sinks to the bottom) →
+back to Available — plus press-and-drag to reorder within the board
+itself), and shows up under **Routines** on the home screen instead of
+**Projects**. Deliberately plain taps rather than double-taps, so
+there's no timing window to fight with the phone's own double-tap-zoom
+gesture. In-progress steps rise to the top, Ready steps come next, and
+complete steps sink to the bottom, all automatically — and any step
+still marked done from an earlier day resets back to not-done the next
+time the board loads, so the board always reflects today, not a
+running history.
+
+Duration tracking is opt-in per step, not automatic — long-press a step
+for "Edit Routine Item" and turn on **Track duration**. A tracked step
+shows a small clock badge, and once complete shows how long it took and
+when it finished, e.g. "done in 6 min · 7:42 AM" — the gap between the
+tap that turned it In Progress and the tap that turned it Complete,
+plus that second tap's clock time. To try it:
 
 1. Create a project through the normal **Add a Project** flow (from the
    Projects panel), named exactly `Morning Routine` and/or `Night Routine`.
