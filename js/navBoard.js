@@ -9,7 +9,11 @@
 //              waiting, blue -> complete, green -> not started), the
 //              same tap-to-advance idea as the routine board. This is
 //              how a project's own status shows up, as one panel among
-//              its others rather than a separate component.
+//              its others rather than a separate component. In
+//              progress/waiting panels also float to the top of their
+//              level and complete panels sink to the bottom (see
+//              statusRank/reorderGrid) — same automatic-sort idea as
+//              the routine board's done-sinks-to-bottom behavior.
 // Used by project.js. Deliberately no task lists or notes beyond that —
 // this is pure navigation plus one status panel, not a workspace with
 // its own features. See supabase/seed_fidel_classroom.sql for the first
@@ -77,16 +81,62 @@ export async function initNavBoard(container, project) {
   container.appendChild(board);
 
   const stack = [];
+  const nodeById = new Map();
+  let grid = null;
 
   function currentChildren() {
     const key = stack.length ? stack[stack.length - 1].id : "root";
     return childrenByParent.get(key) || [];
   }
 
+  // In progress/waiting panels float to the top (still needs attention),
+  // complete panels sink to the bottom, same automatic-sort idea as the
+  // routine board — everything else keeps its normal relative order.
+  function statusRank(item) {
+    if (item.kind !== "status") return 1;
+    if (item.status === "complete") return 2;
+    if (item.status) return 0;
+    return 1;
+  }
+
+  function displayChildren() {
+    return [...currentChildren()].sort((a, b) => statusRank(a) - statusRank(b));
+  }
+
   function updatePanelClasses(el, item) {
     el.classList.toggle("is-inprogress", item.status === "in_progress");
     el.classList.toggle("is-waiting", item.status === "waiting");
     el.classList.toggle("is-complete", item.status === "complete");
+  }
+
+  function flip(mutate) {
+    const before = new Map(
+      Array.from(grid.children).map((el) => [el, el.getBoundingClientRect()])
+    );
+    mutate();
+    for (const el of grid.children) {
+      const b = before.get(el);
+      if (!b) continue;
+      const a = el.getBoundingClientRect();
+      const dx = b.left - a.left;
+      const dy = b.top - a.top;
+      if (dx || dy) {
+        el.style.transition = "none";
+        el.style.transform = `translate(${dx}px, ${dy}px)`;
+        requestAnimationFrame(() => {
+          el.style.transition = "transform 0.22s cubic-bezier(.2,.8,.2,1)";
+          el.style.transform = "";
+        });
+      }
+    }
+  }
+
+  function reorderGrid() {
+    flip(() => {
+      for (const item of displayChildren()) {
+        grid.appendChild(getOrCreatePanelEl(item));
+      }
+    });
   }
 
   function panelEl(item) {
@@ -116,6 +166,7 @@ export async function initNavBoard(container, project) {
         item.status = nextStatus(item.status);
         updatePanelClasses(el, item);
         persistStatus(item);
+        reorderGrid();
       });
     } else if (!isLink) {
       el.addEventListener("click", () => {
@@ -124,6 +175,15 @@ export async function initNavBoard(container, project) {
       });
     }
 
+    return el;
+  }
+
+  function getOrCreatePanelEl(item) {
+    let el = nodeById.get(item.id);
+    if (!el) {
+      el = panelEl(item);
+      nodeById.set(item.id, el);
+    }
     return el;
   }
 
@@ -146,10 +206,10 @@ export async function initNavBoard(container, project) {
       board.appendChild(back);
     }
 
-    const grid = document.createElement("div");
+    grid = document.createElement("div");
     grid.className = "nav-panel-grid";
-    for (const item of currentChildren()) {
-      grid.appendChild(panelEl(item));
+    for (const item of displayChildren()) {
+      grid.appendChild(getOrCreatePanelEl(item));
     }
     board.appendChild(grid);
   }
