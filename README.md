@@ -245,8 +245,9 @@ without a rewrite.
 
 ## Credits
 
-Icons use a curated subset of [Lucide](https://lucide.dev) (ISC license),
-self-hosted as inline SVG in `js/lucideIcons.js` — no CDN dependency.
+Icons use a curated subset of [Tabler](https://tabler.io/icons) (MIT
+license), self-hosted as inline SVG in `js/lucideIcons.js` (filename kept
+for import compatibility) — no CDN dependency.
 
 ## Out of scope for v1
 
