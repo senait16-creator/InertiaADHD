@@ -3,8 +3,9 @@
 // steps can be Ready at once, not exclusive) -> 🟡 In Progress (rises to
 // the top) -> 🟢 Complete (sinks to the bottom) -> back to Available —
 // plus press-and-drag to reorder within the board's own bounds, and
-// long-press for "Edit Routine Item" (currently just the duration-
-// tracking toggle below). Deliberately plain taps rather than
+// long-press for "Edit Routine Item" (an optional subtitle shown under
+// the title — e.g. which book an Audiobook step is on — plus the
+// duration-tracking toggle below). Deliberately plain taps rather than
 // double-taps: no timing window to fight with the phone's own
 // double-tap-zoom gesture. Used by project.js for any project with
 // workspace_type === 'routine'. Deliberately no due dates, priorities,
@@ -96,18 +97,20 @@ async function persistActive(step) {
   }
 }
 
-async function persistTrackDuration(step) {
+// Saves the "Edit Routine Item" modal's fields together.
+async function persistStepEdits(step) {
+  const updates = {
+    track_duration: step.track_duration,
+    subtitle: step.subtitle ?? null,
+  };
   if (!isConfigured) {
-    demoStore.setStepTrackDuration(step.id, step.track_duration);
+    demoStore.setStepEdits(step.id, updates);
     return;
   }
   try {
-    await supabase
-      .from("routine_steps")
-      .update({ track_duration: step.track_duration })
-      .eq("id", step.id);
+    await supabase.from("routine_steps").update(updates).eq("id", step.id);
   } catch (error) {
-    console.error("Failed to save duration-tracking preference:", error);
+    console.error("Failed to save routine item edits:", error);
   }
 }
 
@@ -216,14 +219,18 @@ export async function initRoutineBoard(container, project) {
   board.className = "routine-board";
   container.appendChild(board);
 
-  // Long-press a step for this modal — currently just the duration-
-  // tracking toggle, built once per board and reused across steps.
+  // Long-press a step for this modal — duration tracking and a free-text
+  // subtitle, built once per board and reused across steps.
   const editModal = document.createElement("div");
   editModal.className = "modal-overlay";
   editModal.innerHTML = `
     <div class="modal">
       <h2 id="routine-edit-title">Edit Routine Item</h2>
       <form id="routine-edit-form">
+        <label>
+          Subtitle (optional)
+          <input type="text" id="routine-edit-subtitle" maxlength="60" autocomplete="off" placeholder="e.g. the book you're reading">
+        </label>
         <div class="field">
           <label class="field-checkbox">
             <input type="checkbox" id="routine-edit-track-duration">
@@ -241,6 +248,7 @@ export async function initRoutineBoard(container, project) {
 
   const editTitleEl = editModal.querySelector("#routine-edit-title");
   const editFormEl = editModal.querySelector("#routine-edit-form");
+  const editSubtitleInput = editModal.querySelector("#routine-edit-subtitle");
   const editTrackDurationInput = editModal.querySelector("#routine-edit-track-duration");
   const editCancelBtn = editModal.querySelector("#routine-edit-cancel");
 
@@ -249,6 +257,7 @@ export async function initRoutineBoard(container, project) {
   function openEditModal(step) {
     editingStep = step;
     editTitleEl.textContent = `Edit "${step.name}"`;
+    editSubtitleInput.value = step.subtitle || "";
     editTrackDurationInput.checked = !!step.track_duration;
     editModal.classList.add("open");
   }
@@ -265,10 +274,11 @@ export async function initRoutineBoard(container, project) {
   editFormEl.addEventListener("submit", (e) => {
     e.preventDefault();
     if (!editingStep) return;
+    editingStep.subtitle = editSubtitleInput.value.trim() || null;
     editingStep.track_duration = editTrackDurationInput.checked;
-    persistTrackDuration(editingStep);
+    persistStepEdits(editingStep);
     const el = nodeById.get(editingStep.id);
-    if (el) updateCardClasses(el, editingStep);
+    if (el) updateCard(el, editingStep);
     closeEditModal();
   });
 
@@ -282,17 +292,19 @@ export async function initRoutineBoard(container, project) {
       ${step.link ? `<span class="link-badge">${iconMarkup("external-link")}</span>` : ""}
       <div class="routine-icon" data-color="${step.color || "sage"}">${iconMarkup(step.icon)}</div>
       <div class="routine-label">${step.name}</div>
+      <div class="routine-subtitle"></div>
       <div class="routine-duration"></div>
     `;
     el.addEventListener("pointerdown", (e) => onPointerDown(e, step));
     return el;
   }
 
-  function updateCardClasses(el, step) {
+  function updateCard(el, step) {
     el.classList.toggle("is-ready", !!step.active);
     el.classList.toggle("is-inprogress", step.status === "in_progress");
     el.classList.toggle("is-complete", step.status === "complete");
     el.classList.toggle("tracks-duration", !!step.track_duration);
+    el.querySelector(".routine-subtitle").textContent = step.subtitle || "";
     el.querySelector(".routine-duration").textContent =
       step.status === "complete" ? completionSummary(step) : "";
   }
@@ -321,7 +333,7 @@ export async function initRoutineBoard(container, project) {
         el = cardEl(step);
         nodeById.set(step.id, el);
       }
-      updateCardClasses(el, step);
+      updateCard(el, step);
       board.appendChild(el);
     }
   }

@@ -860,6 +860,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
+  min-width: 0;
   aspect-ratio: 1 / 0.92;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -915,6 +916,24 @@ button {
   line-height: 1.25;
   color: var(--text);
   max-width: 100%;
+}
+
+/* Optional free-text line under the title (see the long-press "Edit
+   Routine Item" modal) — e.g. which book an Audiobook step is on right
+   now. One line, truncated rather than wrapped, so a long title can't
+   push the card taller than its siblings. */
+.routine-subtitle {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routine-subtitle:empty {
+  display: none;
 }
 
 /* "Done 8:14 AM" on every completed card, plus "· 6 min" if the step

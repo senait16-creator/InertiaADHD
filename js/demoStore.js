@@ -130,11 +130,13 @@ export function setStepStatus(id, updates) {
   return step;
 }
 
-export function setStepTrackDuration(id, trackDuration) {
+// Saves the "Edit Routine Item" modal's fields (duration tracking,
+// subtitle) in one go.
+export function setStepEdits(id, updates) {
   const steps = readAllSteps();
   const step = steps.find((s) => s.id === id);
   if (!step) return null;
-  step.track_duration = trackDuration;
+  Object.assign(step, updates);
   writeAllSteps(steps);
   return step;
 }

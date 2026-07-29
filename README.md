@@ -114,7 +114,12 @@ is a separate, opt-in-per-step addition on top of that: long-press a
 step for "Edit Routine Item" and turn on **Track duration**. A tracked
 step shows a small clock badge, and once complete also shows how long
 it took, e.g. "Done 8:22 AM · 7 min" — the gap between the tap that
-turned it In Progress and the tap that turned it Complete. To try it:
+turned it In Progress and the tap that turned it Complete.
+
+The same long-press modal also has an optional **Subtitle** — a short
+free-text line shown under the step's title (e.g. which book an
+Audiobook step is on right now), truncated rather than wrapped if it's
+long. To try it:
 
 1. Create a project through the normal **Add a Project** flow (from the
    Projects panel), named exactly `Morning Routine` and/or `Night Routine`.

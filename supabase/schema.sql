@@ -136,6 +136,11 @@ alter table public.routine_steps add column if not exists completed_at timestamp
 -- step tracking duration automatically.
 alter table public.routine_steps add column if not exists track_duration boolean not null default false;
 
+-- Optional free-text line shown under a step's title (e.g. which book
+-- an Audiobook step is on right now). Also set from the long-press
+-- "Edit Routine Item" modal.
+alter table public.routine_steps add column if not exists subtitle text;
+
 create index if not exists routine_steps_project_sort_idx
   on public.routine_steps (project_id, sort_order);
 
