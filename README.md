@@ -96,15 +96,16 @@ In Supabase → Authentication → URL Configuration, set:
 Most projects open to a blank placeholder page — that's still the default.
 A project can instead open a visual, icon-first routine board (large
 tiles that step through a state on every plain tap — 1st: selected,
-green border; 2nd: in progress, yellow; 3rd: complete, green, sinks to
-the bottom; 4th: back to not started — plus press-and-drag to reorder
-within the board itself), and shows up under **Routines** on the home
-screen instead of **Projects**. Deliberately plain taps rather than
-double-taps, so there's no timing window to fight with the phone's own
-double-tap-zoom gesture. Done steps automatically sink below not-done
-ones — no manual reordering needed to keep today's remaining steps
-visible — and any step still marked done from an earlier day resets back
-to not-done the next time the board loads, so the board always reflects
+green border; 2nd: in progress, yellow, rises to the top; 3rd: complete,
+green, sinks to the bottom; 4th: back to not started — plus
+press-and-drag to reorder within the board itself), and shows up under
+**Routines** on the home screen instead of **Projects**. Deliberately
+plain taps rather than double-taps, so there's no timing window to
+fight with the phone's own double-tap-zoom gesture. In-progress steps
+rise to the top and done steps sink to the bottom automatically — no
+manual reordering needed to keep what you're doing right now visible —
+and any step still marked done from an earlier day resets back to
+not-done the next time the board loads, so the board always reflects
 today, not a running history. To try it:
 
 1. Create a project through the normal **Add a Project** flow (from the

@@ -1,17 +1,18 @@
 // Visual, icon-first routine board: large tiles that step through a
 // state on every plain tap — 1st: selected (green border), 2nd: in
-// progress (yellow), 3rd: complete (green, sinks to the bottom), 4th:
-// back to not started — plus press-and-drag to reorder within the
-// board's own bounds. Deliberately plain taps rather than double-taps:
-// no timing window to fight with the phone's own double-tap-zoom
-// gesture. Used by project.js for any project with
+// progress (yellow, rises to the top), 3rd: complete (green, sinks to
+// the bottom), 4th: back to not started — plus press-and-drag to
+// reorder within the board's own bounds. Deliberately plain taps rather
+// than double-taps: no timing window to fight with the phone's own
+// double-tap-zoom gesture. Used by project.js for any project with
 // workspace_type === 'routine'. Deliberately no due dates, priorities,
 // or counts — see supabase/seed_morning_routine.sql for how a project
 // gets set up with this workspace.
 //
-// Two behaviors are deliberately automatic, not manual: done steps sink
-// below not-done ones (see displaySteps), and any step still marked done
-// from a previous calendar day resets back to not-done the next time the
+// Three behaviors are deliberately automatic, not manual: in-progress
+// steps rise to the top and complete steps sink to the bottom (see
+// displaySteps/statusRank), and any step still marked done from a
+// previous calendar day resets back to not-done the next time the
 // board loads (see the daily-reset pass in initRoutineBoard) — routines
 // describe today, not a running history.
 import { supabase, isConfigured } from "./supabaseClient.js";
@@ -132,14 +133,19 @@ export async function initRoutineBoard(container, project) {
     el.classList.toggle("is-complete", step.status === "complete");
   }
 
-  // Not-done steps first, done steps last — automatic, so an unfinished
-  // step never gets lost below ones you've already handled. Both groups
-  // otherwise keep their normal (manually reorderable) relative order.
+  // In progress steps rise to the top (what you're doing right now),
+  // complete steps sink to the bottom (out of the way), everything else
+  // (not started, or just selected) keeps its normal, manually
+  // reorderable relative order in between — automatic, so what's
+  // in progress or still unfinished never gets lost.
+  function statusRank(step) {
+    if (step.status === "complete") return 2;
+    if (step.status === "in_progress") return 0;
+    return 1;
+  }
+
   function displaySteps() {
-    return [
-      ...steps.filter((step) => step.status !== "complete"),
-      ...steps.filter((step) => step.status === "complete"),
-    ];
+    return [...steps].sort((a, b) => statusRank(a) - statusRank(b));
   }
 
   function renderBoard() {
@@ -182,7 +188,7 @@ export async function initRoutineBoard(container, project) {
   // gesture:
   //   1st tap: selected (green border) — exclusive, clears any other
   //            step's selection; opens the link too, if there is one.
-  //   2nd tap: in progress (yellow)
+  //   2nd tap: in progress (yellow) — rises to the top
   //   3rd tap: complete (green) — sinks to the bottom
   //   4th tap: back to not started
   function advanceState(step) {
