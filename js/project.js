@@ -9,6 +9,7 @@ import { initNavBoard } from "./navBoard.js";
 const params = new URLSearchParams(window.location.search);
 const projectId = params.get("id");
 
+const headerEl = document.getElementById("project-header");
 const iconEl = document.getElementById("project-icon-display");
 const nameEl = document.getElementById("project-name-display");
 const statusEl = document.getElementById("project-status-display");
@@ -40,6 +41,7 @@ const iconPicker = initIconPicker(document.getElementById("edit-icon-picker"));
 let currentProject = null;
 
 function render(project) {
+  headerEl.hidden = false;
   // Legacy or explicitly-emoji rows (no icon_type) still render as text so
   // nothing created before the icon picker existed changes appearance.
   if (project.icon_type === "lucide") {
@@ -75,13 +77,13 @@ async function loadProject() {
   backLinkEl.href = data.workspace_type === "routine" ? "routines.html" : "projects.html";
 
   if (data.workspace_type === "routine") {
-    bodyEl.hidden = true;
     routineMountEl.hidden = false;
     await initRoutineBoard(routineMountEl, data);
   } else if (data.workspace_type === "nav") {
-    bodyEl.hidden = true;
     navMountEl.hidden = false;
     await initNavBoard(navMountEl, data);
+  } else {
+    bodyEl.hidden = false;
   }
 }
 
