@@ -157,6 +157,19 @@ To try the first real example:
    └── Project Notes     → Notion link
    ```
 
+`supabase/seed_graduation_prep.sql` is a second example, showing status
+panels can also stand in for sub-areas rather than just the project
+itself — a `Graduation Prep` project with four independent status
+panels (Academics, Housing, Career Seeds, and Graduation Prep as a
+catch-all), each cycling on its own:
+```
+Graduation Prep (project)
+├── Academics       → status panel
+├── Housing         → status panel
+├── Career Seeds    → status panel
+└── Graduation Prep → status panel
+```
+
 There's no in-app editor for this yet — change a label, icon, color, or
 URL by updating the `nav_items` row directly in the SQL editor (e.g.
 `update public.nav_items set url = '...' where title = 'Teacher Dashboard';`).
@@ -217,6 +230,7 @@ supabase/schema.sql                database schema + RLS policies
 supabase/seed_morning_routine.sql    one-off seed for Morning Routine
 supabase/seed_night_routine.sql        one-off seed for Night Routine
 supabase/seed_fidel_classroom.sql        one-off seed for Fidel Classroom
+supabase/seed_graduation_prep.sql          one-off seed for Graduation Prep
 ```
 
 Kept deliberately flat and framework-free — one HTML/JS pair per screen, no
