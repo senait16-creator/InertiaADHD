@@ -132,23 +132,29 @@ lightweight as everything is meant to add or edit through it.
 
 ### 6. Navigation-hub projects (e.g. Fidel Classroom)
 
-A project can instead open a tree of folder/link panels (see
-`js/navBoard.js`) — a `folder` panel opens another screen of panels
-in-page; a `link` panel opens an external URL in a new tab. It's generic:
-any project can use it, nesting is arbitrary, and it's just a calm
-navigation hub — no task lists, notes, or progress tracking live inside
-it. To try the first real example:
+A project can instead open a flat set of panels (see `js/navBoard.js`),
+three kinds: a `link` panel opens an external URL in a new tab; a
+`folder` panel opens another screen of panels in-page, for when a
+project's structure genuinely needs nesting; a `status` panel doesn't
+navigate anywhere — tapping it cycles its own status instead (not
+started -> in progress, yellow -> waiting, blue -> complete, green ->
+back to not started), the same tap-to-advance idea as the routine board.
+That's how a project's own status shows up: as one panel among its
+others, not a separate component. It's generic — any project can use
+it — and stays a calm navigation hub, no task lists or notes inside it.
+To try the first real example:
 
 1. Create a project through **Add a Project**, named exactly
    `Fidel Classroom`.
 2. Run `supabase/seed_fidel_classroom.sql` in the SQL editor. It flags the
-   project to use this workspace and seeds:
+   project to use this workspace and seeds four panels flat, on one
+   screen:
    ```
    Fidel Classroom (project)
-   ├── Fidel Classroom (folder)
-   │   ├── Teacher Dashboard  → external link
-   │   └── Project Notes      → Notion link
-   └── My Amharic Path        → external link
+   ├── Fidel Classroom   → status panel (tap to cycle in progress/waiting/complete)
+   ├── My Amharic Path   → external link
+   ├── Teacher Dashboard → external link
+   └── Project Notes     → Notion link
    ```
 
 There's no in-app editor for this yet — change a label, icon, color, or
@@ -227,27 +233,21 @@ self-hosted as inline SVG in `js/lucideIcons.js` — no CDN dependency.
 Tasks, habits, calendars, notifications, collaboration, file uploads, AI
 features, progress percentages, and public profiles are all intentionally
 deferred. The Projects dashboard itself stays a plain grid of project
-cards — no tabs or filters there, just each card's border color (see
-Status below). 2026 Vision and Reminders are calm visual placeholders
-with no tracking, scheduling, or notification logic behind them yet.
+cards, border colored by identity, same as any other project. 2026
+Vision and Reminders are calm visual placeholders with no tracking,
+scheduling, or notification logic behind them yet.
 
-Every project does have one small piece of built-in state: a **Status**
-pill at the top of its page (planned / active / waiting / complete),
-cycled by tapping it. It's deliberately just that pill — a small, calm
-indicator — not a panel, and its color is also the project card's border
-color back on the Projects list, so the whole board reads at a glance.
-Inactivity nudges tied to "active" projects are a deliberate future
-version, not built yet. Edit/Delete for a project live behind the ⋯
-button at the top of its page (or long-press the card from the list) —
-kept off the page itself so the page stays about the workspace, not
-managing the project.
+Edit/Delete for a project live behind the ⋯ button at the top of its
+page (or long-press the card from the list) — kept off the page itself
+so the page stays about the workspace, not managing the project.
+Inactivity nudges tied to a nav board's "in progress" status panel are a
+deliberate future version, not built yet.
 
 Three exceptions so far: the routine workspace (a hand-picked prototype of
 drag-and-drop reordering and a tap-to-advance-state interaction model),
 the Maintenance/Hair board (add/edit/delete/reorder text entries), and the
-navigation-hub workspace (folder/link panels, first used for Fidel
-Classroom) — all meant to validate a feel before any general system gets
-built around them. Maintenance deliberately stops at plain text + optional
-links: no
-scheduling, streaks, history, or reminders, so it stays a reference list
-rather than another tracker.
+navigation-hub workspace (link/folder/status panels, first used for
+Fidel Classroom) — all meant to validate a feel before any general
+system gets built around them. Maintenance deliberately stops at plain
+text + optional links: no scheduling, streaks, history, or reminders, so
+it stays a reference list rather than another tracker.

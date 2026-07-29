@@ -66,18 +66,6 @@ export function deleteProject(id) {
   writeAll(readAll().filter((project) => project.id !== id));
 }
 
-// Separate from updateProject (which overwrites name/icon/color together
-// from the Edit Project form) — this only ever touches state, driven by
-// tapping the Status pill on a project's page.
-export function setProjectState(id, state) {
-  const projects = readAll();
-  const project = projects.find((item) => item.id === id);
-  if (!project) return null;
-  project.state = state;
-  writeAll(projects);
-  return project;
-}
-
 export function clearAll() {
   localStorage.removeItem(STORAGE_KEY);
 }
@@ -208,8 +196,10 @@ export function reorderMaintenanceItems(category, section, orderedIds) {
 
 // ---------------- Navigation-hub items (see js/navBoard.js) ----------------
 // No in-app creation flow yet (seeded via SQL against the real project),
-// so this is read-only parity — a demo-mode project never actually gets
-// workspace_type 'nav' set, same as 'routine' above.
+// so this is mostly read-only parity — a demo-mode project never actually
+// gets workspace_type 'nav' set, same as 'routine' above. setNavItemStatus
+// exists because a 'status' kind panel's tap-to-cycle needs somewhere to
+// persist to even in preview mode.
 
 const NAV_ITEMS_KEY = "inertiaadhd_demo_nav_items";
 
@@ -222,8 +212,21 @@ function readAllNavItems() {
   }
 }
 
+function writeAllNavItems(items) {
+  localStorage.setItem(NAV_ITEMS_KEY, JSON.stringify(items));
+}
+
 export function listNavItems(projectId) {
   return readAllNavItems()
     .filter((item) => item.project_id === projectId)
     .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function setNavItemStatus(id, status) {
+  const items = readAllNavItems();
+  const item = items.find((i) => i.id === id);
+  if (!item) return null;
+  item.status = status;
+  writeAllNavItems(items);
+  return item;
 }

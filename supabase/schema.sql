@@ -33,13 +33,11 @@ alter table public.projects add column if not exists icon_type text;
 -- supabase/seed_morning_routine.sql for how a project gets flagged.
 alter table public.projects add column if not exists workspace_type text;
 
--- The project's own lifecycle status — separate from the freeform
--- `status` text column above (which is just a short context line shown
--- under the project name). Cycled by tapping the Status pill on the
--- project's page: null/'planned' -> 'active' -> 'waiting' -> 'complete'
--- -> back to 'planned'. Also reflected as the project card's border
--- color on the Projects list, so the whole board is scannable at a
--- glance without opening anything.
+-- Unused by the app — an early version of project status lived here as
+-- a standalone pill; that idea was replaced by a 'status' kind nav_item
+-- (see below), so a project's status is now just one of its own panels
+-- instead of a separate column. Left in place rather than dropped (this
+-- file only ever adds columns).
 alter table public.projects add column if not exists state text;
 
 create index if not exists projects_user_sort_idx
@@ -226,12 +224,15 @@ create policy "Users can delete their own maintenance items"
   using (auth.uid() = user_id);
 
 -- Navigation-hub workspace (see js/navBoard.js): a project with
--- workspace_type = 'nav' shows a tree of folder/link panels instead of
--- the plain placeholder. A 'folder' item opens another screen of panels
--- (client-side, no page reload); a 'link' item opens an external URL in
--- a new tab. Nesting is via parent_id (null = the project's root level).
--- Deliberately no task lists, notes, or progress tracking — pure
--- navigation, same spirit as the routine board and Maintenance boards.
+-- workspace_type = 'nav' shows a flat (or nested, if needed) set of
+-- panels instead of the plain placeholder. Three kinds: 'link' opens an
+-- external URL in a new tab; 'folder' opens another screen of panels
+-- (client-side, no page reload) for when a project's structure genuinely
+-- needs nesting; 'status' doesn't navigate — tapping it cycles its own
+-- `status` instead (null -> 'in_progress' -> 'waiting' -> 'complete' ->
+-- back to null), the same tap-to-advance idea as the routine board. This
+-- is how a project's own status shows up, as one panel among its others.
+-- Nesting is via parent_id (null = the project's root level).
 create table if not exists public.nav_items (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects(id) on delete cascade,
@@ -242,10 +243,15 @@ create table if not exists public.nav_items (
   icon text,
   color text,
   url text,
+  status text,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Added after the table itself, for databases where nav_items already
+-- existed before this column did.
+alter table public.nav_items add column if not exists status text;
 
 create index if not exists nav_items_project_parent_sort_idx
   on public.nav_items (project_id, parent_id, sort_order);

@@ -1,10 +1,19 @@
-// Navigation-hub workspace: a tree of folder/link panels for a project
-// with workspace_type === 'nav'. A 'folder' item opens another screen of
-// panels (client-side, no page reload); a 'link' item opens an external
-// URL in a new tab. Used by project.js. Deliberately no task lists,
-// notes, or progress tracking — this is pure navigation, not a workspace
-// with its own features. See supabase/seed_fidel_classroom.sql for the
-// first real example of this structure.
+// Navigation-hub workspace: a flat set of panels for a project with
+// workspace_type === 'nav'. Three kinds:
+//   - 'link'   opens an external URL in a new tab
+//   - 'folder' opens another screen of panels (client-side, no page
+//              reload) — for when a project's structure genuinely needs
+//              nesting
+//   - 'status' doesn't navigate anywhere; tapping it cycles its own
+//              status instead (not started -> in progress, yellow ->
+//              waiting, blue -> complete, green -> not started), the
+//              same tap-to-advance idea as the routine board. This is
+//              how a project's own status shows up, as one panel among
+//              its others rather than a separate component.
+// Used by project.js. Deliberately no task lists or notes beyond that —
+// this is pure navigation plus one status panel, not a workspace with
+// its own features. See supabase/seed_fidel_classroom.sql for the first
+// real example of this structure.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import * as demoStore from "./demoStore.js";
 import { iconMarkup } from "./lucideIcons.js";
@@ -13,6 +22,13 @@ function escapeHtml(value) {
   const div = document.createElement("div");
   div.textContent = value ?? "";
   return div.innerHTML;
+}
+
+function nextStatus(status) {
+  if (status === "in_progress") return "waiting";
+  if (status === "waiting") return "complete";
+  if (status === "complete") return null;
+  return "in_progress";
 }
 
 async function fetchNavItems(projectId) {
@@ -29,6 +45,18 @@ async function fetchNavItems(projectId) {
     return [];
   }
   return data;
+}
+
+async function persistStatus(item) {
+  if (!isConfigured) {
+    demoStore.setNavItemStatus(item.id, item.status);
+    return;
+  }
+  try {
+    await supabase.from("nav_items").update({ status: item.status }).eq("id", item.id);
+  } catch (error) {
+    console.error("Failed to save panel status:", error);
+  }
 }
 
 export async function initNavBoard(container, project) {
@@ -55,8 +83,15 @@ export async function initNavBoard(container, project) {
     return childrenByParent.get(key) || [];
   }
 
+  function updatePanelClasses(el, item) {
+    el.classList.toggle("is-inprogress", item.status === "in_progress");
+    el.classList.toggle("is-waiting", item.status === "waiting");
+    el.classList.toggle("is-complete", item.status === "complete");
+  }
+
   function panelEl(item) {
     const isLink = item.kind === "link";
+    const isStatus = item.kind === "status";
     const el = document.createElement(isLink ? "a" : "button");
     el.className = "nav-panel";
     el.dataset.color = item.color || "sage";
@@ -72,10 +107,17 @@ export async function initNavBoard(container, project) {
     el.innerHTML = `
       <div class="icon-badge" data-color="${escapeHtml(item.color || "sage")}">${iconMarkup(item.icon || "folder")}</div>
       <div class="nav-panel-title">${escapeHtml(item.title)}</div>
-      <span class="nav-panel-arrow">›</span>
+      ${isStatus ? "" : `<span class="nav-panel-arrow">›</span>`}
     `;
 
-    if (!isLink) {
+    if (isStatus) {
+      updatePanelClasses(el, item);
+      el.addEventListener("click", () => {
+        item.status = nextStatus(item.status);
+        updatePanelClasses(el, item);
+        persistStatus(item);
+      });
+    } else if (!isLink) {
       el.addEventListener("click", () => {
         stack.push(item);
         render();

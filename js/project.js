@@ -37,18 +37,6 @@ const cancelBtn = document.getElementById("cancel-edit");
 const colorPicker = initColorPicker(document.getElementById("edit-color-picker"));
 const iconPicker = initIconPicker(document.getElementById("edit-icon-picker"));
 
-const statusPillEl = document.getElementById("status-pill");
-const statusPillLabelEl = document.getElementById("status-pill-label");
-
-// The project's own lifecycle status — separate from whichever section
-// is inside it. Tapping the pill cycles through these, wrapping around.
-const PROJECT_STATES = [
-  { key: "planned", label: "Planned" },
-  { key: "active", label: "Active" },
-  { key: "waiting", label: "Waiting" },
-  { key: "complete", label: "Complete" },
-];
-
 let currentProject = null;
 
 function render(project) {
@@ -62,40 +50,7 @@ function render(project) {
   iconEl.dataset.color = project.color || DEFAULT_COLOR;
   nameEl.textContent = project.name;
   statusEl.textContent = project.description || project.status || "";
-  renderStatusPill(project);
 }
-
-function renderStatusPill(project) {
-  const info =
-    PROJECT_STATES.find((s) => s.key === project.state) || PROJECT_STATES[0];
-  statusPillEl.dataset.state = info.key;
-  statusPillLabelEl.textContent = info.label;
-}
-
-async function persistState(state) {
-  if (!isConfigured) return demoStore.setProjectState(projectId, state);
-  const { data, error } = await supabase
-    .from("projects")
-    .update({ state })
-    .eq("id", projectId)
-    .select()
-    .single();
-  if (error) {
-    console.error("Failed to save project status:", error);
-    return null;
-  }
-  return data;
-}
-
-statusPillEl.addEventListener("click", async () => {
-  const currentIndex = PROJECT_STATES.findIndex(
-    (s) => s.key === (currentProject.state || "planned")
-  );
-  const next = PROJECT_STATES[(currentIndex + 1) % PROJECT_STATES.length];
-  currentProject.state = next.key;
-  renderStatusPill(currentProject);
-  await persistState(next.key);
-});
 
 async function loadProject() {
   const data = isConfigured

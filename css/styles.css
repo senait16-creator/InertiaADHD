@@ -28,14 +28,9 @@
   /* Routine step status — a separate namespace from the identity colors
      above. Status tints the whole card; the icon keeps its own identity
      color regardless of status, so you can still tell which step it is.
-     --status-progress doubles as the "Active" color for project status
-     below — same meaning (currently being worked on), same color. */
+     Also reused for a nav board's 'status' panel kind (in progress) —
+     same meaning (currently being worked on), same color. */
   --status-progress: 214, 165, 40;
-
-  /* Project lifecycle status (see the Status pill on a project's page).
-     Planned needs its own neutral color; active/waiting/complete reuse
-     the tokens above so the same color always means the same thing. */
-  --status-planned: 150, 145, 135;
 }
 
 * {
@@ -307,15 +302,13 @@ button {
   user-select: none;
 }
 
-/* Outline each card by its lifecycle status (see the Status pill on a
-   project's page), not its identity color — the icon badge already
-   carries identity color, so the border is free to carry a second,
-   more useful signal: at a glance across the whole grid, which
-   commitments are active, waiting, or done. */
-.project-card[data-state="planned"] { border-color: rgba(var(--status-planned), 0.4); }
-.project-card[data-state="active"] { border-color: rgba(var(--status-progress), 0.5); }
-.project-card[data-state="waiting"] { border-color: rgba(var(--color-blue), 0.45); }
-.project-card[data-state="complete"] { border-color: rgba(var(--color-green), 0.45); }
+/* Outline each card in a deeper version of its own icon tint, so cards
+   read as distinct without adding visual weight. */
+.project-card[data-color="sage"] { border-color: rgba(var(--color-sage), 0.4); }
+.project-card[data-color="green"] { border-color: rgba(var(--color-green), 0.4); }
+.project-card[data-color="blue"] { border-color: rgba(var(--color-blue), 0.4); }
+.project-card[data-color="amber"] { border-color: rgba(var(--color-amber), 0.4); }
+.project-card[data-color="lavender"] { border-color: rgba(var(--color-lavender), 0.4); }
 
 .project-card:active {
   transform: scale(0.965);
@@ -784,75 +777,6 @@ button {
   color: var(--text-muted);
   margin: 0;
   min-height: 1.2em;
-}
-
-/* Status pill — the project's own lifecycle state, separate from
-   whichever section is inside it. Tap to cycle: planned -> active ->
-   waiting -> complete -> planned. Deliberately a small pill, not
-   another panel, so it doesn't compete with the actual workspace. */
-
-.status-pill-wrap {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.4rem 0.9rem 0.4rem 0.7rem;
-  background: var(--surface);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.status-pill:active {
-  transform: scale(0.97);
-}
-
-.status-pill-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.status-pill[data-state="planned"] {
-  border-color: rgba(var(--status-planned), 0.4);
-  background: rgba(var(--status-planned), 0.1);
-}
-.status-pill[data-state="planned"] .status-pill-dot {
-  background: rgb(var(--status-planned));
-}
-
-.status-pill[data-state="active"] {
-  border-color: rgba(var(--status-progress), 0.45);
-  background: rgba(var(--status-progress), 0.14);
-}
-.status-pill[data-state="active"] .status-pill-dot {
-  background: rgb(var(--status-progress));
-}
-
-.status-pill[data-state="waiting"] {
-  border-color: rgba(var(--color-blue), 0.45);
-  background: rgba(var(--color-blue), 0.14);
-}
-.status-pill[data-state="waiting"] .status-pill-dot {
-  background: rgb(var(--color-blue));
-}
-
-.status-pill[data-state="complete"] {
-  border-color: rgba(var(--color-green), 0.45);
-  background: rgba(var(--color-green), 0.14);
-}
-.status-pill[data-state="complete"] .status-pill-dot {
-  background: rgb(var(--color-green));
 }
 
 .project-body {
@@ -1326,3 +1250,20 @@ button {
 .nav-panel[data-color="blue"] { background: rgba(var(--color-blue), 0.08); border-color: rgba(var(--color-blue), 0.35); }
 .nav-panel[data-color="amber"] { background: rgba(var(--color-amber), 0.08); border-color: rgba(var(--color-amber), 0.35); }
 .nav-panel[data-color="lavender"] { background: rgba(var(--color-lavender), 0.08); border-color: rgba(var(--color-lavender), 0.35); }
+
+/* A 'status' kind panel (see js/navBoard.js) — tapping it cycles this
+   instead of navigating anywhere. Overrides the identity tint above
+   once a status is set; the icon keeps its own identity color either
+   way, same as the routine board. */
+.nav-panel.is-inprogress {
+  background: rgba(var(--status-progress), 0.16);
+  border-color: rgba(var(--status-progress), 0.45);
+}
+.nav-panel.is-waiting {
+  background: rgba(var(--color-blue), 0.16);
+  border-color: rgba(var(--color-blue), 0.45);
+}
+.nav-panel.is-complete {
+  background: rgba(var(--color-green), 0.16);
+  border-color: rgba(var(--color-green), 0.45);
+}
