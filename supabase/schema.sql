@@ -33,6 +33,15 @@ alter table public.projects add column if not exists icon_type text;
 -- supabase/seed_morning_routine.sql for how a project gets flagged.
 alter table public.projects add column if not exists workspace_type text;
 
+-- The project's own lifecycle status — separate from the freeform
+-- `status` text column above (which is just a short context line shown
+-- under the project name). Cycled by tapping the Status pill on the
+-- project's page: null/'planned' -> 'active' -> 'waiting' -> 'complete'
+-- -> back to 'planned'. Also reflected as the project card's border
+-- color on the Projects list, so the whole board is scannable at a
+-- glance without opening anything.
+alter table public.projects add column if not exists state text;
+
 create index if not exists projects_user_sort_idx
   on public.projects (user_id, sort_order, created_at);
 

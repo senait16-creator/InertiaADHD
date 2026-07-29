@@ -157,7 +157,11 @@ function projectCardEl(project) {
   const link = document.createElement("a");
   link.className = "project-card";
   link.href = `project.html?id=${encodeURIComponent(project.id)}`;
-  link.dataset.color = project.color || DEFAULT_COLOR;
+  // The card's border reflects lifecycle status, not identity color — the
+  // icon badge (set inside iconBadgeMarkup) already carries identity
+  // color, so the border is free to show something more useful: status,
+  // scannable across the whole grid without opening anything.
+  link.dataset.state = project.state || "planned";
   link.innerHTML = `
     ${iconBadgeMarkup(project)}
     <div class="project-info">

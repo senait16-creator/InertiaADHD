@@ -66,6 +66,18 @@ export function deleteProject(id) {
   writeAll(readAll().filter((project) => project.id !== id));
 }
 
+// Separate from updateProject (which overwrites name/icon/color together
+// from the Edit Project form) — this only ever touches state, driven by
+// tapping the Status pill on a project's page.
+export function setProjectState(id, state) {
+  const projects = readAll();
+  const project = projects.find((item) => item.id === id);
+  if (!project) return null;
+  project.state = state;
+  writeAll(projects);
+  return project;
+}
+
 export function clearAll() {
   localStorage.removeItem(STORAGE_KEY);
 }

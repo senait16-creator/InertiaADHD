@@ -27,8 +27,15 @@
 
   /* Routine step status — a separate namespace from the identity colors
      above. Status tints the whole card; the icon keeps its own identity
-     color regardless of status, so you can still tell which step it is. */
+     color regardless of status, so you can still tell which step it is.
+     --status-progress doubles as the "Active" color for project status
+     below — same meaning (currently being worked on), same color. */
   --status-progress: 214, 165, 40;
+
+  /* Project lifecycle status (see the Status pill on a project's page).
+     Planned needs its own neutral color; active/waiting/complete reuse
+     the tokens above so the same color always means the same thing. */
+  --status-planned: 150, 145, 135;
 }
 
 * {
@@ -300,13 +307,15 @@ button {
   user-select: none;
 }
 
-/* Outline each card in a deeper version of its own icon tint, so cards
-   read as distinct without adding visual weight. */
-.project-card[data-color="sage"] { border-color: rgba(var(--color-sage), 0.4); }
-.project-card[data-color="green"] { border-color: rgba(var(--color-green), 0.4); }
-.project-card[data-color="blue"] { border-color: rgba(var(--color-blue), 0.4); }
-.project-card[data-color="amber"] { border-color: rgba(var(--color-amber), 0.4); }
-.project-card[data-color="lavender"] { border-color: rgba(var(--color-lavender), 0.4); }
+/* Outline each card by its lifecycle status (see the Status pill on a
+   project's page), not its identity color — the icon badge already
+   carries identity color, so the border is free to carry a second,
+   more useful signal: at a glance across the whole grid, which
+   commitments are active, waiting, or done. */
+.project-card[data-state="planned"] { border-color: rgba(var(--status-planned), 0.4); }
+.project-card[data-state="active"] { border-color: rgba(var(--status-progress), 0.5); }
+.project-card[data-state="waiting"] { border-color: rgba(var(--color-blue), 0.45); }
+.project-card[data-state="complete"] { border-color: rgba(var(--color-green), 0.45); }
 
 .project-card:active {
   transform: scale(0.965);
@@ -604,8 +613,12 @@ button {
   padding: 0.85rem 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--danger);
+  color: var(--text);
   cursor: pointer;
+}
+
+.action-menu-item.danger {
+  color: var(--danger);
 }
 
 .action-cancel {
@@ -719,9 +732,36 @@ button {
   margin-bottom: 1.5rem;
 }
 
+.page-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-top-row .back-link {
+  margin-bottom: 0;
+}
+
+.overflow-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 0.3rem 0.65rem;
+  margin-bottom: 1.5rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.overflow-btn:active {
+  background: var(--surface-muted);
+}
+
 .project-header {
   text-align: center;
-  padding: 1rem 0 2rem;
+  padding: 1rem 0 1.25rem;
 }
 
 .icon-badge-lg {
@@ -746,6 +786,75 @@ button {
   min-height: 1.2em;
 }
 
+/* Status pill — the project's own lifecycle state, separate from
+   whichever section is inside it. Tap to cycle: planned -> active ->
+   waiting -> complete -> planned. Deliberately a small pill, not
+   another panel, so it doesn't compete with the actual workspace. */
+
+.status-pill-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem 0.4rem 0.7rem;
+  background: var(--surface);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.status-pill:active {
+  transform: scale(0.97);
+}
+
+.status-pill-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-pill[data-state="planned"] {
+  border-color: rgba(var(--status-planned), 0.4);
+  background: rgba(var(--status-planned), 0.1);
+}
+.status-pill[data-state="planned"] .status-pill-dot {
+  background: rgb(var(--status-planned));
+}
+
+.status-pill[data-state="active"] {
+  border-color: rgba(var(--status-progress), 0.45);
+  background: rgba(var(--status-progress), 0.14);
+}
+.status-pill[data-state="active"] .status-pill-dot {
+  background: rgb(var(--status-progress));
+}
+
+.status-pill[data-state="waiting"] {
+  border-color: rgba(var(--color-blue), 0.45);
+  background: rgba(var(--color-blue), 0.14);
+}
+.status-pill[data-state="waiting"] .status-pill-dot {
+  background: rgb(var(--color-blue));
+}
+
+.status-pill[data-state="complete"] {
+  border-color: rgba(var(--color-green), 0.45);
+  background: rgba(var(--color-green), 0.14);
+}
+.status-pill[data-state="complete"] .status-pill-dot {
+  background: rgb(var(--color-green));
+}
+
 .project-body {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -758,12 +867,6 @@ button {
 
 .project-placeholder {
   margin: 0;
-}
-
-.project-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
 }
 
 /* ---------------- Routine board ---------------- */

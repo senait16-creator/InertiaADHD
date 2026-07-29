@@ -227,9 +227,20 @@ self-hosted as inline SVG in `js/lucideIcons.js` — no CDN dependency.
 Tasks, habits, calendars, notifications, collaboration, file uploads, AI
 features, progress percentages, and public profiles are all intentionally
 deferred. The Projects dashboard itself stays a plain grid of project
-cards — no tabs, filters, or metrics there. 2026 Vision and Reminders are
-calm visual placeholders with no tracking, scheduling, or notification
-logic behind them yet.
+cards — no tabs or filters there, just each card's border color (see
+Status below). 2026 Vision and Reminders are calm visual placeholders
+with no tracking, scheduling, or notification logic behind them yet.
+
+Every project does have one small piece of built-in state: a **Status**
+pill at the top of its page (planned / active / waiting / complete),
+cycled by tapping it. It's deliberately just that pill — a small, calm
+indicator — not a panel, and its color is also the project card's border
+color back on the Projects list, so the whole board reads at a glance.
+Inactivity nudges tied to "active" projects are a deliberate future
+version, not built yet. Edit/Delete for a project live behind the ⋯
+button at the top of its page (or long-press the card from the list) —
+kept off the page itself so the page stays about the workspace, not
+managing the project.
 
 Three exceptions so far: the routine workspace (a hand-picked prototype of
 drag-and-drop reordering and a tap-to-advance-state interaction model),

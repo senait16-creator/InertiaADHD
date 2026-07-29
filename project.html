@@ -15,7 +15,10 @@
 </head>
 <body>
   <main class="project-page">
-    <a href="projects.html" class="back-link" id="back-link">‹ Back</a>
+    <div class="page-top-row">
+      <a href="projects.html" class="back-link" id="back-link">‹ Back</a>
+      <button type="button" class="overflow-btn" id="overflow-btn" aria-label="More actions">⋯</button>
+    </div>
 
     <div class="project-header">
       <div class="icon-badge-lg" id="project-icon-display" data-color="sage">📁</div>
@@ -23,17 +26,37 @@
       <p class="project-status-display" id="project-status-display"></p>
     </div>
 
+    <div class="status-pill-wrap">
+      <button type="button" class="status-pill" id="status-pill" data-state="planned">
+        <span class="status-pill-dot"></span>
+        <span id="status-pill-label">Planned</span>
+      </button>
+    </div>
+
     <div class="project-body" id="project-body">
       <p class="project-placeholder">Project workspace coming next.</p>
     </div>
     <div id="routine-board-mount" hidden></div>
     <div id="nav-board-mount" hidden></div>
-
-    <div class="project-actions">
-      <button class="btn-secondary" id="edit-project-btn" type="button">Edit Project</button>
-      <button class="btn-danger" id="delete-project-btn" type="button">Delete Project</button>
-    </div>
   </main>
+
+  <div class="modal-overlay" id="project-action-modal">
+    <div class="modal action-modal">
+      <div id="action-menu-view">
+        <h2 id="action-menu-title">Project</h2>
+        <button type="button" class="action-menu-item" id="action-edit-btn">Edit Project</button>
+        <button type="button" class="action-menu-item danger" id="action-delete-btn">Delete Project</button>
+        <button type="button" class="btn-secondary action-cancel" id="action-cancel-btn-1">Cancel</button>
+      </div>
+      <div id="action-confirm-view" hidden>
+        <p class="confirm-text" id="confirm-text">Delete this project?</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="action-cancel-btn-2">Cancel</button>
+          <button type="button" class="btn-danger" id="action-confirm-delete-btn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-overlay" id="edit-project-modal">
     <div class="modal">
@@ -48,7 +71,7 @@
           <div class="icon-picker" id="edit-icon-picker" role="radiogroup" aria-label="Project icon"></div>
         </div>
         <label>
-          Status (optional)
+          Context (optional)
           <input type="text" id="edit-status" maxlength="60" autocomplete="off">
         </label>
         <div class="field">

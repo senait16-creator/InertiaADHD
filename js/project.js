@@ -17,8 +17,17 @@ const routineMountEl = document.getElementById("routine-board-mount");
 const navMountEl = document.getElementById("nav-board-mount");
 const backLinkEl = document.getElementById("back-link");
 
-const editBtn = document.getElementById("edit-project-btn");
-const deleteBtn = document.getElementById("delete-project-btn");
+const overflowBtn = document.getElementById("overflow-btn");
+const actionModal = document.getElementById("project-action-modal");
+const actionMenuView = document.getElementById("action-menu-view");
+const actionConfirmView = document.getElementById("action-confirm-view");
+const actionMenuTitle = document.getElementById("action-menu-title");
+const actionEditBtn = document.getElementById("action-edit-btn");
+const actionDeleteBtn = document.getElementById("action-delete-btn");
+const actionCancelBtn1 = document.getElementById("action-cancel-btn-1");
+const actionCancelBtn2 = document.getElementById("action-cancel-btn-2");
+const confirmText = document.getElementById("confirm-text");
+const actionConfirmDeleteBtn = document.getElementById("action-confirm-delete-btn");
 
 const modal = document.getElementById("edit-project-modal");
 const editForm = document.getElementById("edit-project-form");
@@ -27,6 +36,18 @@ const editStatus = document.getElementById("edit-status");
 const cancelBtn = document.getElementById("cancel-edit");
 const colorPicker = initColorPicker(document.getElementById("edit-color-picker"));
 const iconPicker = initIconPicker(document.getElementById("edit-icon-picker"));
+
+const statusPillEl = document.getElementById("status-pill");
+const statusPillLabelEl = document.getElementById("status-pill-label");
+
+// The project's own lifecycle status — separate from whichever section
+// is inside it. Tapping the pill cycles through these, wrapping around.
+const PROJECT_STATES = [
+  { key: "planned", label: "Planned" },
+  { key: "active", label: "Active" },
+  { key: "waiting", label: "Waiting" },
+  { key: "complete", label: "Complete" },
+];
 
 let currentProject = null;
 
@@ -41,7 +62,40 @@ function render(project) {
   iconEl.dataset.color = project.color || DEFAULT_COLOR;
   nameEl.textContent = project.name;
   statusEl.textContent = project.description || project.status || "";
+  renderStatusPill(project);
 }
+
+function renderStatusPill(project) {
+  const info =
+    PROJECT_STATES.find((s) => s.key === project.state) || PROJECT_STATES[0];
+  statusPillEl.dataset.state = info.key;
+  statusPillLabelEl.textContent = info.label;
+}
+
+async function persistState(state) {
+  if (!isConfigured) return demoStore.setProjectState(projectId, state);
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ state })
+    .eq("id", projectId)
+    .select()
+    .single();
+  if (error) {
+    console.error("Failed to save project status:", error);
+    return null;
+  }
+  return data;
+}
+
+statusPillEl.addEventListener("click", async () => {
+  const currentIndex = PROJECT_STATES.findIndex(
+    (s) => s.key === (currentProject.state || "planned")
+  );
+  const next = PROJECT_STATES[(currentIndex + 1) % PROJECT_STATES.length];
+  currentProject.state = next.key;
+  renderStatusPill(currentProject);
+  await persistState(next.key);
+});
 
 async function loadProject() {
   const data = isConfigured
@@ -88,7 +142,6 @@ function closeEditModal() {
   modal.classList.remove("open");
 }
 
-editBtn.addEventListener("click", openEditModal);
 cancelBtn.addEventListener("click", closeEditModal);
 modal.addEventListener("click", (event) => {
   if (event.target === modal) closeEditModal();
@@ -128,9 +181,39 @@ editForm.addEventListener("submit", async (event) => {
   closeEditModal();
 });
 
-deleteBtn.addEventListener("click", async () => {
-  if (!confirm(`Delete "${currentProject.name}"? This cannot be undone.`)) return;
+// Overflow menu (⋯): Edit/Delete live here instead of always-visible
+// buttons, so the page itself is just about the workspace, not managing
+// the project.
+function openActionMenu() {
+  actionMenuTitle.textContent = currentProject.name;
+  actionMenuView.hidden = false;
+  actionConfirmView.hidden = true;
+  actionModal.classList.add("open");
+}
 
+function closeActionModal() {
+  actionModal.classList.remove("open");
+}
+
+overflowBtn.addEventListener("click", openActionMenu);
+actionCancelBtn1.addEventListener("click", closeActionModal);
+actionCancelBtn2.addEventListener("click", closeActionModal);
+actionModal.addEventListener("click", (event) => {
+  if (event.target === actionModal) closeActionModal();
+});
+
+actionEditBtn.addEventListener("click", () => {
+  closeActionModal();
+  openEditModal();
+});
+
+actionDeleteBtn.addEventListener("click", () => {
+  confirmText.textContent = `Delete "${currentProject.name}"?`;
+  actionMenuView.hidden = true;
+  actionConfirmView.hidden = false;
+});
+
+actionConfirmDeleteBtn.addEventListener("click", async () => {
   if (isConfigured) {
     const { error } = await supabase.from("projects").delete().eq("id", projectId);
     if (error) {
