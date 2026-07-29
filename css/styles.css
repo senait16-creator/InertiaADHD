@@ -43,6 +43,7 @@ html, body {
 }
 
 body {
+  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -53,6 +54,17 @@ body {
      it — doesn't zoom the page either. Scrolling and pinch-zoom still
      work fine; only the double-tap-to-zoom gesture is affected. */
   touch-action: manipulation;
+}
+
+/* Home screen only (see js/home.js) — a soft, time-of-day-aware gradient
+   behind the panels. Golden hour in the morning, soft dusk through
+   evening and night, plain --bg through the middle of the day. */
+.bg-golden-hour {
+  background: linear-gradient(180deg, #fdeecb 0%, #f8cf95 30%, #f0a868 55%, #e3835c 78%, #c96257 100%);
+}
+
+.bg-soft-dusk {
+  background: linear-gradient(180deg, #f7e3c9 0%, #f0bd9c 32%, #e69a8d 58%, #c47f95 80%, #9b6f96 100%);
 }
 
 a {

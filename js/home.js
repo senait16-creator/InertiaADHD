@@ -36,6 +36,21 @@ function timeState() {
   return "neutral";
 }
 
+// A soft gradient behind the panels, time-of-day aware — golden hour in
+// the morning, soft dusk through evening and night, plain background
+// through the middle of the day. Wider evening/night window than
+// timeState() above (which is specifically about the Morning/Night
+// routine shortcut) since dusk starts well before "night" does.
+function applyBackgroundGradient() {
+  const hour = new Date().getHours();
+  document.body.classList.remove("bg-golden-hour", "bg-soft-dusk");
+  if (hour >= 5 && hour < 11) {
+    document.body.classList.add("bg-golden-hour");
+  } else if (hour >= 17 || hour < 5) {
+    document.body.classList.add("bg-soft-dusk");
+  }
+}
+
 function escapeHtml(value) {
   const div = document.createElement("div");
   div.textContent = value ?? "";
@@ -138,6 +153,8 @@ async function migrateDemoProjects(userId) {
 }
 
 (async function init() {
+  applyBackgroundGradient();
+
   if (!isConfigured) {
     demoBanner.hidden = false;
     greetingEl.textContent = `${greetingForNow()}, Senait`;

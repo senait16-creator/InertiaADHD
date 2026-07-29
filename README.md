@@ -32,6 +32,12 @@ would live rather than cluttering the home screen. Every other panel and
 the tile treatment itself stay exactly the same either way — only this
 one tile's content and link change.
 
+The page background is also time-of-day aware (see `applyBackgroundGradient`
+in `js/home.js`): a soft golden-hour gradient in the morning (5–11am), a
+soft dusk gradient through evening and night (5pm–5am), and the plain
+background through the middle of the day. Panels, icon colors, and text
+are unaffected either way — only the backdrop behind them changes.
+
 ## Preview mode
 
 Until real Supabase credentials are added to `js/supabaseClient.js`, the app
