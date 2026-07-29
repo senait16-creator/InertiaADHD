@@ -80,18 +80,39 @@ async function persistActive(project, step, turningOn) {
 }
 
 async function persistStatus(step) {
+  const updates = {
+    status: step.status,
+    active: step.active,
+    in_progress_at: step.in_progress_at ?? null,
+    completed_at: step.completed_at ?? null,
+  };
   if (!isConfigured) {
-    demoStore.setStepStatus(step.id, step.status);
+    demoStore.setStepStatus(step.id, updates);
     return;
   }
   try {
-    await supabase
-      .from("routine_steps")
-      .update({ status: step.status, active: step.active })
-      .eq("id", step.id);
+    await supabase.from("routine_steps").update(updates).eq("id", step.id);
   } catch (error) {
     console.error("Failed to save step status:", error);
   }
+}
+
+// "Done in 6 min" — the gap between a step turning in progress and
+// turning complete, so a completed step shows roughly how long it took.
+function formatDuration(ms) {
+  const minutes = Math.round(ms / 60000);
+  if (minutes < 1) return "done in under a min";
+  if (minutes === 1) return "done in 1 min";
+  if (minutes < 60) return `done in ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder ? `done in ${hours}h ${remainder}m` : `done in ${hours}h`;
+}
+
+function stepDuration(step) {
+  if (!step.in_progress_at || !step.completed_at) return null;
+  const ms = new Date(step.completed_at) - new Date(step.in_progress_at);
+  return ms >= 0 ? formatDuration(ms) : null;
 }
 
 export async function initRoutineBoard(container, project) {
@@ -104,7 +125,11 @@ export async function initRoutineBoard(container, project) {
   const stale = steps.filter(
     (step) => step.status === "complete" && !isSameLocalDay(step.updated_at)
   );
-  for (const step of stale) step.status = null;
+  for (const step of stale) {
+    step.status = null;
+    step.in_progress_at = null;
+    step.completed_at = null;
+  }
   if (stale.length) {
     await Promise.all(stale.map((step) => persistStatus(step)));
   }
@@ -122,6 +147,7 @@ export async function initRoutineBoard(container, project) {
       ${step.link ? `<span class="link-badge">${iconMarkup("external-link")}</span>` : ""}
       <div class="routine-icon" data-color="${step.color || "sage"}">${iconMarkup(step.icon)}</div>
       <div class="routine-label">${step.name}</div>
+      <div class="routine-duration"></div>
     `;
     el.addEventListener("pointerdown", (e) => onPointerDown(e, step));
     return el;
@@ -131,6 +157,8 @@ export async function initRoutineBoard(container, project) {
     el.classList.toggle("is-active", !!step.active);
     el.classList.toggle("is-inprogress", step.status === "in_progress");
     el.classList.toggle("is-complete", step.status === "complete");
+    el.querySelector(".routine-duration").textContent =
+      step.status === "complete" ? stepDuration(step) || "" : "";
   }
 
   // In progress steps rise to the top (what you're doing right now),
@@ -201,10 +229,14 @@ export async function initRoutineBoard(container, project) {
       } else if (step.active) {
         step.active = false;
         step.status = "in_progress";
+        step.in_progress_at = new Date().toISOString();
       } else if (step.status === "in_progress") {
         step.status = "complete";
+        step.completed_at = new Date().toISOString();
       } else {
         step.status = null;
+        step.in_progress_at = null;
+        step.completed_at = null;
       }
       renderBoard();
     });

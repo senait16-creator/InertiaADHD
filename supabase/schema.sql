@@ -121,6 +121,14 @@ update public.routine_steps
 set status = 'complete'
 where complete = true and status is null;
 
+-- When a step turns in progress (yellow) or complete (green), the tap
+-- that caused it stamps the matching column here — see advanceState in
+-- js/routineBoard.js. Lets a completed step show how long it took (the
+-- gap between the two), and both get cleared when a step resets back to
+-- not-done (a fourth tap, or the next day's automatic reset).
+alter table public.routine_steps add column if not exists in_progress_at timestamptz;
+alter table public.routine_steps add column if not exists completed_at timestamptz;
+
 create index if not exists routine_steps_project_sort_idx
   on public.routine_steps (project_id, sort_order);
 

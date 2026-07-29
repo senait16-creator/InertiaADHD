@@ -886,6 +886,19 @@ button {
   max-width: 100%;
 }
 
+/* How long a step took, yellow to green (see stepDuration in
+   js/routineBoard.js). Only ever has text on a completed card, so an
+   empty one takes up no space at all. */
+.routine-duration {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.routine-duration:empty {
+  display: none;
+}
+
 /* Single tap: selected, shown as a green border/ring (no fill — that's
    what keeps it visually distinct from is-complete's filled tint below). */
 .routine-card.is-active {

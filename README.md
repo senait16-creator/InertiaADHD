@@ -106,7 +106,9 @@ rise to the top and done steps sink to the bottom automatically — no
 manual reordering needed to keep what you're doing right now visible —
 and any step still marked done from an earlier day resets back to
 not-done the next time the board loads, so the board always reflects
-today, not a running history. To try it:
+today, not a running history. A completed step also shows how long it
+took, e.g. "done in 6 min" — the gap between the tap that turned it
+yellow and the tap that turned it green. To try it:
 
 1. Create a project through the normal **Add a Project** flow (from the
    Projects panel), named exactly `Morning Routine` and/or `Night Routine`.

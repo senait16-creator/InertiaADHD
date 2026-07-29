@@ -114,13 +114,13 @@ export function setActiveStep(projectId, id) {
   return turningOn;
 }
 
-export function setStepStatus(id, status) {
+export function setStepStatus(id, updates) {
   const steps = readAllSteps();
   const step = steps.find((s) => s.id === id);
   if (!step) return null;
-  step.status = status;
+  Object.assign(step, updates);
   step.updated_at = new Date().toISOString();
-  if (status) step.active = false;
+  if (updates.status) step.active = false;
   writeAllSteps(steps);
   return step;
 }
