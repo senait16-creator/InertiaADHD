@@ -123,17 +123,21 @@ long. To try it:
 
 1. Create a project through the normal **Add a Project** flow (from the
    Projects panel), named exactly `Morning Routine`, `Day Routine`,
-   and/or `Night Routine`.
+   `Evening Routine`, and/or `Night Routine`.
 2. Run `supabase/seed_morning_routine.sql`, `supabase/seed_day_routine.sql`,
-   and/or `supabase/seed_night_routine.sql` in the SQL editor. Each flags
-   its project to use the routine workspace and seeds its steps.
+   `supabase/seed_evening_routine.sql`, and/or `supabase/seed_night_routine.sql`
+   in the SQL editor. Each flags its project to use the routine workspace
+   and seeds its steps.
 
-Day Routine is the odd one out: unlike Morning/Night's fixed daily
-checklist, its four items (Get Ready, Work / Job, Academics, Project)
-are broad and repeatable — tapping Project just marks "I've started
-working on one of my personal projects," not which one, so the same
-four items apply all day rather than being a one-time-per-day list.
+Day and Evening Routine are the odd ones out: unlike Morning/Night's
+fixed daily checklist, their items (Day: Get Ready, Work / Job,
+Academics, Project — Evening: Work, Projects, Maintenance) are broad
+and repeatable — tapping Project just marks "I've started working on
+one of my personal projects," not which one, so the same items apply
+throughout the routine rather than being a one-time-per-day list.
 Otherwise it's the exact same board with the exact same tap cycle.
+Evening sits between Day and Night — Night Routine's fixed bedtime-prep
+checklist takes over once work/projects/self-care wind down.
 
 The home screen looks for projects named exactly `Morning Routine` and
 `Night Routine` to decide what the dynamic panel links to — other
@@ -409,6 +413,7 @@ js/project.js                                                          project d
 supabase/schema.sql                database schema + RLS policies
 supabase/seed_morning_routine.sql    one-off seed for Morning Routine
 supabase/seed_day_routine.sql          one-off seed for Day Routine
+supabase/seed_evening_routine.sql        one-off seed for Evening Routine
 supabase/seed_night_routine.sql          one-off seed for Night Routine
 supabase/seed_fidel_classroom.sql          one-off seed for Fidel Classroom
 supabase/seed_graduation_prep.sql            one-off seed for Graduation Prep
