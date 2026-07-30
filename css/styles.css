@@ -506,22 +506,114 @@ button {
   margin-bottom: 1rem;
 }
 
-.modal form .field-checkbox {
+/* Row-list of toggleable behaviors in the "Edit Routine Item" modal
+   (long-press a step) — Track duration / Not today / Continues in
+   phases. Each row's icon is tinted to match what the toggle actually
+   does to the card (grey clock, blue moon, amber hourglass) so the
+   color language carries over from the board itself. */
+.row-list {
   display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  font-size: 0.85rem;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.row-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.row-icon.tint-neutral {
+  background: var(--surface-muted);
   color: var(--text-muted);
 }
 
-.modal form .field-checkbox input[type="checkbox"] {
-  display: block;
-  width: 18px;
-  height: 18px;
+.row-icon.tint-blue {
+  background: rgba(var(--color-blue), 0.18);
+  color: rgb(var(--color-blue));
+}
+
+.row-icon.tint-amber {
+  background: rgba(var(--color-amber), 0.2);
+  color: rgb(var(--color-amber));
+}
+
+.row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.row-title {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.row-desc {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+  line-height: 1.35;
+}
+
+.switch {
+  position: relative;
+  width: 42px;
+  height: 25px;
+  border-radius: 100px;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
   flex-shrink: 0;
-  margin: 0.1rem 0 0;
+  transition: background-color 0.18s ease;
   padding: 0;
-  accent-color: var(--accent);
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(43, 42, 39, 0.25);
+  transition: transform 0.18s ease;
+}
+
+.switch.on::after {
+  transform: translateX(17px);
+}
+
+.switch.on.tone-neutral {
+  background: var(--text-muted);
+}
+
+.switch.on.tone-blue {
+  background: rgb(var(--color-blue));
+}
+
+.switch.on.tone-amber {
+  background: rgb(var(--color-amber));
 }
 
 .modal form .field-label {

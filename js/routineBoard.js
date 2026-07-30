@@ -500,23 +500,31 @@ export async function initRoutineBoard(container, project) {
           Subtitle (optional)
           <input type="text" id="routine-edit-subtitle" maxlength="60" autocomplete="off" placeholder="e.g. the book you're reading">
         </label>
-        <div class="field">
-          <label class="field-checkbox">
-            <input type="checkbox" id="routine-edit-track-duration">
-            <span>Track duration — show a timer badge and record how long this step takes</span>
-          </label>
-        </div>
-        <div class="field">
-          <label class="field-checkbox">
-            <input type="checkbox" id="routine-edit-not-today">
-            <span>Not today — turns this step blue and moves it to the bottom of the board; a plain tap undoes it</span>
-          </label>
-        </div>
-        <div class="field">
-          <label class="field-checkbox">
-            <input type="checkbox" id="routine-edit-phased">
-            <span>Continues in phases (e.g. Steps) — completing it here offers to add a continuation card in another routine</span>
-          </label>
+        <div class="row-list">
+          <div class="row">
+            <div class="row-icon tint-neutral">${iconMarkup("clock")}</div>
+            <div class="row-text">
+              <div class="row-title">Track duration</div>
+              <div class="row-desc">Show a timer badge and record how long this step takes</div>
+            </div>
+            <button type="button" class="switch tone-neutral" id="routine-edit-track-duration" role="switch" aria-checked="false" aria-label="Track duration"></button>
+          </div>
+          <div class="row">
+            <div class="row-icon tint-blue">${iconMarkup("moon-star")}</div>
+            <div class="row-text">
+              <div class="row-title">Not today</div>
+              <div class="row-desc">Turns blue and sinks to the bottom; a plain tap undoes it</div>
+            </div>
+            <button type="button" class="switch tone-blue" id="routine-edit-not-today" role="switch" aria-checked="false" aria-label="Not today"></button>
+          </div>
+          <div class="row">
+            <div class="row-icon tint-amber">${iconMarkup("hourglass")}</div>
+            <div class="row-text">
+              <div class="row-title">Continues in phases</div>
+              <div class="row-desc">Completing it offers a continuation card in another routine</div>
+            </div>
+            <button type="button" class="switch tone-amber" id="routine-edit-phased" role="switch" aria-checked="false" aria-label="Continues in phases"></button>
+          </div>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="routine-edit-cancel">Cancel</button>
@@ -534,6 +542,27 @@ export async function initRoutineBoard(container, project) {
   const editNotTodayInput = editModal.querySelector("#routine-edit-not-today");
   const editPhasedInput = editModal.querySelector("#routine-edit-phased");
   const editCancelBtn = editModal.querySelector("#routine-edit-cancel");
+
+  // The three toggles above are custom switch buttons, not native
+  // checkboxes (see the row-list styles in css/styles.css) — this gives
+  // each one a .checked-like getter/setter/toggle so the rest of the
+  // modal's code can treat them exactly like the checkboxes they
+  // replaced.
+  function wireSwitch(btn) {
+    Object.defineProperty(btn, "checked", {
+      get() {
+        return btn.classList.contains("on");
+      },
+      set(value) {
+        btn.classList.toggle("on", !!value);
+        btn.setAttribute("aria-checked", value ? "true" : "false");
+      },
+    });
+    btn.addEventListener("click", () => {
+      btn.checked = !btn.checked;
+    });
+  }
+  [editTrackDurationInput, editNotTodayInput, editPhasedInput].forEach(wireSwitch);
 
   let editingStep = null;
 
