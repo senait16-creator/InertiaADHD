@@ -143,14 +143,23 @@ creating routine-workspace
 projects some other way, or for editing a routine's steps beyond the
 tap/drag board itself.
 
-A step can also be flagged (via its `kind` column — currently only set
-through a one-off SQL update, see the `video_panel` block in
-`supabase/seed_morning_routine.sql`) to open a secondary screen of video
-cards instead of cycling its own status directly when tapped — the
-Stretch step in Morning Routine works this way. That status cycle still
-exists; it just moves onto the same card, reused as the panel's own
-header. Each card stores a video URL, display title, optional duration,
-optional note, and display order:
+Every card also has a second, separately-tappable zone: the icon square
+opens the step's attached resource (if it has one), while everything
+else on the card — label, badges, the rest of its surface — always
+advances the tap cycle above, no matter what the icon does. The two
+never compete for the same tap: "do the task" and "open what's attached
+to it" are deliberately different gestures on the same card. A step
+with no resource just does nothing when its icon is tapped.
+
+A step's resource is either a plain external `link` (opens in a new
+tab), or, via its `kind` column (currently only set through a one-off
+SQL update — see the `video_panel` blocks in
+`supabase/seed_morning_routine.sql`), a small library of video cards —
+Morning video and Stretch both work this way today. The step's own
+status cycle is unaffected either way; for a video-library step it just
+moves onto the same card, reused as the panel's own header. Each video
+card stores a URL, display title, optional duration, optional note, and
+display order:
 
 - **Adding a video** — tap **+ Add Video**, paste any common YouTube
   link shape (`youtube.com/watch?v=…`, `youtu.be/…`, Shorts, or embed

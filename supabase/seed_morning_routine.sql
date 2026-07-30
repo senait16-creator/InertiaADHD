@@ -77,10 +77,10 @@ where rs.project_id = p.id
   and p.name = 'Morning Routine'
   and rs.name = 'Stretch';
 
--- Turns Stretch into a 'video_panel' kind step: tapping it now opens a
--- secondary screen of video cards (see js/routineBoard.js) instead of
--- cycling its own status directly — that status cycle still exists,
--- just moved to the same card reused as that panel's own header.
+-- Turns Stretch into a 'video_panel' kind step: tapping its icon square
+-- now opens a secondary screen of video cards (see js/routineBoard.js)
+-- instead of the plain-link/no-op it'd otherwise do there; tapping the
+-- rest of the card still cycles its own status exactly as before.
 -- Starts with zero videos; add them from the panel itself. Safe to
 -- re-run.
 update public.routine_steps rs
@@ -89,6 +89,31 @@ from public.projects p
 where rs.project_id = p.id
   and p.name = 'Morning Routine'
   and rs.name = 'Stretch';
+
+-- Turns Morning video into a 'video_panel' step too, so its icon opens
+-- a small library the same way Stretch's does, rather than the single
+-- external link it used to open on first tap. Safe to re-run.
+update public.routine_steps rs
+set kind = 'video_panel'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Morning Routine'
+  and rs.name = 'Morning video';
+
+-- Carries the step's existing single link over as the library's first
+-- video, only if it doesn't already have any (so this never duplicates
+-- on a re-run, and never overwrites videos added by hand from the
+-- panel itself since).
+insert into public.routine_step_videos (user_id, step_id, url, title, sort_order)
+select rs.user_id, rs.id, rs.link, 'Morning Video', 0
+from public.routine_steps rs
+join public.projects p on p.id = rs.project_id
+where p.name = 'Morning Routine'
+  and rs.name = 'Morning video'
+  and rs.link is not null
+  and not exists (
+    select 1 from public.routine_step_videos v where v.step_id = rs.id
+  );
 
 -- Updates the Daily Amharic step's icon even if it was already seeded
 -- with an older icon ('graduation-cap', then 'language') under its old

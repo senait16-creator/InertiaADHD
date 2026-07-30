@@ -28,6 +28,17 @@
 // board loads (see the daily-reset pass in initRoutineBoard) — routines
 // describe today, not a running history.
 //
+// A card has two separately-tappable zones, so "doing the task" and
+// "opening whatever's attached to it" never fight over the same tap:
+// the body (label, badges, most of the card) always advances the tap
+// cycle above, while the icon square opens the step's resource, if it
+// has one — a plain external `link`, or, for a 'video_panel' kind step
+// (see the video panel section below), a small library of video cards.
+// A step with neither just does nothing when its icon is tapped. Which
+// zone was pressed is decided at pointerdown (see onPointerDown) since
+// pointer capture rewrites every later event's target to the card
+// itself, not whatever's actually under the pointer.
+//
 // The board itself never looks backward — but every completion is
 // quietly logged to a separate, permanent table (see recordCompletion
 // and supabase/routine_completions) for the Insights page
@@ -396,35 +407,41 @@ export async function initRoutineBoard(container, project) {
     closeEditModal();
   });
 
-  // A step's card normally advances its own tap-cycle; a 'video_panel'
-  // kind step (see openVideoPanel below) opens its panel instead when
-  // tapped from the main grid — but the same card reused as that panel's
-  // own header still needs to advance the cycle like any other step, so
-  // cardEl takes the tap handler as a parameter instead of hardcoding it.
-  function handleMainGridTap(step) {
-    if (step.kind === "video_panel") openVideoPanel(step);
-    else advanceState(step);
-  }
-
   function handlePanelHeaderTap(step) {
     advanceState(step);
     if (videoPanelHeaderCard) updateCard(videoPanelHeaderCard, step);
   }
 
-  function cardEl(step, onTap = handleMainGridTap) {
+  // The icon square's tap target — opens whatever resource a step has,
+  // if any. Read fresh off the step each tap (rather than baked in at
+  // cardEl creation time) since the same step object is mutated in
+  // place elsewhere in this file.
+  function handleIconTap(step) {
+    if (step.kind === "video_panel") {
+      openVideoPanel(step);
+    } else if (step.link) {
+      window.open(step.link, "_blank", "noopener,noreferrer");
+    }
+  }
+
+  // iconOpensResource is false for the one card that's already showing
+  // its own resource — the video panel's header card reuse of a
+  // 'video_panel' step — since tapping its icon there would just try to
+  // reopen the panel it's already inside.
+  function cardEl(step, { onBodyTap = advanceState, iconOpensResource = true } = {}) {
     const el = document.createElement("div");
     el.className = "routine-card";
     el.dataset.id = step.id;
     el.innerHTML = `
       <span class="complete-badge">${iconMarkup("check")}</span>
       <span class="duration-badge">${iconMarkup("clock")}</span>
-      ${step.link ? `<span class="link-badge">${iconMarkup("external-link")}</span>` : ""}
+      ${step.link || step.kind === "video_panel" ? `<span class="link-badge">${iconMarkup("external-link")}</span>` : ""}
       <div class="routine-icon" data-color="${step.color || "sage"}">${iconMarkup(step.icon)}</div>
       <div class="routine-label">${step.name}</div>
       <div class="routine-subtitle"></div>
       <div class="routine-duration"></div>
     `;
-    el.addEventListener("pointerdown", (e) => onPointerDown(e, step, onTap));
+    el.addEventListener("pointerdown", (e) => onPointerDown(e, step, onBodyTap, iconOpensResource));
     return el;
   }
 
@@ -490,11 +507,11 @@ export async function initRoutineBoard(container, project) {
     }
   }
 
-  // Every tap advances a step one step further — no double-tap timing
-  // involved, so there's no fight with the phone's own double-tap-zoom
-  // gesture:
+  // Every tap on a card's body advances it one step further — no
+  // double-tap timing involved, so there's no fight with the phone's own
+  // double-tap-zoom gesture:
   //   1st tap: Ready (gray) — up next; not exclusive, so several steps
-  //            can be Ready at once; opens the link too, if there is one.
+  //            can be Ready at once.
   //   2nd tap: In Progress (yellow) — rises to the top; starts the timer
   //            if this step has duration tracking on.
   //   3rd tap: Complete (green) — sinks to the bottom; always records a
@@ -526,9 +543,6 @@ export async function initRoutineBoard(container, project) {
 
     if (wasIdle) {
       persistActive(step);
-      if (step.link) {
-        window.open(step.link, "_blank", "noopener,noreferrer");
-      }
     } else {
       persistStatus(step);
       if (justCompletedAt) recordCompletion(project, step, justCompletedAt);
@@ -538,16 +552,20 @@ export async function initRoutineBoard(container, project) {
   const LONG_PRESS_MS = 500;
   let drag = null;
 
-  function onPointerDown(e, step, onTap) {
+  function onPointerDown(e, step, onBodyTap, iconOpensResource) {
     if (e.button !== undefined && e.button > 0) return;
     const el = e.currentTarget;
+    // Captured here, before setPointerCapture below rewrites every later
+    // event's target to el regardless of where the pointer actually is.
+    const pressedIcon = iconOpensResource && !!e.target.closest(".routine-icon");
     el.setPointerCapture(e.pointerId);
     const rect = el.getBoundingClientRect();
     drag = {
       pointerId: e.pointerId,
       step,
       el,
-      onTap,
+      onBodyTap,
+      pressedIcon,
       startX: e.clientX,
       startY: e.clientY,
       originLeft: rect.left,
@@ -631,7 +649,7 @@ export async function initRoutineBoard(container, project) {
 
   function onPointerUp(e) {
     if (!drag || e.pointerId !== drag.pointerId) return;
-    const { el, step, onTap, dragging, longPressFired } = drag;
+    const { el, step, onBodyTap, pressedIcon, dragging, longPressFired } = drag;
     if (drag.longPressTimer) clearTimeout(drag.longPressTimer);
     el.removeEventListener("pointermove", onPointerMove);
     el.removeEventListener("pointerup", onPointerUp);
@@ -653,13 +671,14 @@ export async function initRoutineBoard(container, project) {
       flip(() => renderBoard());
       persistReorder(project, steps);
     } else if (!longPressFired) {
-      onTap(step);
+      if (pressedIcon) handleIconTap(step);
+      else onBodyTap(step);
     }
     drag = null;
   }
 
   // --- Video panel: a secondary screen of video cards for a
-  // 'video_panel' kind step (see handleMainGridTap above). ---
+  // 'video_panel' kind step (see handleIconTap above). ---
   const videoPanelEl = document.createElement("div");
   videoPanelEl.className = "video-panel";
   videoPanelEl.hidden = true;
@@ -862,7 +881,10 @@ export async function initRoutineBoard(container, project) {
     back.addEventListener("click", closeVideoPanel);
     videoPanelEl.appendChild(back);
 
-    videoPanelHeaderCard = cardEl(videoPanelStep, handlePanelHeaderTap);
+    videoPanelHeaderCard = cardEl(videoPanelStep, {
+      onBodyTap: handlePanelHeaderTap,
+      iconOpensResource: false,
+    });
     updateCard(videoPanelHeaderCard, videoPanelStep);
 
     videoGridEl = document.createElement("div");
