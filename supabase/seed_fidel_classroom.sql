@@ -25,7 +25,7 @@ select p.id, p.user_id, null, v.kind, v.title, v.icon, v.color, v.sort_order, v.
 from public.projects p
 cross join (
   values
-    ('status', 'Fidel Classroom', 'graduation-cap', 'amber', 0, null),
+    ('status', 'Fidel Classroom', 'language', 'amber', 0, null),
     ('link', 'My Amharic Path', 'route', 'sage', 1, 'https://senait16-creator.github.io/fidel-classroom/'),
     ('link', 'Teacher Dashboard', 'layout-dashboard', 'blue', 2, 'https://senait16-creator.github.io/fidel-classroom/'),
     ('link', 'Project Notes', 'notebook-pen', 'lavender', 3, 'https://app.notion.com/p/Fidel-Classroom-the-Classroom-3abf72174b1b8041ab81cdc6aa7f4193')
@@ -67,3 +67,13 @@ where child.project_id = p.id
   and child.title = 'Project Notes'
   and child.parent_id = parent.id
   and parent.title = 'Fidel Classroom';
+
+-- Updates the Fidel Classroom status panel's icon even if it was
+-- already seeded with the older 'graduation-cap' icon. Safe to re-run.
+update public.nav_items
+set icon = 'language'
+from public.projects p
+where nav_items.project_id = p.id
+  and p.name = 'Fidel Classroom'
+  and nav_items.title = 'Fidel Classroom'
+  and nav_items.kind = 'status';
