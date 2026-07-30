@@ -77,6 +77,19 @@ where rs.project_id = p.id
   and p.name = 'Morning Routine'
   and rs.name = 'Stretch';
 
+-- Turns Stretch into a 'video_panel' kind step: tapping it now opens a
+-- secondary screen of video cards (see js/routineBoard.js) instead of
+-- cycling its own status directly — that status cycle still exists,
+-- just moved to the same card reused as that panel's own header.
+-- Starts with zero videos; add them from the panel itself. Safe to
+-- re-run.
+update public.routine_steps rs
+set kind = 'video_panel'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Morning Routine'
+  and rs.name = 'Stretch';
+
 -- Updates the Daily Amharic step's icon even if it was already seeded
 -- with an older icon ('graduation-cap', then 'language') under its old
 -- name, "Fidel Classroom" — the rename above runs first, so this

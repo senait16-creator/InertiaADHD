@@ -143,6 +143,39 @@ creating routine-workspace
 projects some other way, or for editing a routine's steps beyond the
 tap/drag board itself.
 
+A step can also be flagged (via its `kind` column — currently only set
+through a one-off SQL update, see the `video_panel` block in
+`supabase/seed_morning_routine.sql`) to open a secondary screen of video
+cards instead of cycling its own status directly when tapped — the
+Stretch step in Morning Routine works this way. That status cycle still
+exists; it just moves onto the same card, reused as the panel's own
+header. Each card stores a video URL, display title, optional duration,
+optional note, and display order:
+
+- **Adding a video** — tap **+ Add Video**, paste any common YouTube
+  link shape (`youtube.com/watch?v=…`, `youtu.be/…`, Shorts, or embed
+  URLs). The thumbnail and title are derived automatically: the
+  thumbnail from YouTube's standard thumbnail URL pattern (falling back
+  to a lower resolution if the highest one isn't available for that
+  video), the title via YouTube's public oEmbed endpoint — but only
+  when the title field is still empty, so it never silently overwrites
+  something typed by hand. A **↻** button next to the title always
+  force-refetches on demand.
+- **Editing a video** — tap the pencil icon on any card to change its
+  URL, title, duration, note, or supply a custom thumbnail URL that
+  overrides the automatic one. Replacing the URL re-derives the
+  thumbnail (and the title, if it was still on its auto-fetched value).
+- **A non-YouTube or unreachable URL** doesn't block the panel — the
+  card just shows a generic placeholder ("Preview unavailable") and
+  stays fully editable.
+- Tapping a card's thumbnail/title (not the pencil) opens its URL in a
+  new tab. Deleting is available from the same edit modal.
+
+The five starting cards (once seeded) aren't a finished routine to
+maintain — they're a small, disposable experiment: try one for a week,
+then replace or keep it. There's no cap on how many cards a panel can
+hold.
+
 ### 5. Routine Insights
 
 Every routine board quietly logs a permanent history row each time a

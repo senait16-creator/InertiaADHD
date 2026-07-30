@@ -338,3 +338,54 @@ export function updateRelationship(id, fields) {
 export function deleteRelationship(id) {
   writeAllRelationships(readAllRelationships().filter((p) => p.id !== id));
 }
+
+// ---------------- Routine step videos (see js/routineBoard.js) ----------------
+// Video cards for a 'video_panel' kind step — first used for Stretch.
+
+const STEP_VIDEOS_KEY = "inertiaadhd_demo_step_videos";
+
+function readAllStepVideos() {
+  try {
+    const raw = localStorage.getItem(STEP_VIDEOS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAllStepVideos(videos) {
+  localStorage.setItem(STEP_VIDEOS_KEY, JSON.stringify(videos));
+}
+
+export function listStepVideos(stepId) {
+  return readAllStepVideos()
+    .filter((v) => v.step_id === stepId)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function addStepVideo(fields) {
+  const videos = readAllStepVideos();
+  const video = {
+    id: makeId(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+  videos.push(video);
+  writeAllStepVideos(videos);
+  return video;
+}
+
+export function updateStepVideo(id, fields) {
+  const videos = readAllStepVideos();
+  const video = videos.find((v) => v.id === id);
+  if (!video) return null;
+  Object.assign(video, fields);
+  video.updated_at = new Date().toISOString();
+  writeAllStepVideos(videos);
+  return video;
+}
+
+export function deleteStepVideo(id) {
+  writeAllStepVideos(readAllStepVideos().filter((v) => v.id !== id));
+}

@@ -141,6 +141,14 @@ alter table public.routine_steps add column if not exists track_duration boolean
 -- "Edit Routine Item" modal.
 alter table public.routine_steps add column if not exists subtitle text;
 
+-- Lets a step open something other than the normal tap cycle — currently
+-- just 'video_panel' (a secondary screen of video cards, e.g. Stretch;
+-- see routine_step_videos below and openVideoPanel in js/routineBoard.js).
+-- Null/anything else keeps the standard Available -> Ready -> In
+-- Progress -> Complete behavior. No in-app UI sets this yet — flip it
+-- with a one-off SQL update, the same way a step's icon gets changed.
+alter table public.routine_steps add column if not exists kind text;
+
 create index if not exists routine_steps_project_sort_idx
   on public.routine_steps (project_id, sort_order);
 
@@ -423,4 +431,68 @@ create policy "Users can update their own relationships"
 drop policy if exists "Users can delete their own relationships" on public.relationships;
 create policy "Users can delete their own relationships"
   on public.relationships for delete
+  using (auth.uid() = user_id);
+
+-- Video cards for a 'video_panel' kind routine step (see js/routineBoard.js
+-- — first used for Stretch). Not a finalized routine: the point is being
+-- able to swap a card's url/title/thumbnail after trying it for a week,
+-- without deleting and rebuilding the card. step_id deliberately has no
+-- foreign key (same reasoning as routine_completions' step_id) so a
+-- step rename never orphans its videos. thumbnail_url is either a
+-- manual override or the auto-derived YouTube thumbnail computed at
+-- save time (see youtubeThumbnailUrl in js/routineBoard.js) — stored
+-- rather than recomputed on every render so a custom override sticks.
+create table if not exists public.routine_step_videos (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  step_id uuid not null,
+  url text not null,
+  title text,
+  thumbnail_url text,
+  duration text,
+  note text,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists routine_step_videos_step_sort_idx
+  on public.routine_step_videos (step_id, sort_order);
+
+create or replace function public.set_routine_step_videos_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_routine_step_videos_updated_at on public.routine_step_videos;
+create trigger set_routine_step_videos_updated_at
+  before update on public.routine_step_videos
+  for each row
+  execute function public.set_routine_step_videos_updated_at();
+
+alter table public.routine_step_videos enable row level security;
+
+drop policy if exists "Users can view their own step videos" on public.routine_step_videos;
+create policy "Users can view their own step videos"
+  on public.routine_step_videos for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own step videos" on public.routine_step_videos;
+create policy "Users can insert their own step videos"
+  on public.routine_step_videos for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own step videos" on public.routine_step_videos;
+create policy "Users can update their own step videos"
+  on public.routine_step_videos for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own step videos" on public.routine_step_videos;
+create policy "Users can delete their own step videos"
+  on public.routine_step_videos for delete
   using (auth.uid() = user_id);

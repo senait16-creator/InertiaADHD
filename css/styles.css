@@ -855,6 +855,14 @@ button {
   margin-bottom: 1.5rem;
 }
 
+/* An author-stylesheet display rule at equal specificity to the
+   browser's own [hidden] { display: none } wins the tie (see the same
+   fix on .overflow-btn) — needed here since the video panel toggles
+   this board's hidden attribute to show/hide it. */
+.routine-board[hidden] {
+  display: none;
+}
+
 @media (min-width: 480px) {
   .routine-board {
     grid-template-columns: repeat(3, 1fr);
@@ -1804,4 +1812,156 @@ button {
 
 .person-form-actions .btn-primary {
   flex: 1;
+}
+
+/* ---------------- Video panel (a 'video_panel' kind routine step, e.g.
+   Stretch — see openVideoPanel in js/routineBoard.js) ---------------- */
+
+.video-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.video-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.video-open-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.video-thumb-wrap {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+
+.video-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  color: var(--text-muted);
+}
+
+.video-thumb-placeholder svg {
+  width: 26px;
+  height: 26px;
+}
+
+.video-thumb-placeholder span {
+  font-size: 0.66rem;
+}
+
+.video-duration-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.video-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.6rem 0.7rem 0.15rem;
+  line-height: 1.3;
+}
+
+.video-note {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 0 0.7rem 0.6rem;
+}
+
+.video-edit-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.video-edit-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.add-video-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: transparent;
+  border: 1.5px dashed #d8d2c5;
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  padding: 0.9rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.field-with-button {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.modal form .field-with-button input {
+  flex: 1;
+  margin-top: 0;
+}
+
+.field-with-button button {
+  flex-shrink: 0;
+  width: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.field-with-button button svg {
+  width: 18px;
+  height: 18px;
 }

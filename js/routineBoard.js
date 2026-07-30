@@ -161,6 +161,117 @@ async function recordCompletion(project, step, completedAt) {
   }
 }
 
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value ?? "";
+  return div.innerHTML;
+}
+
+// ---------------- Video panel (a 'video_panel' kind step, e.g. Stretch) ----------------
+// Supports youtube.com/watch?v=, youtu.be/, youtube.com/shorts/, and
+// youtube.com/embed/ — the common shapes a pasted link comes in.
+function extractYouTubeId(url) {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "").replace(/^m\./, "");
+    if (host === "youtu.be") return u.pathname.slice(1).split("/")[0] || null;
+    if (host === "youtube.com" || host === "music.youtube.com") {
+      if (u.pathname === "/watch") return u.searchParams.get("v");
+      const shorts = u.pathname.match(/^\/shorts\/([^/?]+)/);
+      if (shorts) return shorts[1];
+      const embed = u.pathname.match(/^\/embed\/([^/?]+)/);
+      if (embed) return embed[1];
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function youtubeThumbnailUrl(videoId) {
+  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+}
+
+// A video's thumbnail_url is "auto" (not a manual override) when it
+// matches exactly what we'd derive from the url right now — used so the
+// edit form only shows something in "Custom thumbnail URL" when the
+// person actually set one.
+function isAutoThumbnail(video) {
+  const videoId = extractYouTubeId(video.url);
+  return !!videoId && video.thumbnail_url === youtubeThumbnailUrl(videoId);
+}
+
+// Best-effort only — YouTube's oEmbed endpoint is public and needs no
+// API key, but this still has to fail silently (network error, private
+// or deleted video, no network at all) without blocking Save; the title
+// stays manually editable either way.
+async function fetchYouTubeTitle(url) {
+  try {
+    const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.title || null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchStepVideos(stepId) {
+  if (!isConfigured) return demoStore.listStepVideos(stepId);
+  const { data, error } = await supabase
+    .from("routine_step_videos")
+    .select("*")
+    .eq("step_id", stepId)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("Failed to load step videos:", error);
+    return [];
+  }
+  return data;
+}
+
+async function persistNewVideo(project, step, fields) {
+  const payload = { ...fields, step_id: step.id, user_id: project.user_id };
+  if (!isConfigured) return demoStore.addStepVideo(payload);
+  try {
+    const { data, error } = await supabase.from("routine_step_videos").insert(payload).select().single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Failed to add video:", error);
+    return null;
+  }
+}
+
+async function persistVideoUpdate(video, fields) {
+  if (!isConfigured) return demoStore.updateStepVideo(video.id, fields);
+  try {
+    const { data, error } = await supabase
+      .from("routine_step_videos")
+      .update(fields)
+      .eq("id", video.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Failed to update video:", error);
+    return null;
+  }
+}
+
+async function persistVideoDelete(video) {
+  if (!isConfigured) {
+    demoStore.deleteStepVideo(video.id);
+    return;
+  }
+  try {
+    await supabase.from("routine_step_videos").delete().eq("id", video.id);
+  } catch (error) {
+    console.error("Failed to delete video:", error);
+  }
+}
+
 // "6 min" — the gap between a step turning in progress and turning
 // complete, so a completed step shows roughly how long it took.
 function formatDuration(ms) {
@@ -279,10 +390,28 @@ export async function initRoutineBoard(container, project) {
     persistStepEdits(editingStep);
     const el = nodeById.get(editingStep.id);
     if (el) updateCard(el, editingStep);
+    if (videoPanelHeaderCard && videoPanelStep && videoPanelStep.id === editingStep.id) {
+      updateCard(videoPanelHeaderCard, videoPanelStep);
+    }
     closeEditModal();
   });
 
-  function cardEl(step) {
+  // A step's card normally advances its own tap-cycle; a 'video_panel'
+  // kind step (see openVideoPanel below) opens its panel instead when
+  // tapped from the main grid — but the same card reused as that panel's
+  // own header still needs to advance the cycle like any other step, so
+  // cardEl takes the tap handler as a parameter instead of hardcoding it.
+  function handleMainGridTap(step) {
+    if (step.kind === "video_panel") openVideoPanel(step);
+    else advanceState(step);
+  }
+
+  function handlePanelHeaderTap(step) {
+    advanceState(step);
+    if (videoPanelHeaderCard) updateCard(videoPanelHeaderCard, step);
+  }
+
+  function cardEl(step, onTap = handleMainGridTap) {
     const el = document.createElement("div");
     el.className = "routine-card";
     el.dataset.id = step.id;
@@ -295,7 +424,7 @@ export async function initRoutineBoard(container, project) {
       <div class="routine-subtitle"></div>
       <div class="routine-duration"></div>
     `;
-    el.addEventListener("pointerdown", (e) => onPointerDown(e, step));
+    el.addEventListener("pointerdown", (e) => onPointerDown(e, step, onTap));
     return el;
   }
 
@@ -409,15 +538,16 @@ export async function initRoutineBoard(container, project) {
   const LONG_PRESS_MS = 500;
   let drag = null;
 
-  function onPointerDown(e, step) {
+  function onPointerDown(e, step, onTap) {
     if (e.button !== undefined && e.button > 0) return;
-    const el = nodeById.get(step.id);
+    const el = e.currentTarget;
     el.setPointerCapture(e.pointerId);
     const rect = el.getBoundingClientRect();
     drag = {
       pointerId: e.pointerId,
       step,
       el,
+      onTap,
       startX: e.clientX,
       startY: e.clientY,
       originLeft: rect.left,
@@ -446,6 +576,10 @@ export async function initRoutineBoard(container, project) {
       // Deliberately not too sensitive — a small wobble while tapping
       // shouldn't accidentally start a drag.
       if (Math.hypot(dx, dy) < 16) return;
+      // Only cards in the main grid are reorderable — e.g. a step's own
+      // card reused as its video panel's header has nowhere to be
+      // dropped, so it shouldn't lift into a drag at all.
+      if (!board.contains(drag.el)) return;
       if (drag.longPressTimer) {
         clearTimeout(drag.longPressTimer);
         drag.longPressTimer = null;
@@ -497,7 +631,7 @@ export async function initRoutineBoard(container, project) {
 
   function onPointerUp(e) {
     if (!drag || e.pointerId !== drag.pointerId) return;
-    const { el, step, dragging, longPressFired } = drag;
+    const { el, step, onTap, dragging, longPressFired } = drag;
     if (drag.longPressTimer) clearTimeout(drag.longPressTimer);
     el.removeEventListener("pointermove", onPointerMove);
     el.removeEventListener("pointerup", onPointerUp);
@@ -519,9 +653,246 @@ export async function initRoutineBoard(container, project) {
       flip(() => renderBoard());
       persistReorder(project, steps);
     } else if (!longPressFired) {
-      advanceState(step);
+      onTap(step);
     }
     drag = null;
+  }
+
+  // --- Video panel: a secondary screen of video cards for a
+  // 'video_panel' kind step (see handleMainGridTap above). ---
+  const videoPanelEl = document.createElement("div");
+  videoPanelEl.className = "video-panel";
+  videoPanelEl.hidden = true;
+  container.appendChild(videoPanelEl);
+
+  const videoEditModal = document.createElement("div");
+  videoEditModal.className = "modal-overlay";
+  videoEditModal.innerHTML = `
+    <div class="modal">
+      <h2 id="video-edit-title">Add Video</h2>
+      <form id="video-edit-form">
+        <label>
+          Video URL
+          <input type="url" id="video-edit-url" required autocomplete="off" placeholder="https://youtube.com/watch?v=...">
+        </label>
+        <label>
+          Display title
+          <div class="field-with-button">
+            <input type="text" id="video-edit-title-input" autocomplete="off" placeholder="e.g. 10-Minute Morning Stretch">
+            <button type="button" id="video-edit-refetch" title="Fetch title from URL">${iconMarkup("repeat-2")}</button>
+          </div>
+        </label>
+        <label>
+          Duration (optional)
+          <input type="text" id="video-edit-duration" autocomplete="off" placeholder="e.g. 10 min">
+        </label>
+        <label>
+          Custom thumbnail URL (optional)
+          <input type="url" id="video-edit-thumb" autocomplete="off" placeholder="https://...">
+        </label>
+        <label>
+          Note (optional)
+          <input type="text" id="video-edit-note" autocomplete="off" placeholder="e.g. Hips, Gentle">
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-danger" id="video-delete-btn" hidden>Delete</button>
+          <button type="button" class="btn-secondary" id="video-edit-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(videoEditModal);
+
+  const videoEditTitleEl = videoEditModal.querySelector("#video-edit-title");
+  const videoEditFormEl = videoEditModal.querySelector("#video-edit-form");
+  const videoUrlInput = videoEditModal.querySelector("#video-edit-url");
+  const videoTitleInput = videoEditModal.querySelector("#video-edit-title-input");
+  const videoDurationInput = videoEditModal.querySelector("#video-edit-duration");
+  const videoThumbInput = videoEditModal.querySelector("#video-edit-thumb");
+  const videoNoteInput = videoEditModal.querySelector("#video-edit-note");
+  const videoRefetchBtn = videoEditModal.querySelector("#video-edit-refetch");
+  const videoDeleteBtn = videoEditModal.querySelector("#video-delete-btn");
+  const videoCancelBtn = videoEditModal.querySelector("#video-edit-cancel");
+
+  let editingVideo = null;
+  let videoPanelStep = null;
+  let videoPanelHeaderCard = null;
+  let videoGridEl = null;
+  let videos = [];
+
+  function openVideoEditModal(video) {
+    editingVideo = video;
+    videoEditTitleEl.textContent = video ? "Edit Video" : "Add Video";
+    videoUrlInput.value = video?.url || "";
+    videoTitleInput.value = video?.title || "";
+    videoDurationInput.value = video?.duration || "";
+    videoThumbInput.value = video && !isAutoThumbnail(video) ? video.thumbnail_url || "" : "";
+    videoNoteInput.value = video?.note || "";
+    videoDeleteBtn.hidden = !video;
+    videoEditModal.classList.add("open");
+  }
+
+  function closeVideoEditModal() {
+    videoEditModal.classList.remove("open");
+    editingVideo = null;
+  }
+
+  videoCancelBtn.addEventListener("click", closeVideoEditModal);
+  videoEditModal.addEventListener("click", (e) => {
+    if (e.target === videoEditModal) closeVideoEditModal();
+  });
+
+  async function fillTitleIfEmpty(url) {
+    if (!url || videoTitleInput.value.trim()) return;
+    const title = await fetchYouTubeTitle(url);
+    if (title) videoTitleInput.value = title;
+  }
+
+  videoUrlInput.addEventListener("blur", () => fillTitleIfEmpty(videoUrlInput.value.trim()));
+
+  videoRefetchBtn.addEventListener("click", async () => {
+    const url = videoUrlInput.value.trim();
+    if (!url) return;
+    const title = await fetchYouTubeTitle(url);
+    if (title) videoTitleInput.value = title;
+  });
+
+  videoEditFormEl.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = videoUrlInput.value.trim();
+    if (!url) return;
+    const customThumb = videoThumbInput.value.trim();
+    const videoId = extractYouTubeId(url);
+    const fields = {
+      url,
+      title: videoTitleInput.value.trim() || null,
+      duration: videoDurationInput.value.trim() || null,
+      note: videoNoteInput.value.trim() || null,
+      thumbnail_url: customThumb || (videoId ? youtubeThumbnailUrl(videoId) : null),
+    };
+
+    if (editingVideo) {
+      const updated = await persistVideoUpdate(editingVideo, fields);
+      if (updated) {
+        const idx = videos.findIndex((v) => v.id === editingVideo.id);
+        if (idx !== -1) videos[idx] = updated;
+      }
+    } else {
+      const created = await persistNewVideo(project, videoPanelStep, { ...fields, sort_order: videos.length });
+      if (created) videos.push(created);
+    }
+
+    closeVideoEditModal();
+    renderVideoGrid();
+  });
+
+  videoDeleteBtn.addEventListener("click", async () => {
+    if (!editingVideo) return;
+    await persistVideoDelete(editingVideo);
+    videos = videos.filter((v) => v.id !== editingVideo.id);
+    closeVideoEditModal();
+    renderVideoGrid();
+  });
+
+  function videoCardEl(video) {
+    const el = document.createElement("div");
+    el.className = "video-card";
+    el.dataset.id = video.id;
+
+    const videoId = extractYouTubeId(video.url);
+    const thumbUrl = video.thumbnail_url || (videoId ? youtubeThumbnailUrl(videoId) : null);
+    const durationBadge = video.duration
+      ? `<span class="video-duration-badge">${escapeHtml(video.duration)}</span>`
+      : "";
+    const thumbInner = thumbUrl
+      ? `<img class="video-thumb" src="${escapeHtml(thumbUrl)}" alt="" loading="lazy">`
+      : `<div class="video-thumb-placeholder">${iconMarkup("stretching")}<span>Preview unavailable</span></div>`;
+
+    el.innerHTML = `
+      <button type="button" class="video-edit-btn" aria-label="Edit video">${iconMarkup("pencil")}</button>
+      <a class="video-open-link" href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="video-thumb-wrap">${thumbInner}${durationBadge}</div>
+        <div class="video-title">${escapeHtml(video.title || "Untitled video")}</div>
+        ${video.note ? `<div class="video-note">${escapeHtml(video.note)}</div>` : ""}
+      </a>
+    `;
+
+    el.querySelector(".video-edit-btn").addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openVideoEditModal(video);
+    });
+
+    const img = el.querySelector(".video-thumb");
+    if (img) {
+      img.addEventListener("load", () => {
+        // YouTube returns a 120x90 gray placeholder (not a 404) when
+        // maxresdefault.jpg doesn't exist for a video — swap to
+        // hqdefault.jpg, which is always available, when that happens.
+        if (img.naturalWidth === 120 && img.naturalHeight === 90 && videoId) {
+          img.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        }
+      });
+      img.addEventListener("error", () => {
+        const wrap = img.closest(".video-thumb-wrap");
+        if (wrap) wrap.innerHTML = `<div class="video-thumb-placeholder">${iconMarkup("stretching")}<span>Preview unavailable</span></div>${durationBadge}`;
+      });
+    }
+
+    return el;
+  }
+
+  function renderVideoGrid() {
+    while (videoGridEl.children.length > 1) {
+      videoGridEl.removeChild(videoGridEl.lastChild);
+    }
+    for (const video of videos) {
+      videoGridEl.appendChild(videoCardEl(video));
+    }
+  }
+
+  function renderVideoPanelShell() {
+    videoPanelEl.innerHTML = "";
+
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "back-link nav-back";
+    back.textContent = `‹ ${project.name}`;
+    back.addEventListener("click", closeVideoPanel);
+    videoPanelEl.appendChild(back);
+
+    videoPanelHeaderCard = cardEl(videoPanelStep, handlePanelHeaderTap);
+    updateCard(videoPanelHeaderCard, videoPanelStep);
+
+    videoGridEl = document.createElement("div");
+    videoGridEl.className = "video-panel-grid";
+    videoGridEl.appendChild(videoPanelHeaderCard);
+    videoPanelEl.appendChild(videoGridEl);
+    renderVideoGrid();
+
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "add-video-row";
+    addBtn.textContent = "+ Add Video";
+    addBtn.addEventListener("click", () => openVideoEditModal(null));
+    videoPanelEl.appendChild(addBtn);
+  }
+
+  async function openVideoPanel(step) {
+    videoPanelStep = step;
+    board.hidden = true;
+    videoPanelEl.hidden = false;
+    videoPanelEl.innerHTML = `<p class="subtitle">Loading…</p>`;
+    videos = await fetchStepVideos(step.id);
+    renderVideoPanelShell();
+  }
+
+  function closeVideoPanel() {
+    videoPanelStep = null;
+    videoPanelHeaderCard = null;
+    videoPanelEl.hidden = true;
+    board.hidden = false;
   }
 
   renderBoard();
