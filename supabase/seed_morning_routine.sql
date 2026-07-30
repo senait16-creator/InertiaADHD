@@ -22,7 +22,7 @@ cross join (
     ('Brush teeth', 'smile', 'lavender', 4, null),
     ('Wash face', 'smile-plus', 'blue', 5, null),
     ('Shower', 'shower-head', 'sage', 6, null),
-    ('Stretch', 'activity', 'green', 7, null),
+    ('Stretch', 'stretching', 'green', 7, null),
     ('Exercise', 'dumbbell', 'amber', 8, null),
     ('Bible Study', 'book-heart', 'lavender', 9, null)
 ) as v(name, icon, color, sort_order, link)
@@ -57,6 +57,15 @@ from public.projects p
 where rs.project_id = p.id
   and p.name = 'Morning Routine'
   and rs.name = 'Wash face';
+
+-- Updates the Stretch icon even if it was already seeded with the
+-- older, non-stretch-specific 'activity' icon. Safe to re-run.
+update public.routine_steps rs
+set icon = 'stretching'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Morning Routine'
+  and rs.name = 'Stretch';
 
 -- Six more steps, added after the original ten. A separate insert (rather
 -- than adding to the values list above) because that first insert only
