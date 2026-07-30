@@ -785,6 +785,14 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* An author-stylesheet display rule at equal specificity to the
+   browser's own [hidden] { display: none } wins the tie, which would
+   otherwise defeat the hidden attribute on a hidden overflow-btn (see
+   person.html, hidden until an existing person loads). */
+.overflow-btn[hidden] {
+  display: none;
+}
+
 .overflow-btn:active {
   background: var(--surface-muted);
 }
@@ -1560,4 +1568,240 @@ button {
   .item-chart {
     display: none;
   }
+}
+
+/* ---------------- Relationships (relationships.html, person.html) ----------------
+   Reflection and stewardship, not a CRM: no health scores, streaks, or
+   "overdue" red flags anywhere below. */
+
+.filter-scroll {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+  margin-bottom: 1.25rem;
+  scrollbar-width: none;
+}
+
+.filter-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.person-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.person-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+
+.person-card:active {
+  transform: scale(0.99);
+}
+
+.person-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.person-avatar[data-color="sage"] { background: rgba(var(--color-sage), 0.22); }
+.person-avatar[data-color="green"] { background: rgba(var(--color-green), 0.22); }
+.person-avatar[data-color="blue"] { background: rgba(var(--color-blue), 0.22); }
+.person-avatar[data-color="amber"] { background: rgba(var(--color-amber), 0.22); }
+.person-avatar[data-color="lavender"] { background: rgba(var(--color-lavender), 0.22); }
+
+.person-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.person-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.person-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-tags {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.person-tag {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.reconnect-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.4rem;
+}
+
+.add-person-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: transparent;
+  border: 1.5px dashed #d8d2c5;
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  padding: 0.9rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.empty-note {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+/* Tap-to-select field pickers on person.html — .chip-group[data-multi]
+   allows several selected at once (Season, Feelings); without it,
+   selecting one clears the rest (Circle, Investment Intention). */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.chip[aria-checked="true"] {
+  background: rgba(var(--color-sage), 0.18);
+  border-color: rgb(var(--color-sage));
+  color: var(--text);
+}
+
+.chip:active {
+  transform: scale(0.96);
+}
+
+/* Full-page form (person.html) — same visual spec as .modal form, just
+   not nested inside a modal overlay. */
+.person-form {
+  max-width: 100%;
+}
+
+.person-form .field {
+  margin-bottom: 1.4rem;
+}
+
+.person-form .field-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.person-form .field-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: -0.3rem 0 0.6rem;
+}
+
+.person-form input[type="text"],
+.person-form input[type="date"],
+.person-form textarea {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.person-form textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.person-form input:focus,
+.person-form textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.person-form-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+}
+
+.person-form-actions .btn-primary {
+  flex: 1;
 }

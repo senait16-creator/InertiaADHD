@@ -176,19 +176,56 @@ chart's bucket size and the underlying averaging window). It shows:
 
 ### 6. Maintenance
 
-Maintenance (`maintenance.html`) is a list of self-care areas (Hair, Skin,
-Nails, Feet, Body, Hygiene — see `js/maintenanceAreas.js`). Only **Hair** is
-wired up to a real board for now; the rest show a dimmed "soon" row until
-each gets built the same way.
+Maintenance (`maintenance.html`) is a list of self-care areas (Hair,
+Relationships, Skin, Nails, Feet, Body, Hygiene — see
+`js/maintenanceAreas.js`). Hair and Relationships are wired up to real
+boards; the rest show a dimmed "soon" row until each gets built the
+same way.
 
-A category board (`category.html?id=hair`) has four sections — Care, Learn
-/ Links, Products, What I Know — each a plain list you add/edit/delete/
-reorder yourself (tap a row's pencil to edit, press-and-drag to reorder,
-"+ Add" to create). An item is just a title, optional notes, and an
-optional link; tapping a row with a link opens it, otherwise it opens the
-edit form. Deliberately no scheduling, streaks, history, or reminders —
-it's a reference list, not a tracker, so Maintenance stays exactly as
-lightweight as everything is meant to add or edit through it.
+A category board (`category.html?id=hair`) — Hair's board — has four
+sections: Care, Learn / Links, Products, What I Know, each a plain list
+you add/edit/delete/reorder yourself (tap a row's pencil to edit,
+press-and-drag to reorder, "+ Add" to create). An item is just a title,
+optional notes, and an optional link; tapping a row with a link opens
+it, otherwise it opens the edit form. Deliberately no scheduling,
+streaks, history, or reminders — it's a reference list, not a tracker.
+
+Relationships (`relationships.html`, `person.html`) is a different
+shape — one profile per person, not a plain list — so it's its own
+pair of pages rather than another category board (see
+`js/maintenanceAreas.js`'s `href` override). The point is noticing your
+relationship landscape and being intentional about it, not tracking
+"performance": no health scores, streaks, or "overdue" warnings
+anywhere. Tap **+ Add Person** for a profile with:
+
+- **Relationship Circle** — single-select (Core / Go-To, Close Friend,
+  Community, Growing Friendship, Distant Friend, Acquaintance, Family,
+  Mentor, Professional).
+- **Current Season** — multi-select tags (Flourishing, Growing, Stable,
+  Needs Tending, Gray Area, Reconciliation, Space, Boundaries) — an
+  honest description of the present, not a rating.
+- **Investment Intention** — single-select (Invest More, Maintain,
+  Occasional Check-ins, Give Space, Revisit Later).
+- **How I Feel Around Them** — multi-select tags (Safe, Peaceful,
+  Energized, Seen, Comfortable, Curious, Uncertain, Tense, Drained,
+  Anxious, Guarded) — a private observation, not a judgment of them.
+- **Last Meaningful Connection** — a date, never turned into a
+  countdown or "overdue" flag.
+- **Relationship Intention** — a short free-text answer to "What does
+  loving this person well look like in this season?"
+- **Notes** — free text for life updates, prayer needs, birthdays,
+  anything worth remembering.
+
+The list page filters by circle/season/investment intention, plus a
+gentle **Reconnect** view: people whose season reads positive/stable
+(at least one of Flourishing/Growing/Stable — see
+`isReconnectCandidate` in `js/relationshipOptions.js`), whose stated
+intention is to stay engaged (Invest More/Maintain/Occasional
+Check-ins), and who haven't had a connection logged in 30+ days (or
+ever). It's presented as a quiet aside under the card ("You haven't had
+a meaningful connection with Maya in a while"), never a red flag or a
+count. Long-press a card for Edit/Delete, same pattern as a project
+card.
 
 ### 7. Navigation-hub projects (e.g. Fidel Classroom)
 
@@ -262,9 +299,11 @@ insights.html             Routine Insights (reflection, not motivation)
 projects.html               the original project dashboard (Add Project modal)
 maintenance.html              list of self-care areas (Hair is real, rest "soon")
 category.html                    a maintenance area's board (e.g. Hair)
-vision.html                        calm placeholder
-reminders.html                       calm placeholder
-project.html                            single project view (edit / delete / routine board)
+relationships.html                  list of people (Maintenance → Relationships)
+person.html                            one person's relationship profile
+vision.html                               calm placeholder
+reminders.html                              calm placeholder
+project.html                                    single project view (edit / delete / routine board)
 
 css/styles.css          shared styles
 
@@ -277,16 +316,19 @@ js/routineBoard.js               visual routine board (tap-to-advance / drag)
 js/insights.js                     Routine Insights — reads routine_completions only
 js/navBoard.js                        navigation-hub board (folder / link panels)
 js/maintenanceAreas.js                   fixed list of maintenance areas
-js/home.js                                 home screen logic
-js/login.js                                  sign-in logic
-js/setPassword.js                              set/change password logic
-js/routines.js                                   routines list logic
-js/projects.js                                     projects dashboard logic
-js/maintenance.js                                    maintenance areas list logic
-js/category.js                                         maintenance board (add/edit/delete/reorder)
-js/vision.js                                             vision placeholder logic
-js/reminders.js                                            reminders placeholder logic
-js/project.js                                                project detail logic
+js/relationshipOptions.js                   fixed option lists + Reconnect heuristic
+js/relationships.js                            people list, filters, long-press menu
+js/person.js                                      one person's profile (create/edit/delete)
+js/home.js                                           home screen logic
+js/login.js                                            sign-in logic
+js/setPassword.js                                        set/change password logic
+js/routines.js                                             routines list logic
+js/projects.js                                               projects dashboard logic
+js/maintenance.js                                              maintenance areas list logic
+js/category.js                                                   maintenance board (add/edit/delete/reorder)
+js/vision.js                                                       vision placeholder logic
+js/reminders.js                                                      reminders placeholder logic
+js/project.js                                                          project detail logic
 
 supabase/schema.sql                database schema + RLS policies
 supabase/seed_morning_routine.sql    one-off seed for Morning Routine
@@ -324,11 +366,16 @@ so the page stays about the workspace, not managing the project.
 Inactivity nudges tied to a nav board's "in progress" status panel are a
 deliberate future version, not built yet.
 
-Three exceptions so far: the routine workspace (a hand-picked prototype of
+Four exceptions so far: the routine workspace (a hand-picked prototype of
 drag-and-drop reordering and a tap-to-advance-state interaction model),
-the Maintenance/Hair board (add/edit/delete/reorder text entries), and the
+the Maintenance/Hair board (add/edit/delete/reorder text entries), the
 navigation-hub workspace (link/folder/status panels, first used for
-Fidel Classroom) — all meant to validate a feel before any general
-system gets built around them. Maintenance deliberately stops at plain
-text + optional links: no scheduling, streaks, history, or reminders, so
-it stays a reference list rather than another tracker.
+Fidel Classroom), and Relationships (its own richer per-person profile,
+since a person doesn't fit the plain title/notes/link shape the other
+Maintenance areas use) — all meant to validate a feel before any general
+system gets built around them. Maintenance's Hair board deliberately
+stops at plain text + optional links: no scheduling, streaks, history,
+or reminders, so it stays a reference list rather than another tracker.
+Relationships follows the same spirit in its own vocabulary: Season and
+Feelings are honest descriptions, never a score, and Reconnect is a
+quiet aside, never an overdue warning.

@@ -20,7 +20,7 @@ listEl.innerHTML = MAINTENANCE_AREAS.map((area) => {
     <span class="entry-arrow">›</span>
   `;
   return area.real
-    ? `<a class="entry-panel" href="category.html?id=${area.key}">${inner}</a>`
+    ? `<a class="entry-panel" href="${area.href || `category.html?id=${area.key}`}">${inner}</a>`
     : `<div class="entry-panel dim">${inner}</div>`;
 }).join("");
 

@@ -276,3 +276,65 @@ export function setNavItemStatus(id, status) {
   writeAllNavItems(items);
   return item;
 }
+
+// ---------------- Relationships (see relationships.html/js/person.js) ----------------
+
+const RELATIONSHIPS_KEY = "inertiaadhd_demo_relationships";
+
+function readAllRelationships() {
+  try {
+    const raw = localStorage.getItem(RELATIONSHIPS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAllRelationships(people) {
+  localStorage.setItem(RELATIONSHIPS_KEY, JSON.stringify(people));
+}
+
+export function listRelationships() {
+  return readAllRelationships().sort(
+    (a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at)
+  );
+}
+
+export function getRelationship(id) {
+  return readAllRelationships().find((p) => p.id === id) || null;
+}
+
+export function addRelationship(fields) {
+  const people = readAllRelationships();
+  const person = {
+    id: makeId(),
+    name: fields.name,
+    circle: fields.circle || null,
+    season: fields.season || [],
+    investment_intention: fields.investment_intention || null,
+    feelings: fields.feelings || [],
+    last_connection_at: fields.last_connection_at || null,
+    intention: fields.intention || null,
+    notes: fields.notes || null,
+    sort_order: people.length,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  people.push(person);
+  writeAllRelationships(people);
+  return person;
+}
+
+export function updateRelationship(id, fields) {
+  const people = readAllRelationships();
+  const person = people.find((p) => p.id === id);
+  if (!person) return null;
+  Object.assign(person, fields);
+  person.updated_at = new Date().toISOString();
+  writeAllRelationships(people);
+  return person;
+}
+
+export function deleteRelationship(id) {
+  writeAllRelationships(readAllRelationships().filter((p) => p.id !== id));
+}
