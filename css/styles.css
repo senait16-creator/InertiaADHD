@@ -984,6 +984,15 @@ button {
   border-color: rgba(var(--color-green), 0.45);
 }
 
+/* "Not Today" (see setNotToday in js/routineBoard.js) — set from the
+   long-press edit modal, not part of the tap cycle above. Sinks below
+   even Complete (see statusRank), so it reads as "set aside for today"
+   rather than another status to progress through. */
+.routine-card.is-not-today {
+  background: rgba(var(--color-blue), 0.16);
+  border-color: rgba(var(--color-blue), 0.45);
+}
+
 .complete-badge {
   position: absolute;
   top: -6px;

@@ -171,6 +171,35 @@ export function listRoutineCompletions() {
   return readAllCompletions();
 }
 
+// ---------------- Routine skips (see js/insights.js) ----------------
+// A permanent log of every time a step was marked "Not Today" — same
+// shape/purpose as routine completions above, just for the opposite event.
+
+const SKIPS_KEY = "inertiaadhd_demo_routine_skips";
+
+function readAllSkips() {
+  try {
+    const raw = localStorage.getItem(SKIPS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAllSkips(rows) {
+  localStorage.setItem(SKIPS_KEY, JSON.stringify(rows));
+}
+
+export function addRoutineSkip(entry) {
+  const rows = readAllSkips();
+  rows.push({ id: makeId(), created_at: new Date().toISOString(), ...entry });
+  writeAllSkips(rows);
+}
+
+export function listRoutineSkips() {
+  return readAllSkips();
+}
+
 // ---------------- Maintenance items (see js/category.js) ----------------
 
 const MAINTENANCE_KEY = "inertiaadhd_demo_maintenance_items";

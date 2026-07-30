@@ -185,6 +185,17 @@ maintain — they're a small, disposable experiment: try one for a week,
 then replace or keep it. There's no cap on how many cards a panel can
 hold.
 
+Long-press a step and check **Not today** for a third option beyond the
+usual done/not-done: the card turns blue and sinks below even Complete
+(see `statusRank`), for a step you're deliberately setting aside for
+today rather than skipping past on the way to Complete. It isn't part
+of the normal tap cycle — a plain tap on a "Not Today" card just undoes
+it, back to Available — and it resets on its own the next day, same as
+Complete does. Each time a step is marked this way it's also logged to
+a permanent `routine_skips` table (mirroring how completions are logged
+to `routine_completions`), so a future Insights view could eventually
+notice a skip pattern the same way it already notices completions.
+
 ### 5. Routine Insights
 
 Every routine board quietly logs a permanent history row each time a

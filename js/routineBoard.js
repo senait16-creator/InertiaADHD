@@ -172,6 +172,31 @@ async function recordCompletion(project, step, completedAt) {
   }
 }
 
+// Logs a permanent history row every time a step is marked "Not Today"
+// (see setNotToday) — same reasoning as recordCompletion above: the
+// step's own 'not_today' status only reflects today and resets by
+// tomorrow, so this is what a future Insights view would read to notice
+// a skip pattern.
+async function recordSkip(project, step) {
+  const entry = {
+    project_id: project.id,
+    step_id: step.id,
+    step_name: step.name,
+    icon: step.icon || null,
+    color: step.color || null,
+    skipped_at: new Date().toISOString(),
+  };
+  if (!isConfigured) {
+    demoStore.addRoutineSkip(entry);
+    return;
+  }
+  try {
+    await supabase.from("routine_skips").insert(entry);
+  } catch (error) {
+    console.error("Failed to record routine skip:", error);
+  }
+}
+
 function escapeHtml(value) {
   const div = document.createElement("div");
   div.textContent = value ?? "";
@@ -322,11 +347,13 @@ export async function initRoutineBoard(container, project) {
   let steps = await fetchSteps(project.id);
   const nodeById = new Map();
 
-  // Daily reset: a step still marked done from an earlier calendar day
-  // goes back to not-done, so the board reflects today rather than
-  // carrying over yesterday's completions.
+  // Daily reset: a step still marked done (or "Not Today") from an
+  // earlier calendar day goes back to not-done, so the board reflects
+  // today rather than carrying over yesterday's completions or skips.
   const stale = steps.filter(
-    (step) => step.status === "complete" && !isSameLocalDay(step.updated_at)
+    (step) =>
+      (step.status === "complete" || step.status === "not_today") &&
+      !isSameLocalDay(step.updated_at)
   );
   for (const step of stale) {
     step.status = null;
@@ -359,6 +386,12 @@ export async function initRoutineBoard(container, project) {
             <span>Track duration — show a timer badge and record how long this step takes</span>
           </label>
         </div>
+        <div class="field">
+          <label class="field-checkbox">
+            <input type="checkbox" id="routine-edit-not-today">
+            <span>Not today — turns this step blue and moves it to the bottom of the board; a plain tap undoes it</span>
+          </label>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="routine-edit-cancel">Cancel</button>
           <button type="submit" class="btn-primary">Save</button>
@@ -372,6 +405,7 @@ export async function initRoutineBoard(container, project) {
   const editFormEl = editModal.querySelector("#routine-edit-form");
   const editSubtitleInput = editModal.querySelector("#routine-edit-subtitle");
   const editTrackDurationInput = editModal.querySelector("#routine-edit-track-duration");
+  const editNotTodayInput = editModal.querySelector("#routine-edit-not-today");
   const editCancelBtn = editModal.querySelector("#routine-edit-cancel");
 
   let editingStep = null;
@@ -381,6 +415,7 @@ export async function initRoutineBoard(container, project) {
     editTitleEl.textContent = `Edit "${step.name}"`;
     editSubtitleInput.value = step.subtitle || "";
     editTrackDurationInput.checked = !!step.track_duration;
+    editNotTodayInput.checked = step.status === "not_today";
     editModal.classList.add("open");
   }
 
@@ -396,9 +431,16 @@ export async function initRoutineBoard(container, project) {
   editFormEl.addEventListener("submit", (e) => {
     e.preventDefault();
     if (!editingStep) return;
+    const wasNotToday = editingStep.status === "not_today";
+    const markNotToday = editNotTodayInput.checked;
+
     editingStep.subtitle = editSubtitleInput.value.trim() || null;
     editingStep.track_duration = editTrackDurationInput.checked;
     persistStepEdits(editingStep);
+
+    if (markNotToday && !wasNotToday) setNotToday(editingStep);
+    else if (!markNotToday && wasNotToday) clearNotToday(editingStep);
+
     const el = nodeById.get(editingStep.id);
     if (el) updateCard(el, editingStep);
     if (videoPanelHeaderCard && videoPanelStep && videoPanelStep.id === editingStep.id) {
@@ -406,6 +448,30 @@ export async function initRoutineBoard(container, project) {
     }
     closeEditModal();
   });
+
+  // Sinks a step to the very bottom of the board for today (see
+  // statusRank) without touching anything else about it — the same
+  // step picks back up tomorrow, or right away if cleared here or via a
+  // plain tap (see advanceState's catch-all reset branch).
+  function setNotToday(step) {
+    flip(() => {
+      step.status = "not_today";
+      step.active = false;
+      step.in_progress_at = null;
+      step.completed_at = null;
+      renderBoard();
+    });
+    persistStatus(step);
+    recordSkip(project, step);
+  }
+
+  function clearNotToday(step) {
+    flip(() => {
+      step.status = null;
+      renderBoard();
+    });
+    persistStatus(step);
+  }
 
   function handlePanelHeaderTap(step) {
     advanceState(step);
@@ -449,19 +515,26 @@ export async function initRoutineBoard(container, project) {
     el.classList.toggle("is-ready", !!step.active);
     el.classList.toggle("is-inprogress", step.status === "in_progress");
     el.classList.toggle("is-complete", step.status === "complete");
+    el.classList.toggle("is-not-today", step.status === "not_today");
     el.classList.toggle("tracks-duration", !!step.track_duration);
     el.querySelector(".routine-subtitle").textContent = step.subtitle || "";
     el.querySelector(".routine-duration").textContent =
-      step.status === "complete" ? completionSummary(step) : "";
+      step.status === "complete"
+        ? completionSummary(step)
+        : step.status === "not_today"
+          ? "Not today"
+          : "";
   }
 
   // In progress steps rise to the top (what you're doing right now),
   // Ready steps come next (up next, so you can see at a glance which
   // few you've queued up), Available (untouched) steps keep their
-  // normal, manually reorderable order after that, and complete steps
-  // sink to the bottom — automatic, so what's in progress or still
-  // unfinished never gets lost.
+  // normal, manually reorderable order after that, complete steps sink
+  // to the bottom, and "Not Today" steps sink even further below those
+  // — automatic, so what's in progress or still unfinished never gets
+  // lost, and what's explicitly skipped stays out of the way.
   function statusRank(step) {
+    if (step.status === "not_today") return 4;
     if (step.status === "complete") return 3;
     if (step.status === "in_progress") return 0;
     if (step.active) return 1;
@@ -518,6 +591,10 @@ export async function initRoutineBoard(container, project) {
   //            completion timestamp, and stops the timer too if this
   //            step has duration tracking on.
   //   4th tap: back to Available (not started)
+  // A step marked "Not Today" (blue, see setNotToday) isn't part of this
+  // cycle — it falls through to the same catch-all branch a 4th tap
+  // hits, so a plain tap on it just undoes the skip and returns it to
+  // Available, ready to start the cycle fresh.
   function advanceState(step) {
     const wasIdle = !step.active && !step.status;
     let justCompletedAt = null;

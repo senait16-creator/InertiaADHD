@@ -235,6 +235,47 @@ create policy "Users can delete their own routine completions"
   on public.routine_completions for delete
   using (auth.uid() = user_id);
 
+-- A permanent log of every time a step is marked "Not Today" (see
+-- setNotToday in js/routineBoard.js) — the same snapshot-not-a-join
+-- shape as routine_completions above, for the same reason: a step's own
+-- 'not_today' status only reflects *today* and resets by tomorrow, so
+-- this is what would let Insights notice a skip pattern later (e.g.
+-- "you skip Exercise most Mondays").
+create table if not exists public.routine_skips (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  project_id uuid not null references public.projects(id) on delete cascade,
+  step_id uuid not null,
+  step_name text not null,
+  icon text,
+  color text,
+  skipped_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists routine_skips_user_skipped_idx
+  on public.routine_skips (user_id, skipped_at);
+
+create index if not exists routine_skips_project_skipped_idx
+  on public.routine_skips (project_id, skipped_at);
+
+alter table public.routine_skips enable row level security;
+
+drop policy if exists "Users can view their own routine skips" on public.routine_skips;
+create policy "Users can view their own routine skips"
+  on public.routine_skips for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own routine skips" on public.routine_skips;
+create policy "Users can insert their own routine skips"
+  on public.routine_skips for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own routine skips" on public.routine_skips;
+create policy "Users can delete their own routine skips"
+  on public.routine_skips for delete
+  using (auth.uid() = user_id);
+
 -- Maintenance category boards (see js/category.js). Each row is one piece
 -- of content in one of a category's four sections (care/learn/products/
 -- what_i_know). Categories themselves (Hair, Skin, ...) are a fixed list
