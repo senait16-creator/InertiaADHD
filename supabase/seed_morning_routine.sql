@@ -93,3 +93,16 @@ where p.name = 'Morning Routine'
   and not exists (
     select 1 from public.routine_steps rs where rs.project_id = p.id and rs.name = v.name
   );
+
+-- No Breakfast, added after Hair. Same per-step-name guard.
+insert into public.routine_steps (project_id, user_id, name, icon, color, sort_order, link)
+select p.id, p.user_id, v.name, v.icon, v.color, v.sort_order, v.link
+from public.projects p
+cross join (
+  values
+    ('No Breakfast', 'utensils', 'blue', 17, null)
+) as v(name, icon, color, sort_order, link)
+where p.name = 'Morning Routine'
+  and not exists (
+    select 1 from public.routine_steps rs where rs.project_id = p.id and rs.name = v.name
+  );
