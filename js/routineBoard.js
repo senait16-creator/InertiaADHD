@@ -113,6 +113,7 @@ async function persistStepEdits(step) {
   const updates = {
     track_duration: step.track_duration,
     subtitle: step.subtitle ?? null,
+    phased: step.phased,
   };
   if (!isConfigured) {
     demoStore.setStepEdits(step.id, updates);
@@ -194,6 +195,101 @@ async function recordSkip(project, step) {
     await supabase.from("routine_skips").insert(entry);
   } catch (error) {
     console.error("Failed to record routine skip:", error);
+  }
+}
+
+// ---------------- Continuations (see the phased/continuation_of columns) ----------------
+// A phased step (e.g. Steps) can be completed for "this part of the day"
+// without pretending the whole habit is done — completing it offers to
+// drop a small continuation card into another routine, and the
+// original shows an hourglass badge for as long as that continuation
+// stays open (not yet completed).
+
+// Every other routine-workspace project — candidate targets for "Add a
+// continuation to ___". Fetched fresh each time rather than assumed,
+// since routine projects can be renamed or added to over time.
+async function fetchOtherRoutineProjects(excludeProjectId) {
+  if (!isConfigured) {
+    return demoStore
+      .listProjects()
+      .filter((p) => p.workspace_type === "routine" && p.id !== excludeProjectId);
+  }
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("workspace_type", "routine")
+    .neq("id", excludeProjectId)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("Failed to load other routines:", error);
+    return [];
+  }
+  return data;
+}
+
+// For a set of phased steps, which of them have an open (not yet
+// completed) continuation card somewhere. Returns a Set of step ids.
+async function fetchOpenContinuations(stepIds) {
+  if (!stepIds.length) return new Set();
+  let rows;
+  if (!isConfigured) {
+    rows = demoStore.listAllSteps().filter((s) => stepIds.includes(s.continuation_of));
+  } else {
+    const { data, error } = await supabase
+      .from("routine_steps")
+      .select("continuation_of, status")
+      .in("continuation_of", stepIds);
+    if (error) {
+      console.error("Failed to load continuations:", error);
+      return new Set();
+    }
+    rows = data;
+  }
+  const open = new Set();
+  for (const row of rows) {
+    if (row.status !== "complete") open.add(row.continuation_of);
+  }
+  return open;
+}
+
+async function createContinuationStep(originStep, targetProject) {
+  const fields = {
+    project_id: targetProject.id,
+    user_id: originStep.user_id,
+    name: `Finish Remaining ${originStep.name}`,
+    icon: originStep.icon,
+    color: originStep.color,
+    sort_order: 9999,
+    continuation_of: originStep.id,
+  };
+  if (!isConfigured) {
+    // Demo mode has no per-project step count handy here, so this just
+    // appends after whatever's already in that project.
+    fields.sort_order = demoStore.listSteps(targetProject.id).length;
+    return demoStore.addStep(fields);
+  }
+  const { count } = await supabase
+    .from("routine_steps")
+    .select("id", { count: "exact", head: true })
+    .eq("project_id", targetProject.id);
+  fields.sort_order = count ?? 0;
+  const { data, error } = await supabase.from("routine_steps").insert(fields).select().single();
+  if (error) {
+    console.error("Failed to create continuation step:", error);
+    return null;
+  }
+  return data;
+}
+
+async function deleteStepRecord(step) {
+  if (!isConfigured) {
+    demoStore.deleteStep(step.id);
+    return;
+  }
+  try {
+    await supabase.from("routine_steps").delete().eq("id", step.id);
+  } catch (error) {
+    console.error("Failed to delete continuation step:", error);
   }
 }
 
@@ -347,11 +443,26 @@ export async function initRoutineBoard(container, project) {
   let steps = await fetchSteps(project.id);
   const nodeById = new Map();
 
+  // A completed continuation card (see continuation_of) was only ever
+  // temporary — once it's served its purpose it gets deleted outright
+  // on the next day's load, rather than reset back to Available like a
+  // normal step would be, since there's no reason for "Finish Remaining
+  // Steps" to exist again tomorrow.
+  const staleContinuations = steps.filter(
+    (step) => step.continuation_of && step.status === "complete" && !isSameLocalDay(step.updated_at)
+  );
+  if (staleContinuations.length) {
+    await Promise.all(staleContinuations.map((step) => deleteStepRecord(step)));
+    const staleIds = new Set(staleContinuations.map((step) => step.id));
+    steps = steps.filter((step) => !staleIds.has(step.id));
+  }
+
   // Daily reset: a step still marked done (or "Not Today") from an
   // earlier calendar day goes back to not-done, so the board reflects
   // today rather than carrying over yesterday's completions or skips.
   const stale = steps.filter(
     (step) =>
+      !step.continuation_of &&
       (step.status === "complete" || step.status === "not_today") &&
       !isSameLocalDay(step.updated_at)
   );
@@ -362,6 +473,15 @@ export async function initRoutineBoard(container, project) {
   }
   if (stale.length) {
     await Promise.all(stale.map((step) => persistStatus(step)));
+  }
+
+  // For every phased step (see the "Not today"-style checkbox in the
+  // edit modal below), whether it currently has an open continuation
+  // elsewhere — drives the hourglass badge in updateCard.
+  const phasedStepIds = steps.filter((step) => step.phased).map((step) => step.id);
+  const openContinuations = await fetchOpenContinuations(phasedStepIds);
+  for (const step of steps) {
+    step.hasOpenContinuation = openContinuations.has(step.id);
   }
 
   const board = document.createElement("div");
@@ -392,6 +512,12 @@ export async function initRoutineBoard(container, project) {
             <span>Not today — turns this step blue and moves it to the bottom of the board; a plain tap undoes it</span>
           </label>
         </div>
+        <div class="field">
+          <label class="field-checkbox">
+            <input type="checkbox" id="routine-edit-phased">
+            <span>Continues in phases (e.g. Steps) — completing it here offers to add a continuation card in another routine</span>
+          </label>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="routine-edit-cancel">Cancel</button>
           <button type="submit" class="btn-primary">Save</button>
@@ -406,6 +532,7 @@ export async function initRoutineBoard(container, project) {
   const editSubtitleInput = editModal.querySelector("#routine-edit-subtitle");
   const editTrackDurationInput = editModal.querySelector("#routine-edit-track-duration");
   const editNotTodayInput = editModal.querySelector("#routine-edit-not-today");
+  const editPhasedInput = editModal.querySelector("#routine-edit-phased");
   const editCancelBtn = editModal.querySelector("#routine-edit-cancel");
 
   let editingStep = null;
@@ -416,6 +543,7 @@ export async function initRoutineBoard(container, project) {
     editSubtitleInput.value = step.subtitle || "";
     editTrackDurationInput.checked = !!step.track_duration;
     editNotTodayInput.checked = step.status === "not_today";
+    editPhasedInput.checked = !!step.phased;
     editModal.classList.add("open");
   }
 
@@ -436,6 +564,7 @@ export async function initRoutineBoard(container, project) {
 
     editingStep.subtitle = editSubtitleInput.value.trim() || null;
     editingStep.track_duration = editTrackDurationInput.checked;
+    editingStep.phased = editPhasedInput.checked;
     persistStepEdits(editingStep);
 
     if (markNotToday && !wasNotToday) setNotToday(editingStep);
@@ -473,6 +602,63 @@ export async function initRoutineBoard(container, project) {
     persistStatus(step);
   }
 
+  // Offered right after completing a phased step (see the "Continues in
+  // phases" checkbox above) — one modal, reused for whichever step just
+  // triggered it. Built once per board; its list of routine buttons is
+  // filled in fresh each time it opens, since which other routines exist
+  // isn't known until then.
+  const continueModal = document.createElement("div");
+  continueModal.className = "modal-overlay";
+  continueModal.innerHTML = `
+    <div class="modal">
+      <h2 id="continue-modal-title">Continue later today?</h2>
+      <p id="continue-modal-body" class="subtitle"></p>
+      <div id="continue-modal-routines" class="continue-routine-list"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="continue-modal-skip">Not needed today</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(continueModal);
+
+  const continueModalBodyEl = continueModal.querySelector("#continue-modal-body");
+  const continueModalRoutinesEl = continueModal.querySelector("#continue-modal-routines");
+  const continueModalSkipBtn = continueModal.querySelector("#continue-modal-skip");
+
+  function closeContinueModal() {
+    continueModal.classList.remove("open");
+  }
+
+  continueModalSkipBtn.addEventListener("click", closeContinueModal);
+  continueModal.addEventListener("click", (e) => {
+    if (e.target === continueModal) closeContinueModal();
+  });
+
+  async function promptContinuation(step) {
+    const otherRoutines = await fetchOtherRoutineProjects(project.id);
+    if (!otherRoutines.length) return;
+
+    continueModalBodyEl.textContent = `You marked "${step.name}" done for now — want to pick it back up later today?`;
+    continueModalRoutinesEl.innerHTML = "";
+    for (const routine of otherRoutines) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn-primary";
+      btn.textContent = `Continue in ${routine.name}`;
+      btn.addEventListener("click", async () => {
+        closeContinueModal();
+        const created = await createContinuationStep(step, routine);
+        if (created) {
+          step.hasOpenContinuation = true;
+          const el = nodeById.get(step.id);
+          if (el) updateCard(el, step);
+        }
+      });
+      continueModalRoutinesEl.appendChild(btn);
+    }
+    continueModal.classList.add("open");
+  }
+
   function handlePanelHeaderTap(step) {
     advanceState(step);
     if (videoPanelHeaderCard) updateCard(videoPanelHeaderCard, step);
@@ -501,6 +687,7 @@ export async function initRoutineBoard(container, project) {
     el.innerHTML = `
       <span class="complete-badge">${iconMarkup("check")}</span>
       <span class="duration-badge">${iconMarkup("clock")}</span>
+      <span class="phase-badge">${iconMarkup("hourglass")}</span>
       ${step.link || step.kind === "video_panel" ? `<span class="link-badge">${iconMarkup("external-link")}</span>` : ""}
       <div class="routine-icon" data-color="${step.color || "sage"}">${iconMarkup(step.icon)}</div>
       <div class="routine-label">${step.name}</div>
@@ -517,6 +704,7 @@ export async function initRoutineBoard(container, project) {
     el.classList.toggle("is-complete", step.status === "complete");
     el.classList.toggle("is-not-today", step.status === "not_today");
     el.classList.toggle("tracks-duration", !!step.track_duration);
+    el.classList.toggle("has-continuation", !!step.hasOpenContinuation);
     el.querySelector(".routine-subtitle").textContent = step.subtitle || "";
     el.querySelector(".routine-duration").textContent =
       step.status === "complete"
@@ -622,7 +810,10 @@ export async function initRoutineBoard(container, project) {
       persistActive(step);
     } else {
       persistStatus(step);
-      if (justCompletedAt) recordCompletion(project, step, justCompletedAt);
+      if (justCompletedAt) {
+        recordCompletion(project, step, justCompletedAt);
+        if (step.phased && !step.hasOpenContinuation) promptContinuation(step);
+      }
     }
   }
 

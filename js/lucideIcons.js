@@ -54,6 +54,11 @@ const ICONS = {
   "stretching": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M5 20l5 -.5l1 -2" /><path d="M18 20v-5h-5.5l2.5 -6.5l-5.5 1l1.5 2" /></svg>`,
   "book-heart": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12" /><path d="M19 16h-12a2 2 0 0 0 -2 2" /><path d="M9 8h6" /></svg>`,
   "check": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10" /></svg>`,
+  // A step's "still continuing later today" badge (see the phased/
+  // continuation_of columns and the "Not today"-style prompt in
+  // js/routineBoard.js) — shown until the continuation card elsewhere
+  // is completed.
+  "hourglass": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12" /><path d="M6 21h12" /><path d="M6 3v3a6 6 0 0 0 3.2 5.3a1.5 1.5 0 0 1 0 2.7a6 6 0 0 0 -3.2 5.3v0.7" /><path d="M18 3v3.7a6 6 0 0 1 -3.2 5.3a1.5 1.5 0 0 0 0 2.7a6 6 0 0 1 3.2 5.3v0.7" /></svg>`,
   "external-link": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /><path d="M11 13l9 -9" /><path d="M15 4h5v5" /></svg>`,
 
   // Home-screen panels (js/home.js), Night Routine steps, and the

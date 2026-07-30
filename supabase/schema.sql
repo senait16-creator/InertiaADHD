@@ -149,6 +149,32 @@ alter table public.routine_steps add column if not exists subtitle text;
 -- with a one-off SQL update, the same way a step's icon gets changed.
 alter table public.routine_steps add column if not exists kind text;
 
+-- Opt-in for habits that are naturally completed in phases rather than
+-- once (e.g. Steps: a morning walk gets you partway to 10k, the rest
+-- happens later). Toggled from the long-press "Edit Routine Item"
+-- modal. When a phased step is completed, the app offers to create a
+-- continuation card in another routine — see continuation_of below and
+-- setNotToday/promptContinuation in js/routineBoard.js. Off (false) for
+-- every step by default, since most habits are just done or not done —
+-- this is deliberately opt-in per step, not a generic feature every
+-- step gets.
+alter table public.routine_steps add column if not exists phased boolean not null default false;
+
+-- Set only on a continuation card itself (e.g. "Finish Remaining
+-- Steps"), pointing back at the phased step it continues. No foreign
+-- key, same reasoning as routine_completions.step_id: renaming or
+-- deleting the original step should never orphan or cascade-delete the
+-- continuation. A phased step shows its "still going" hourglass badge
+-- for as long as a continuation row referencing it exists and isn't
+-- complete (see fetchOpenContinuations in js/routineBoard.js); once
+-- that continuation is completed, the next daily reset deletes it
+-- outright rather than resetting it like a normal step, since it was
+-- only ever temporary.
+alter table public.routine_steps add column if not exists continuation_of uuid;
+
+create index if not exists routine_steps_continuation_of_idx
+  on public.routine_steps (continuation_of);
+
 create index if not exists routine_steps_project_sort_idx
   on public.routine_steps (project_id, sort_order);
 

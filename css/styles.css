@@ -1064,6 +1064,46 @@ button {
   display: none;
 }
 
+/* Shown on a phased step (see the "Continues in phases" checkbox and
+   continuation_of in supabase/schema.sql) for as long as its
+   continuation card elsewhere hasn't been completed yet — bottom-right
+   so it never collides with the top-corner badges above. */
+.phase-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--color-amber));
+  opacity: 0.75;
+}
+
+.phase-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.routine-card.has-continuation .phase-badge {
+  display: flex;
+}
+
+/* The "Continue in ___" buttons on the post-completion prompt (see
+   promptContinuation in js/routineBoard.js) — one per other routine
+   project, stacked so an extra routine just adds another row. */
+.continue-routine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.continue-routine-list .btn-primary {
+  width: 100%;
+}
+
 .routine-card.is-dragging {
   z-index: 100;
   transform: scale(0.97);

@@ -196,6 +196,22 @@ a permanent `routine_skips` table (mirroring how completions are logged
 to `routine_completions`), so a future Insights view could eventually
 notice a skip pattern the same way it already notices completions.
 
+Some habits are only naturally *partly* done by the end of one routine
+— 10K Steps doesn't really finish by breakfast. Check **Continues in
+phases** in the same long-press modal (deliberately opt-in per step,
+not something every step gets, so it stays meaningful rather than
+becoming a generic "I'll do it later" escape hatch) and completing that
+step offers to drop a small continuation card — "Finish Remaining 10K
+Steps" — into another routine. The original still turns green like any
+completion (Morning isn't lying about what happened), but also picks up
+a small hourglass badge for as long as that continuation card stays
+open; completing the continuation elsewhere clears the badge, and a
+completed continuation gets deleted outright on the next day's load
+(rather than reset like a normal step) since it was only ever temporary
+for that one day. 10K Steps in Morning Routine is seeded this way
+already — the same checkbox works for anything else that's naturally
+phased (hydration, say), no code changes needed to add another.
+
 ### 5. Routine Insights
 
 Every routine board quietly logs a permanent history row each time a

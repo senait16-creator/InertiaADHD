@@ -174,3 +174,14 @@ where p.name = 'Morning Routine'
   and not exists (
     select 1 from public.routine_steps rs where rs.project_id = p.id and rs.name = v.name
   );
+
+-- Flags 10K Steps as a phased habit: completing it in Morning Routine
+-- now offers to add a "Finish Remaining 10K Steps" continuation card to
+-- Day Routine or Night Routine (see js/routineBoard.js), rather than
+-- pretending the whole 10,000 is done by breakfast. Safe to re-run.
+update public.routine_steps rs
+set phased = true
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Morning Routine'
+  and rs.name = '10K Steps';

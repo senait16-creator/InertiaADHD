@@ -93,10 +93,34 @@ export function listSteps(projectId) {
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
-// Every step across every routine project — used by js/insights.js,
-// which reports across all routines at once rather than one at a time.
+// Every step across every routine project — used by js/insights.js
+// (reports across all routines at once) and by fetchOpenContinuations
+// in js/routineBoard.js (a continuation card can live in a different
+// project than the phased step it continues).
 export function listAllSteps() {
   return readAllSteps();
+}
+
+// Creates a continuation card (see continuation_of in supabase/schema.sql)
+// — the only in-app way a routine step gets created; every other step
+// still comes from a SQL seed.
+export function addStep(fields) {
+  const steps = readAllSteps();
+  const step = {
+    id: makeId(),
+    active: false,
+    status: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+  steps.push(step);
+  writeAllSteps(steps);
+  return step;
+}
+
+export function deleteStep(id) {
+  writeAllSteps(readAllSteps().filter((s) => s.id !== id));
 }
 
 export function reorderSteps(projectId, orderedIds) {
