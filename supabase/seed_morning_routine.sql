@@ -17,7 +17,7 @@ cross join (
   values
     ('Morning video', 'monitor-play', 'sage', 0, 'https://www.youtube.com/watch?v=UAZJC-yirR0&list=PL7E_dGgQuBhAxYVfdb2v9p_KgdyXWWykT&index=2'),
     ('Audiobook', 'headphones', 'blue', 1, null),
-    ('Fidel Classroom', 'amarigna', 'amber', 2, null),
+    ('Daily Amharic', 'amarigna', 'amber', 2, null),
     ('10K Steps', 'footprints', 'green', 3, null),
     ('Brush teeth', 'smile', 'lavender', 4, null),
     ('Wash face', 'smile-plus', 'blue', 5, null),
@@ -30,6 +30,16 @@ where p.name = 'Morning Routine'
   and not exists (
     select 1 from public.routine_steps rs where rs.project_id = p.id
   );
+
+-- Renames the "Fidel Classroom" step to "Daily Amharic" even if it was
+-- already seeded under the old name. Safe to re-run (a no-op once
+-- already renamed, since no row will match the old name anymore).
+update public.routine_steps rs
+set name = 'Daily Amharic'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Morning Routine'
+  and rs.name = 'Fidel Classroom';
 
 -- Sets/updates the Morning video link even if the steps above were already
 -- seeded before this column existed. Safe to re-run.
@@ -67,14 +77,16 @@ where rs.project_id = p.id
   and p.name = 'Morning Routine'
   and rs.name = 'Stretch';
 
--- Updates the Fidel Classroom step's icon even if it was already seeded
--- with an older icon ('graduation-cap', then 'language'). Safe to re-run.
+-- Updates the Daily Amharic step's icon even if it was already seeded
+-- with an older icon ('graduation-cap', then 'language') under its old
+-- name, "Fidel Classroom" — the rename above runs first, so this
+-- matches on the current name either way. Safe to re-run.
 update public.routine_steps rs
 set icon = 'amarigna'
 from public.projects p
 where rs.project_id = p.id
   and p.name = 'Morning Routine'
-  and rs.name = 'Fidel Classroom';
+  and rs.name = 'Daily Amharic';
 
 -- Six more steps, added after the original ten. A separate insert (rather
 -- than adding to the values list above) because that first insert only
