@@ -140,13 +140,23 @@ cross join (
     ('Make Bed', 'bed', 'sage', 11, null),
     ('Get Dressed', 'shirt', 'lavender', 12, null),
     ('Tea / Coffee', 'coffee', 'amber', 13, null),
-    ('Medication', 'pill', 'green', 14, null),
-    ('One Productive Task', 'zap', 'lavender', 15, null)
+    ('Medication', 'pill', 'green', 14, null)
 ) as v(name, icon, color, sort_order, link)
 where p.name = 'Morning Routine'
   and not exists (
     select 1 from public.routine_steps rs where rs.project_id = p.id and rs.name = v.name
   );
+
+-- One Productive Task (sort_order 15) was removed at the user's request.
+-- Deliberately dropped from the values list above, not just deleted by
+-- a one-off statement, so re-running this file after a delete can never
+-- resurrect it. See the standalone delete statement below, which
+-- removes it from a project that was already seeded before this change.
+delete from public.routine_steps rs
+using public.projects p
+where rs.project_id = p.id
+  and p.name = 'Morning Routine'
+  and rs.name = 'One Productive Task';
 
 -- Hair, added after the sixteen steps above. Same per-step-name guard,
 -- so it only adds to a project that doesn't already have it.
