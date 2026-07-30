@@ -17,7 +17,7 @@ cross join (
   values
     ('Morning video', 'monitor-play', 'sage', 0, 'https://www.youtube.com/watch?v=UAZJC-yirR0&list=PL7E_dGgQuBhAxYVfdb2v9p_KgdyXWWykT&index=2'),
     ('Audiobook', 'headphones', 'blue', 1, null),
-    ('Fidel Classroom', 'language', 'amber', 2, null),
+    ('Fidel Classroom', 'amarigna', 'amber', 2, null),
     ('10K Steps', 'footprints', 'green', 3, null),
     ('Brush teeth', 'smile', 'lavender', 4, null),
     ('Wash face', 'smile-plus', 'blue', 5, null),
@@ -68,9 +68,9 @@ where rs.project_id = p.id
   and rs.name = 'Stretch';
 
 -- Updates the Fidel Classroom step's icon even if it was already seeded
--- with the older 'graduation-cap' icon. Safe to re-run.
+-- with an older icon ('graduation-cap', then 'language'). Safe to re-run.
 update public.routine_steps rs
-set icon = 'language'
+set icon = 'amarigna'
 from public.projects p
 where rs.project_id = p.id
   and p.name = 'Morning Routine'
