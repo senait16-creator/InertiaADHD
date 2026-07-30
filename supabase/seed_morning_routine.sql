@@ -185,3 +185,13 @@ from public.projects p
 where rs.project_id = p.id
   and p.name = 'Morning Routine'
   and rs.name = '10K Steps';
+
+-- Updates the Drink Water icon even if it was already seeded with the
+-- older, generic 'droplets' icon — a water bottle reads more literally
+-- as "drink water" than an abstract droplet shape. Safe to re-run.
+update public.routine_steps rs
+set icon = 'bottle'
+from public.projects p
+where rs.project_id = p.id
+  and p.name = 'Morning Routine'
+  and rs.name = 'Drink Water';
