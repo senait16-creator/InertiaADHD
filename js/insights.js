@@ -1,11 +1,13 @@
 // Routine Insights — reflection, not motivation. This page only reads
-// history (see supabase/routine_completions, logged by
-// js/routineBoard.js's recordCompletion); it never writes anything, and
-// the routine board itself never reads from here. Deliberately no
-// streaks, badges, progress rings, giant percentages, or "missed day"
-// warnings — just plain counts, averages, and a few small charts, in
-// the app's own muted palette (one accent hue, not a rainbow per item)
-// so nothing reads as a score to win or lose.
+// history (see supabase/routine_completions and supabase/routine_skips,
+// logged by js/routineBoard.js's recordCompletion and recordSkip); it
+// never writes anything, and the routine board itself never reads from
+// here. Deliberately no streaks, badges, progress rings, giant
+// percentages, or "missed day" warnings — just plain counts, averages,
+// and a few small charts, in the app's own muted palette (one accent
+// hue, not a rainbow per item) so nothing reads as a score to win or
+// lose. That stance extends to the Not Today section too: it's framed
+// as a pattern to notice, not a miss to explain.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
@@ -180,6 +182,20 @@ async function fetchCompletions(userId) {
   return data;
 }
 
+async function fetchSkips(userId) {
+  if (!isConfigured) return demoStore.listRoutineSkips();
+  const { data, error } = await supabase
+    .from("routine_skips")
+    .select("*")
+    .eq("user_id", userId)
+    .order("skipped_at", { ascending: true });
+  if (error) {
+    console.error("Failed to load routine skips:", error);
+    return [];
+  }
+  return data;
+}
+
 // ---------------- Charts — plain SVG, one hue, no build step ----------------
 // Single accent hue (sequential "more is more", not identity), a hairline
 // baseline instead of a full axis, and a native <title> per bar for the
@@ -315,6 +331,49 @@ function computeItemStats(completions, buckets, bucketKeyFn, rangeStart, project
       shortestDurationMinutes: durations.length ? Math.min(...durations) : null,
       longestDurationMinutes: durations.length ? Math.max(...durations) : null,
       totalDurationMinutes: durations.length ? durations.reduce((a, b) => a + b, 0) : null,
+      bucketCounts,
+    });
+  }
+
+  items.sort((a, b) => b.count - a.count);
+  return items;
+}
+
+// Same shape as computeItemStats above, for routine_skips instead of
+// routine_completions — how often a step got marked "Not Today" rather
+// than how often it got done. Deliberately its own pass rather than a
+// flag on the completion data, since a skip is the opposite kind of
+// event, not a variant of a completion.
+function computeSkipStats(skips, buckets, bucketKeyFn, rangeStart, projects) {
+  const inRange = skips.filter((s) => new Date(s.skipped_at) >= rangeStart);
+  const groups = new Map();
+
+  for (const s of inRange) {
+    const key = `${s.project_id}::${s.step_name}`;
+    if (!groups.has(key)) {
+      groups.set(key, { projectId: s.project_id, stepName: s.step_name, icon: s.icon, color: s.color, rows: [] });
+    }
+    groups.get(key).rows.push(s);
+  }
+
+  const projectById = new Map(projects.map((p) => [p.id, p]));
+  const items = [];
+
+  for (const group of groups.values()) {
+    const rows = group.rows;
+    const bucketCounts = new Map(buckets.map((b) => [b.key, 0]));
+    for (const r of rows) {
+      const bKey = bucketKeyFn(new Date(r.skipped_at));
+      if (bucketCounts.has(bKey)) bucketCounts.set(bKey, bucketCounts.get(bKey) + 1);
+    }
+
+    items.push({
+      projectId: group.projectId,
+      projectName: projectById.get(group.projectId)?.name || "",
+      stepName: group.stepName,
+      icon: group.icon,
+      color: group.color || DEFAULT_COLOR,
+      count: rows.length,
       bucketCounts,
     });
   }
@@ -517,9 +576,41 @@ function trackTimeSectionHtml(trackedItems) {
   `;
 }
 
+// Deliberately named after the toggle itself ("Not Today," not "Skips"
+// or "Missed") and framed as a pattern to notice, not a miss to
+// explain — same non-judgmental stance as the rest of this page. Only
+// shown at all once there's something in it (see render below), same
+// as every other section.
+function notTodaySectionHtml(skipItems, buckets, showProjectName) {
+  const rows = skipItems
+    .map((item) => {
+      return `
+        <div class="item-row">
+          <div class="icon-badge" data-color="${escapeHtml(item.color)}">${iconMarkup(item.icon || "moon-star")}</div>
+          <div class="item-info">
+            <div class="item-name">${escapeHtml(item.stepName)}</div>
+            ${showProjectName ? `<div class="item-project">${escapeHtml(item.projectName)}</div>` : ""}
+            <div class="item-meta">${item.count}×</div>
+          </div>
+          <div class="item-chart">${sparklineSvg(buckets, item.bucketCounts)}</div>
+        </div>
+      `;
+    })
+    .join("");
+
+  return `
+    <section class="insight-section">
+      <h2>Not Today</h2>
+      <p class="insight-section-note">How often you've set a step aside for another day — not a miss, just a pattern.</p>
+      <div class="item-list">${rows}</div>
+    </section>
+  `;
+}
+
 // ---------------- Init ----------------
 
 let allCompletions = [];
+let allSkips = [];
 let allSteps = [];
 let routineProjects = [];
 let currentFilter = "days";
@@ -529,7 +620,9 @@ function render() {
   const rangeStart = buckets[0].date;
   const bucketKeyFn = FILTERS[currentFilter].key;
 
-  const hasAnyData = allCompletions.some((c) => new Date(c.completed_at) >= rangeStart);
+  const hasAnyData =
+    allCompletions.some((c) => new Date(c.completed_at) >= rangeStart) ||
+    allSkips.some((s) => new Date(s.skipped_at) >= rangeStart);
   emptyEl.hidden = hasAnyData;
   if (!hasAnyData) {
     sectionsEl.innerHTML = "";
@@ -547,11 +640,15 @@ function render() {
   const showProjectName = new Set(itemList.map((i) => i.projectId)).size > 1;
   const flowSentences = computeRoutineFlow(overallList, itemList, allCompletions, rangeStart);
 
+  const skipItems = computeSkipStats(allSkips, buckets, bucketKeyFn, rangeStart, routineProjects);
+  const showSkipProjectName = new Set(skipItems.map((i) => i.projectId)).size > 1;
+
   sectionsEl.innerHTML = [
     flowSentences.length ? routineFlowSectionHtml(flowSentences) : "",
     overallList.length ? overallSectionHtml(overallList, buckets) : "",
     itemList.length ? itemsSectionHtml(itemList, buckets, showProjectName) : "",
     trackedItems.length ? trackTimeSectionHtml(trackedItems) : "",
+    skipItems.length ? notTodaySectionHtml(skipItems, buckets, showSkipProjectName) : "",
   ].join("");
 }
 
@@ -578,7 +675,11 @@ tabsEl.addEventListener("click", (e) => {
 
   routineProjects = await fetchRoutineProjects(userId);
   const projectIds = routineProjects.map((p) => p.id);
-  [allSteps, allCompletions] = await Promise.all([fetchAllSteps(projectIds), fetchCompletions(userId)]);
+  [allSteps, allCompletions, allSkips] = await Promise.all([
+    fetchAllSteps(projectIds),
+    fetchCompletions(userId),
+    fetchSkips(userId),
+  ]);
 
   selectFilter("days");
 })();

@@ -242,6 +242,13 @@ chart's bucket size and the underlying averaging window). It shows:
 - **Track Time** — just the steps with duration tracking on (see
   section 4): average/shortest/longest duration and total time spent
   in the selected range.
+- **Not Today** — how often each step got set aside rather than done
+  (see section 4's Not Today toggle), per step, with the same small
+  trend chart as Individual Routine Items. Framed as a pattern to
+  notice, not a miss to explain — same non-judgmental stance as the
+  rest of this page. Only appears once there's a skip logged; a fresh
+  account (or one that's never used the toggle) simply won't show this
+  section.
 
 ### 6. Maintenance
 
