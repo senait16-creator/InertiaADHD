@@ -449,14 +449,50 @@ deliberate future version, not built yet.
 
 Four exceptions so far: the routine workspace (a hand-picked prototype of
 drag-and-drop reordering and a tap-to-advance-state interaction model),
-the Maintenance/Hair board (add/edit/delete/reorder text entries), the
+the Maintenance/Hair board (add/edit/delete/reorder text entries, though
+see "Hair Lab" below — this is slated for a full redesign), the
 navigation-hub workspace (link/folder/status panels, first used for
 Fidel Classroom), and Relationships (its own richer per-person profile,
 since a person doesn't fit the plain title/notes/link shape the other
 Maintenance areas use) — all meant to validate a feel before any general
-system gets built around them. Maintenance's Hair board deliberately
-stops at plain text + optional links: no scheduling, streaks, history,
-or reminders, so it stays a reference list rather than another tracker.
-Relationships follows the same spirit in its own vocabulary: Season and
-Feelings are honest descriptions, never a score, and Reconnect is a
-quiet aside, never an overdue warning.
+system gets built around them. Relationships follows the same spirit in
+its own vocabulary: Season and Feelings are honest descriptions, never a
+score, and Reconnect is a quiet aside, never an overdue warning.
+
+### Hair Lab (design direction, not yet built)
+
+The current Hair board (plain text + optional links, no scheduling or
+history) is getting replaced by something with a different premise
+entirely — not "give me the right routine," but "help me become my own
+expert." A layout prototype exists (see the session that designed it)
+covering six panels — Hair Routine (the current process, not an
+experiment), Wash Log (plain history, no analytics), Experiments (the
+core of it), Products, What I've Learned (permanent lessons, a personal
+handbook), and Notes & Resources — plus a "Today's Experiment" card
+(Question / Variable / Success looks like) to front-load curiosity
+before the first tap.
+
+The premise: hair has too many interacting variables (curl pattern,
+density, porosity, health, climate, product combinations, drying
+method, water content, technique) for someone else's routine to
+reliably transfer to your own hair. So instead of "what routine should
+I use," the app is built around "what happens if I change this one
+variable" — every experiment is designed to isolate a single change
+(see the Experiments panel's structured fields: section tested,
+condition, moisture, products, drying method, results, and a deliberate
+"would I repeat this" rather than a pass/fail), and What I've Learned
+turns individual experiments into standing knowledge instead of
+requiring a re-read of the whole log. Curiosity and observation, not
+perfection — same non-scoring, non-streak stance as the rest of the
+app, just pointed at learning instead of reflection.
+
+Explicitly **not v1**: any AI layer over this data (identifying which
+variable likely caused an outcome, spotting repeated patterns across
+experiments, suggesting the next variable to test, flagging products
+that work well together, recommending sample sizes before committing to
+full-size purchases). The mechanism being built now — one isolated
+variable, structured fields, permanent lessons — is what any of that
+would eventually read from; none of it needs to exist for the
+experimentation framework itself to be useful on its own. Worth noting
+for later: this framework isn't inherently hair-specific — hair is just
+where it got proven out first.
