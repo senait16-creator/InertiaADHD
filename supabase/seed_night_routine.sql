@@ -1,5 +1,5 @@
 -- Turns an existing "Night Routine" project into a routine-board workspace
--- and seeds it with the seven steps described for it.
+-- and seeds it with the steps described for it.
 --
 -- Run this AFTER creating a project named exactly "Night Routine" through
 -- the app's normal "Add a Project" flow (name matters, icon/color picked
@@ -59,3 +59,22 @@ from public.projects p
 where rs.project_id = p.id
   and p.name = 'Night Routine'
   and rs.name = 'Do hair';
+
+-- Two more steps, added after the original seven: framed as tomorrow's
+-- prep rather than tonight's chores — a water bottle that's already
+-- full and a room that's already tidy are a small gift to whoever wakes
+-- up next. Same per-step-name guard as the morning routine's later
+-- additions, so this still adds to an already-seeded project. Safe to
+-- re-run.
+insert into public.routine_steps (project_id, user_id, name, icon, color, sort_order)
+select p.id, p.user_id, v.name, v.icon, v.color, v.sort_order
+from public.projects p
+cross join (
+  values
+    ('Fill water bottle', 'bottle', 'blue', 7),
+    ('Tidy room', 'home', 'sage', 8)
+) as v(name, icon, color, sort_order)
+where p.name = 'Night Routine'
+  and not exists (
+    select 1 from public.routine_steps rs where rs.project_id = p.id and rs.name = v.name
+  );
