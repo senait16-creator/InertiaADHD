@@ -6,12 +6,13 @@
 // URL — an area only ever belongs here once it's built; there's no
 // "soon" placeholder concept anymore (removed at the user's request).
 // Most real areas use the generic 4-section board (js/category.js);
-// `href` overrides that for Relationships, which has its own dedicated
-// pages (relationships.html/person.html) instead — its data (a
-// person's circle, season, feelings, ...) doesn't fit the plain
-// title/notes/link shape category.js boards use.
+// `href` overrides that for Hair and Relationships, both of which have
+// their own dedicated pages instead — Hair (hair.html and friends) is
+// an experimentation framework, not the plain title/notes/link shape
+// category.js boards use; Relationships (relationships.html/person.html)
+// has its own richer per-person profile for the same reason.
 export const MAINTENANCE_AREAS = [
-  { key: "hair", name: "Hair", icon: "crown", color: "lavender", real: true },
+  { key: "hair", name: "Hair", icon: "crown", color: "lavender", real: true, href: "hair.html" },
   { key: "relationships", name: "Relationships", icon: "users", color: "green", real: true, href: "relationships.html" },
 ];
 

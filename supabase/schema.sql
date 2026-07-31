@@ -563,3 +563,438 @@ drop policy if exists "Users can delete their own step videos" on public.routine
 create policy "Users can delete their own step videos"
   on public.routine_step_videos for delete
   using (auth.uid() = user_id);
+
+-- ==================== Hair (see js/hair.js and friends) ====================
+-- Replaces the old plain-text Hair board (category.html?id=hair). Not a
+-- tracker — an experimentation framework: a routine (what you usually
+-- do), products (a growing personal database), a wash log and
+-- experiments that reference each other, permanent lessons distilled
+-- from experiments, a results photo gallery, and free-form notes. See
+-- the README's "Hair Lab" section for the full design rationale.
+
+-- One row per step in the current routine (Shampoo, Conditioner, ...) —
+-- not an experiment, just what you actually do, reorderable like any
+-- other list in this app.
+create table if not exists public.hair_routine_steps (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists hair_routine_steps_user_sort_idx
+  on public.hair_routine_steps (user_id, sort_order);
+
+create or replace function public.set_hair_routine_steps_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_hair_routine_steps_updated_at on public.hair_routine_steps;
+create trigger set_hair_routine_steps_updated_at
+  before update on public.hair_routine_steps
+  for each row
+  execute function public.set_hair_routine_steps_updated_at();
+
+alter table public.hair_routine_steps enable row level security;
+
+drop policy if exists "Users can view their own hair routine steps" on public.hair_routine_steps;
+create policy "Users can view their own hair routine steps"
+  on public.hair_routine_steps for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own hair routine steps" on public.hair_routine_steps;
+create policy "Users can insert their own hair routine steps"
+  on public.hair_routine_steps for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own hair routine steps" on public.hair_routine_steps;
+create policy "Users can update their own hair routine steps"
+  on public.hair_routine_steps for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own hair routine steps" on public.hair_routine_steps;
+create policy "Users can delete their own hair routine steps"
+  on public.hair_routine_steps for delete
+  using (auth.uid() = user_id);
+
+-- A growing personal product database — referenced by id (not name)
+-- from hair_wash_log.product_ids and hair_experiments.product_ids
+-- below, so renaming a product never breaks those links.
+create table if not exists public.hair_products (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  brand text,
+  category text,
+  notes text,
+  favorite boolean not null default false,
+  repurchase text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists hair_products_user_idx
+  on public.hair_products (user_id);
+
+create or replace function public.set_hair_products_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_hair_products_updated_at on public.hair_products;
+create trigger set_hair_products_updated_at
+  before update on public.hair_products
+  for each row
+  execute function public.set_hair_products_updated_at();
+
+alter table public.hair_products enable row level security;
+
+drop policy if exists "Users can view their own hair products" on public.hair_products;
+create policy "Users can view their own hair products"
+  on public.hair_products for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own hair products" on public.hair_products;
+create policy "Users can insert their own hair products"
+  on public.hair_products for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own hair products" on public.hair_products;
+create policy "Users can update their own hair products"
+  on public.hair_products for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own hair products" on public.hair_products;
+create policy "Users can delete their own hair products"
+  on public.hair_products for delete
+  using (auth.uid() = user_id);
+
+-- A plain wash history. experiment_id deliberately has no foreign key
+-- (same reasoning as routine_completions.step_id elsewhere in this
+-- file) so deleting an experiment never orphans the wash that led to
+-- it — see hair_experiments.wash_log_id below for the other direction
+-- of this same link.
+create table if not exists public.hair_wash_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  wash_date date not null,
+  product_ids uuid[] not null default '{}',
+  style_before text,
+  notes text,
+  experiment_id uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists hair_wash_log_user_date_idx
+  on public.hair_wash_log (user_id, wash_date);
+
+create or replace function public.set_hair_wash_log_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_hair_wash_log_updated_at on public.hair_wash_log;
+create trigger set_hair_wash_log_updated_at
+  before update on public.hair_wash_log
+  for each row
+  execute function public.set_hair_wash_log_updated_at();
+
+alter table public.hair_wash_log enable row level security;
+
+drop policy if exists "Users can view their own hair wash log" on public.hair_wash_log;
+create policy "Users can view their own hair wash log"
+  on public.hair_wash_log for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own hair wash log" on public.hair_wash_log;
+create policy "Users can insert their own hair wash log"
+  on public.hair_wash_log for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own hair wash log" on public.hair_wash_log;
+create policy "Users can update their own hair wash log"
+  on public.hair_wash_log for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own hair wash log" on public.hair_wash_log;
+create policy "Users can delete their own hair wash log"
+  on public.hair_wash_log for delete
+  using (auth.uid() = user_id);
+
+-- The core table. changing holds the single variable being tested
+-- (see the "What am I changing?" step in js/hair.js) — everything else
+-- is expected to stay the same. wash_log_id is the mirror of
+-- hair_wash_log.experiment_id above, same no-FK reasoning. The six
+-- result_* columns are flat rather than a single JSON blob, matching
+-- how the rest of this schema prefers explicit columns over embedded
+-- structure.
+create table if not exists public.hair_experiments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  changing text,
+  goal text,
+  success text,
+  section text,
+  hair_condition text,
+  hair_moisture text,
+  product_ids uuid[] not null default '{}',
+  product_order text,
+  drying_method text,
+  revair_heat text,
+  revair_tension integer,
+  revair_time text,
+  protective_after text,
+  result_definition integer,
+  result_volume integer,
+  result_softness integer,
+  result_frizz integer,
+  result_shrinkage integer,
+  result_longevity integer,
+  observations text,
+  liked text[] not null default '{}',
+  disliked text[] not null default '{}',
+  next_try text,
+  repeat text,
+  wash_log_id uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists hair_experiments_user_created_idx
+  on public.hair_experiments (user_id, created_at);
+
+create or replace function public.set_hair_experiments_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_hair_experiments_updated_at on public.hair_experiments;
+create trigger set_hair_experiments_updated_at
+  before update on public.hair_experiments
+  for each row
+  execute function public.set_hair_experiments_updated_at();
+
+alter table public.hair_experiments enable row level security;
+
+drop policy if exists "Users can view their own hair experiments" on public.hair_experiments;
+create policy "Users can view their own hair experiments"
+  on public.hair_experiments for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own hair experiments" on public.hair_experiments;
+create policy "Users can insert their own hair experiments"
+  on public.hair_experiments for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own hair experiments" on public.hair_experiments;
+create policy "Users can update their own hair experiments"
+  on public.hair_experiments for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own hair experiments" on public.hair_experiments;
+create policy "Users can delete their own hair experiments"
+  on public.hair_experiments for delete
+  using (auth.uid() = user_id);
+
+-- Permanent lessons distilled from experiments (see the "Save as a
+-- lesson" button in js/hairExperiment.js) — deliberately just text, no
+-- link back to the experiment it came from, since a lesson is meant to
+-- outlive any single experiment.
+create table if not exists public.hair_lessons (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  text text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists hair_lessons_user_created_idx
+  on public.hair_lessons (user_id, created_at);
+
+alter table public.hair_lessons enable row level security;
+
+drop policy if exists "Users can view their own hair lessons" on public.hair_lessons;
+create policy "Users can view their own hair lessons"
+  on public.hair_lessons for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own hair lessons" on public.hair_lessons;
+create policy "Users can insert their own hair lessons"
+  on public.hair_lessons for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own hair lessons" on public.hair_lessons;
+create policy "Users can update their own hair lessons"
+  on public.hair_lessons for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own hair lessons" on public.hair_lessons;
+create policy "Users can delete their own hair lessons"
+  on public.hair_lessons for delete
+  using (auth.uid() = user_id);
+
+-- Links, videos, product recommendations, ideas — a plain inbox, same
+-- shape as hair_lessons.
+create table if not exists public.hair_notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  type text,
+  text text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists hair_notes_user_created_idx
+  on public.hair_notes (user_id, created_at);
+
+alter table public.hair_notes enable row level security;
+
+drop policy if exists "Users can view their own hair notes" on public.hair_notes;
+create policy "Users can view their own hair notes"
+  on public.hair_notes for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own hair notes" on public.hair_notes;
+create policy "Users can insert their own hair notes"
+  on public.hair_notes for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own hair notes" on public.hair_notes;
+create policy "Users can update their own hair notes"
+  on public.hair_notes for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own hair notes" on public.hair_notes;
+create policy "Users can delete their own hair notes"
+  on public.hair_notes for delete
+  using (auth.uid() = user_id);
+
+-- Experiment -> result -> photo -> date. experiment_id has no foreign
+-- key, same reasoning as elsewhere in this file. photo_url points at
+-- Supabase Storage (see the "hair-photos" bucket set up in section 4 of
+-- the README) rather than storing image bytes in the table.
+create table if not exists public.hair_gallery (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  experiment_id uuid,
+  title text not null,
+  photo_date date not null,
+  photo_url text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists hair_gallery_user_date_idx
+  on public.hair_gallery (user_id, photo_date);
+
+alter table public.hair_gallery enable row level security;
+
+drop policy if exists "Users can view their own hair gallery" on public.hair_gallery;
+create policy "Users can view their own hair gallery"
+  on public.hair_gallery for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own hair gallery" on public.hair_gallery;
+create policy "Users can insert their own hair gallery"
+  on public.hair_gallery for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own hair gallery" on public.hair_gallery;
+create policy "Users can update their own hair gallery"
+  on public.hair_gallery for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own hair gallery" on public.hair_gallery;
+create policy "Users can delete their own hair gallery"
+  on public.hair_gallery for delete
+  using (auth.uid() = user_id);
+
+-- One row per user — just the draggable order of the seven panels on
+-- the Hair home screen (see js/hair.js). A dedicated tiny table rather
+-- than a column bolted onto some other table, since nothing else in
+-- this app has a natural "one row per user" home yet.
+create table if not exists public.hair_settings (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  panel_order text[] not null default '{}',
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.set_hair_settings_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_hair_settings_updated_at on public.hair_settings;
+create trigger set_hair_settings_updated_at
+  before update on public.hair_settings
+  for each row
+  execute function public.set_hair_settings_updated_at();
+
+alter table public.hair_settings enable row level security;
+
+drop policy if exists "Users can view their own hair settings" on public.hair_settings;
+create policy "Users can view their own hair settings"
+  on public.hair_settings for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own hair settings" on public.hair_settings;
+create policy "Users can insert their own hair settings"
+  on public.hair_settings for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own hair settings" on public.hair_settings;
+create policy "Users can update their own hair settings"
+  on public.hair_settings for update
+  using (auth.uid() = user_id);
+
+-- Storage bucket for hair_gallery photos (see photo_url above). Public
+-- read, so a saved photo_url just works as a plain image URL with no
+-- signing — but uploads/deletes are restricted to files under the
+-- uploader's own `${user_id}/...` path prefix, the standard Supabase
+-- Storage per-user-folder pattern (see uploadGalleryPhoto in
+-- js/hairGallery.js).
+insert into storage.buckets (id, name, public)
+values ('hair-photos', 'hair-photos', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Anyone can view hair photos" on storage.objects;
+create policy "Anyone can view hair photos"
+  on storage.objects for select
+  using (bucket_id = 'hair-photos');
+
+drop policy if exists "Users can upload their own hair photos" on storage.objects;
+create policy "Users can upload their own hair photos"
+  on storage.objects for insert
+  with check (bucket_id = 'hair-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Users can delete their own hair photos" on storage.objects;
+create policy "Users can delete their own hair photos"
+  on storage.objects for delete
+  using (bucket_id = 'hair-photos' and (storage.foldername(name))[1] = auth.uid()::text);

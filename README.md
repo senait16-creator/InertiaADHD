@@ -15,7 +15,7 @@ by itself rather than a line of text explaining it:
 ```
 Home
 ├─ Morning / Night / Routines  → dynamic, see below
-├─ Maintenance                 → self-care areas; Hair is real, the rest are "soon"
+├─ Maintenance                 → self-care areas with a real board built (Hair, Relationships)
 ├─ Projects                    → the original project dashboard (everything else)
 ├─ 2026 Vision                 → calm placeholder
 └─ Reminders                   → calm placeholder, deliberately the smallest panel
@@ -262,13 +262,8 @@ used everywhere else in the app (Routines, nav-board, ...), not a
 full-width list. Only areas with a real board built belong in that
 list at all — currently Hair and Relationships.
 
-A category board (`category.html?id=hair`) — Hair's board — has four
-sections: Care, Learn / Links, Products, What I Know, each a plain list
-you add/edit/delete/reorder yourself (tap a row's pencil to edit,
-press-and-drag to reorder, "+ Add" to create). An item is just a title,
-optional notes, and an optional link; tapping a row with a link opens
-it, otherwise it opens the edit form. Deliberately no scheduling,
-streaks, history, or reminders — it's a reference list, not a tracker.
+Hair (`hair.html` and friends) is its own experimentation framework,
+not a category board — see "Hair Lab" below.
 
 Relationships (`relationships.html`, `person.html`) is a different
 shape — one profile per person, not a plain list — so it's its own
@@ -377,10 +372,20 @@ set-password.html       set/change the account password
 routines.html            list of routine-workspace projects
 insights.html             Routine Insights (reflection, not motivation)
 projects.html               the original project dashboard (Add Project modal)
-maintenance.html              list of self-care areas (Hair is real, rest "soon")
-category.html                    a maintenance area's board (e.g. Hair)
+maintenance.html              list of self-care areas with a real board built
+category.html                    a maintenance area's board (generic 4-section)
 relationships.html                  list of people (Maintenance → Relationships)
 person.html                            one person's relationship profile
+hair.html                                 Hair Lab home (reorderable panel grid)
+hair-routine.html                           Hair Routine (ordered step list)
+hair-products.html                            Products list
+hair-product.html                               one product (computed stats + notes)
+hair-washlog.html                                 Wash Log
+hair-experiments.html                               Experiments list
+hair-experiment.html                                  one experiment (full structured form)
+hair-gallery.html                                       Results Gallery
+hair-learned.html                                         What I've Learned
+hair-notes.html                                             Notes & Resources
 vision.html                               calm placeholder
 reminders.html                              calm placeholder
 project.html                                    single project view (edit / delete / routine board)
@@ -399,6 +404,17 @@ js/maintenanceAreas.js                   fixed list of maintenance areas
 js/relationshipOptions.js                   fixed option lists + Reconnect heuristic
 js/relationships.js                            people list, filters, long-press menu
 js/person.js                                      one person's profile (create/edit/delete)
+js/hairShared.js                                    shared Hair constants + Start Experiment modal
+js/hair.js                                            Hair Lab home logic (reorderable panels)
+js/hairRoutine.js                                       Hair Routine logic (drag-reorder steps)
+js/hairProducts.js                                        Products list logic
+js/hairProduct.js                                           one product (computed stats)
+js/hairWashLog.js                                             Wash Log logic
+js/hairExperiments.js                                           Experiments list logic
+js/hairExperiment.js                                              one experiment's full form
+js/hairGallery.js                                                   Results Gallery (photo upload)
+js/hairLearned.js                                                     What I've Learned logic
+js/hairNotes.js                                                         Notes & Resources logic
 js/home.js                                           home screen logic
 js/login.js                                            sign-in logic
 js/setPassword.js                                        set/change password logic
@@ -449,50 +465,76 @@ deliberate future version, not built yet.
 
 Four exceptions so far: the routine workspace (a hand-picked prototype of
 drag-and-drop reordering and a tap-to-advance-state interaction model),
-the Maintenance/Hair board (add/edit/delete/reorder text entries, though
-see "Hair Lab" below — this is slated for a full redesign), the
+Hair (its own experimentation framework, see "Hair Lab" below), the
 navigation-hub workspace (link/folder/status panels, first used for
 Fidel Classroom), and Relationships (its own richer per-person profile,
-since a person doesn't fit the plain title/notes/link shape the other
-Maintenance areas use) — all meant to validate a feel before any general
-system gets built around them. Relationships follows the same spirit in
-its own vocabulary: Season and Feelings are honest descriptions, never a
+since a person doesn't fit the plain title/notes/link shape a category
+board uses) — all meant to validate a feel before any general system
+gets built around them. Relationships follows the same spirit in its
+own vocabulary: Season and Feelings are honest descriptions, never a
 score, and Reconnect is a quiet aside, never an overdue warning.
 
-### Hair Lab (design direction, not yet built)
+### Hair Lab
 
-The current Hair board (plain text + optional links, no scheduling or
-history) is getting replaced by something with a different premise
-entirely — not "give me the right routine," but "help me become my own
-expert." A layout prototype exists (see the session that designed it)
-covering six panels — Hair Routine (the current process, not an
-experiment), Wash Log (plain history, no analytics), Experiments (the
-core of it), Products, What I've Learned (permanent lessons, a personal
-handbook), and Notes & Resources — plus a "Today's Experiment" card
-(Question / Variable / Success looks like) to front-load curiosity
-before the first tap.
-
-The premise: hair has too many interacting variables (curl pattern,
-density, porosity, health, climate, product combinations, drying
-method, water content, technique) for someone else's routine to
+Hair (`hair.html` and friends) has a different premise than the rest of
+Maintenance — not "give me the right routine," but "help me become my
+own expert." The premise: hair has too many interacting variables (curl
+pattern, density, porosity, health, climate, product combinations,
+drying method, water content, technique) for someone else's routine to
 reliably transfer to your own hair. So instead of "what routine should
-I use," the app is built around "what happens if I change this one
-variable" — every experiment is designed to isolate a single change
-(see the Experiments panel's structured fields: section tested,
-condition, moisture, products, drying method, results, and a deliberate
-"would I repeat this" rather than a pass/fail), and What I've Learned
-turns individual experiments into standing knowledge instead of
-requiring a re-read of the whole log. Curiosity and observation, not
-perfection — same non-scoring, non-streak stance as the rest of the
-app, just pointed at learning instead of reflection.
+I use," it's built around "what happens if I change this one
+variable," and every screen answers one of four questions — Routine
+("what do I usually do?"), Experiment ("what am I trying?"),
+Observation ("what happened?"), Learning ("what do I now know?") — shown
+as a small loop strip at the top of `hair.html`.
 
-Explicitly **not v1**: any AI layer over this data (identifying which
-variable likely caused an outcome, spotting repeated patterns across
-experiments, suggesting the next variable to test, flagging products
-that work well together, recommending sample sizes before committing to
-full-size purchases). The mechanism being built now — one isolated
-variable, structured fields, permanent lessons — is what any of that
-would eventually read from; none of it needs to exist for the
-experimentation framework itself to be useful on its own. Worth noting
-for later: this framework isn't inherently hair-specific — hair is just
-where it got proven out first.
+Seven panels, reorderable by press-and-drag (order persisted per-user
+in `hair_settings`): **Hair Routine** (`hair-routine.html`) — the
+current process, a plain ordered step list, not an experiment.
+**Products** (`hair-products.html`/`hair-product.html`) — manually
+added (name/brand/category/notes/favorite/repurchase); a product's
+detail page computes (never asks you to track) Experiments Used,
+Average Results, Most Common Pairing, and a one-sentence insight
+("Works best when hair is very damp") that only appears once 2+
+well-rated experiments using it agree on a moisture level — silence
+until there's real signal, same restraint as Insights (section 5).
+**Wash Log** (`hair-washlog.html`) — plain history entries (products
+used, style before, notes) that either show a link to the experiment
+they became, or a "start an experiment from this wash" action.
+**Experiments** (`hair-experiments.html`/`hair-experiment.html`) — the
+core of it: every experiment opens with one sentence ("What am I
+changing? Everything stays the same. Only this changes: ___"), then
+structured fields (section tested, hair condition, moisture, products
+used + order, drying method with conditional RevAir fields when
+selected, protective style after), six 5-star result ratings
+(Definition/Volume/Softness/Frizz/Shrinkage/Longevity), observations
+with a one-tap "Save as a lesson," liked/disliked short-lists, what to
+try next, and would-I-repeat-this rather than a pass/fail. A "Testing:
+___" banner is a soft reminder only, not a field lock. **Results
+Gallery** (`hair-gallery.html`) — experiment → result → photo → date,
+photos resized client-side and stored in Supabase Storage's
+`hair-photos` bucket (or as a data URL in demo mode). **What I've
+Learned** (`hair-learned.html`) — permanent lessons, mostly arriving
+via an experiment's "Save as a lesson," a personal handbook rather than
+a re-read of every experiment. **Notes & Resources**
+(`hair-notes.html`) — links, videos, product recommendations, ideas,
+and future experiments to try someday.
+
+Products are referenced everywhere by id, never by name, so renaming
+one never breaks a pairing/lesson lookup.
+
+Explicitly **not v1** (per an explicit decision to hold off until the
+rest was built): voice capture (talk through an experiment naturally,
+AI structures it) and product search/auto-import (search a product by
+name, app imports brand/category/image/price/link) — both would need a
+small server-side piece (speech-to-text, a scraping/lookup service, or
+at minimum an Open Graph fetch for pasted product URLs, since the
+browser can't fetch arbitrary external pages itself) and neither is
+needed for the experimentation framework to be useful on its own. Also
+deferred: any AI layer that reads *across* experiments (identifying
+which variable likely caused an outcome, spotting repeated patterns,
+suggesting the next variable to test, recommending sample sizes before
+a full-size purchase) — the structured fields and permanent lessons
+being built now are what any of that would eventually read from. Worth
+noting for later: this framework isn't inherently hair-specific — hair
+is just where it got proven out first.

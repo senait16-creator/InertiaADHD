@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Experiment — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="hair-experiments.html" class="back-link">‹ Experiments</a>
+
+    <header class="dashboard-header">
+      <h1 id="page-title">New Experiment</h1>
+    </header>
+
+    <div class="hair-form">
+      <div id="testing-banner-slot"></div>
+      <div id="linked-wash-slot"></div>
+
+      <form id="experiment-form">
+        <div class="field">
+          <span class="field-label">Title</span>
+          <input type="text" id="f-title" placeholder="e.g. Curl Custard on Damp Hair">
+        </div>
+
+        <div class="field">
+          <span class="field-label">Goal — what question am I trying to answer?</span>
+          <input type="text" id="f-goal">
+        </div>
+
+        <div class="field">
+          <span class="field-label">Success looks like (optional)</span>
+          <input type="text" id="f-success" placeholder="What would I hope to learn?">
+        </div>
+
+        <div class="field">
+          <span class="field-label">Section tested</span>
+          <div class="chip-group" id="f-section"></div>
+          <p class="field-note">Different parts of your hair have different textures — you don't always have to compare across the whole head.</p>
+        </div>
+
+        <hr class="section-divider">
+        <p class="section-heading">Variables</p>
+
+        <div class="field">
+          <span class="field-label">Hair condition</span>
+          <div class="chip-group" id="f-condition"></div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Hair moisture</span>
+          <div class="chip-group" id="f-moisture"></div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Products used</span>
+          <div class="chip-group" id="f-products"></div>
+          <p class="field-note" id="f-products-empty" hidden>No products yet — add some from the Products panel first.</p>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Product order</span>
+          <input type="text" id="f-order" placeholder="e.g. Leave-In → Curl Custard → Oil">
+        </div>
+
+        <div class="field">
+          <span class="field-label">Drying method</span>
+          <div class="chip-group" id="f-drying"></div>
+          <div id="revair-block" class="conditional-block" hidden>
+            <div class="field">
+              <span class="field-label">Heat</span>
+              <div class="chip-group" id="f-heat"></div>
+            </div>
+            <div class="field">
+              <span class="field-label">Tension (1–7)</span>
+              <input type="number" id="f-tension" min="1" max="7">
+            </div>
+            <div class="field">
+              <span class="field-label">Approximate time (minutes)</span>
+              <input type="text" id="f-time">
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Protective style after</span>
+          <div class="chip-group" id="f-protective"></div>
+        </div>
+
+        <hr class="section-divider">
+        <p class="section-heading">Results</p>
+        <div class="field" id="results-slot"></div>
+
+        <div class="field">
+          <span class="field-label">Observations</span>
+          <textarea id="f-observations" rows="3" placeholder="What did you notice?"></textarea>
+          <button type="button" class="btn-ghost" id="save-lesson-btn" style="margin-top:0.6rem;"></button>
+        </div>
+
+        <div class="field">
+          <span class="field-label">What I liked</span>
+          <div class="short-list" id="list-liked"></div>
+          <button type="button" class="add-row-btn" id="add-liked" style="margin-top:0.5rem; padding:0.55rem;">+ Add</button>
+        </div>
+
+        <div class="field">
+          <span class="field-label">What I didn't like</span>
+          <div class="short-list" id="list-disliked"></div>
+          <button type="button" class="add-row-btn" id="add-disliked" style="margin-top:0.5rem; padding:0.55rem;">+ Add</button>
+        </div>
+
+        <div class="field">
+          <span class="field-label">What I want to try next</span>
+          <input type="text" id="f-next">
+        </div>
+
+        <div class="field">
+          <span class="field-label">Would I repeat this?</span>
+          <div class="segmented" id="f-repeat">
+            <button type="button" data-value="Yes" aria-pressed="false">Yes</button>
+            <button type="button" data-value="Maybe" aria-pressed="false">Maybe</button>
+            <button type="button" data-value="No" aria-pressed="false">No</button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="delete-btn" style="margin-right:auto; color:var(--danger);" hidden>Delete</button>
+          <button type="button" class="btn-secondary" id="cancel-btn">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script type="module" src="js/hairExperiment.js"></script>
+</body>
+</html>

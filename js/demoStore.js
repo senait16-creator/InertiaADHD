@@ -442,3 +442,326 @@ export function updateStepVideo(id, fields) {
 export function deleteStepVideo(id) {
   writeAllStepVideos(readAllStepVideos().filter((v) => v.id !== id));
 }
+
+// ==================== Hair (see js/hair.js and friends) ====================
+
+// ---------------- Hair routine steps ----------------
+
+const HAIR_ROUTINE_KEY = "inertiaadhd_demo_hair_routine";
+
+function readHairRoutine() {
+  try {
+    const raw = localStorage.getItem(HAIR_ROUTINE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHairRoutine(steps) {
+  localStorage.setItem(HAIR_ROUTINE_KEY, JSON.stringify(steps));
+}
+
+export function listHairRoutineSteps() {
+  return readHairRoutine().sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function addHairRoutineStep(name) {
+  const steps = readHairRoutine();
+  const step = {
+    id: makeId(),
+    name,
+    sort_order: steps.length,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  steps.push(step);
+  writeHairRoutine(steps);
+  return step;
+}
+
+export function updateHairRoutineStep(id, name) {
+  const steps = readHairRoutine();
+  const step = steps.find((s) => s.id === id);
+  if (!step) return null;
+  step.name = name;
+  step.updated_at = new Date().toISOString();
+  writeHairRoutine(steps);
+  return step;
+}
+
+export function deleteHairRoutineStep(id) {
+  writeHairRoutine(readHairRoutine().filter((s) => s.id !== id));
+}
+
+export function reorderHairRoutineSteps(orderedIds) {
+  const steps = readHairRoutine();
+  orderedIds.forEach((id, index) => {
+    const step = steps.find((s) => s.id === id);
+    if (step) step.sort_order = index;
+  });
+  writeHairRoutine(steps);
+}
+
+// ---------------- Hair products ----------------
+
+const HAIR_PRODUCTS_KEY = "inertiaadhd_demo_hair_products";
+
+function readHairProducts() {
+  try {
+    const raw = localStorage.getItem(HAIR_PRODUCTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHairProducts(products) {
+  localStorage.setItem(HAIR_PRODUCTS_KEY, JSON.stringify(products));
+}
+
+export function listHairProducts() {
+  return readHairProducts().sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+export function getHairProduct(id) {
+  return readHairProducts().find((p) => p.id === id) || null;
+}
+
+export function addHairProduct(fields) {
+  const products = readHairProducts();
+  const product = {
+    id: makeId(),
+    favorite: false,
+    repurchase: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+  products.push(product);
+  writeHairProducts(products);
+  return product;
+}
+
+export function updateHairProduct(id, fields) {
+  const products = readHairProducts();
+  const product = products.find((p) => p.id === id);
+  if (!product) return null;
+  Object.assign(product, fields);
+  product.updated_at = new Date().toISOString();
+  writeHairProducts(products);
+  return product;
+}
+
+export function deleteHairProduct(id) {
+  writeHairProducts(readHairProducts().filter((p) => p.id !== id));
+}
+
+// ---------------- Hair wash log ----------------
+
+const HAIR_WASH_LOG_KEY = "inertiaadhd_demo_hair_wash_log";
+
+function readHairWashLog() {
+  try {
+    const raw = localStorage.getItem(HAIR_WASH_LOG_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHairWashLog(rows) {
+  localStorage.setItem(HAIR_WASH_LOG_KEY, JSON.stringify(rows));
+}
+
+export function listHairWashLog() {
+  return readHairWashLog().sort((a, b) => b.wash_date.localeCompare(a.wash_date));
+}
+
+export function addHairWashLogEntry(fields) {
+  const rows = readHairWashLog();
+  const entry = {
+    id: makeId(),
+    product_ids: [],
+    experiment_id: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+  rows.push(entry);
+  writeHairWashLog(rows);
+  return entry;
+}
+
+export function updateHairWashLogEntry(id, fields) {
+  const rows = readHairWashLog();
+  const entry = rows.find((r) => r.id === id);
+  if (!entry) return null;
+  Object.assign(entry, fields);
+  entry.updated_at = new Date().toISOString();
+  writeHairWashLog(rows);
+  return entry;
+}
+
+// ---------------- Hair experiments ----------------
+
+const HAIR_EXPERIMENTS_KEY = "inertiaadhd_demo_hair_experiments";
+
+function readHairExperiments() {
+  try {
+    const raw = localStorage.getItem(HAIR_EXPERIMENTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHairExperiments(rows) {
+  localStorage.setItem(HAIR_EXPERIMENTS_KEY, JSON.stringify(rows));
+}
+
+export function listHairExperiments() {
+  return readHairExperiments().sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export function getHairExperiment(id) {
+  return readHairExperiments().find((e) => e.id === id) || null;
+}
+
+export function addHairExperiment(fields) {
+  const rows = readHairExperiments();
+  const experiment = {
+    id: makeId(),
+    product_ids: [],
+    liked: [],
+    disliked: [],
+    wash_log_id: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+  rows.push(experiment);
+  writeHairExperiments(rows);
+  return experiment;
+}
+
+export function updateHairExperiment(id, fields) {
+  const rows = readHairExperiments();
+  const experiment = rows.find((e) => e.id === id);
+  if (!experiment) return null;
+  Object.assign(experiment, fields);
+  experiment.updated_at = new Date().toISOString();
+  writeHairExperiments(rows);
+  return experiment;
+}
+
+export function deleteHairExperiment(id) {
+  writeHairExperiments(readHairExperiments().filter((e) => e.id !== id));
+}
+
+// ---------------- Hair lessons ----------------
+
+const HAIR_LESSONS_KEY = "inertiaadhd_demo_hair_lessons";
+
+function readHairLessons() {
+  try {
+    const raw = localStorage.getItem(HAIR_LESSONS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHairLessons(rows) {
+  localStorage.setItem(HAIR_LESSONS_KEY, JSON.stringify(rows));
+}
+
+export function listHairLessons() {
+  return readHairLessons().sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export function addHairLesson(text) {
+  const rows = readHairLessons();
+  const lesson = { id: makeId(), text, created_at: new Date().toISOString() };
+  rows.push(lesson);
+  writeHairLessons(rows);
+  return lesson;
+}
+
+// ---------------- Hair notes & resources ----------------
+
+const HAIR_NOTES_KEY = "inertiaadhd_demo_hair_notes";
+
+function readHairNotes() {
+  try {
+    const raw = localStorage.getItem(HAIR_NOTES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHairNotes(rows) {
+  localStorage.setItem(HAIR_NOTES_KEY, JSON.stringify(rows));
+}
+
+export function listHairNotes() {
+  return readHairNotes().sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export function addHairNote(type, text) {
+  const rows = readHairNotes();
+  const note = { id: makeId(), type, text, created_at: new Date().toISOString() };
+  rows.push(note);
+  writeHairNotes(rows);
+  return note;
+}
+
+// ---------------- Hair results gallery ----------------
+
+const HAIR_GALLERY_KEY = "inertiaadhd_demo_hair_gallery";
+
+function readHairGallery() {
+  try {
+    const raw = localStorage.getItem(HAIR_GALLERY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHairGallery(rows) {
+  localStorage.setItem(HAIR_GALLERY_KEY, JSON.stringify(rows));
+}
+
+export function listHairGallery() {
+  return readHairGallery().sort((a, b) => b.photo_date.localeCompare(a.photo_date));
+}
+
+// photo_url is a data: URL in demo mode (no Supabase Storage to upload
+// to) — fine at the small sizes this app resizes photos to before
+// saving, see readAndResizeImage in js/hairGallery.js.
+export function addHairGalleryPhoto(fields) {
+  const rows = readHairGallery();
+  const entry = { id: makeId(), experiment_id: null, created_at: new Date().toISOString(), ...fields };
+  rows.push(entry);
+  writeHairGallery(rows);
+  return entry;
+}
+
+// ---------------- Hair settings (panel order) ----------------
+
+const HAIR_SETTINGS_KEY = "inertiaadhd_demo_hair_settings";
+
+export function getHairSettings() {
+  try {
+    const raw = localStorage.getItem(HAIR_SETTINGS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveHairPanelOrder(panelOrder) {
+  localStorage.setItem(HAIR_SETTINGS_KEY, JSON.stringify({ panel_order: panelOrder }));
+}

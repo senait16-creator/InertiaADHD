@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Results Gallery — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="hair.html" class="back-link">‹ Hair</a>
+
+    <header class="dashboard-header">
+      <h1>Results Gallery</h1>
+      <p class="subtitle">Experiment → result → picture → date. Sometimes you just need to see what it actually looked like.</p>
+    </header>
+
+    <div class="gallery-grid" id="gallery-grid"></div>
+    <p class="subtitle" id="empty-note" hidden>No photos yet.</p>
+    <button type="button" class="add-row-btn" id="add-photo-btn" style="margin-top:0.9rem;">+ Add Photo</button>
+    <input type="file" id="photo-input" accept="image/*" hidden>
+  </main>
+
+  <div class="modal-overlay" id="add-photo-modal">
+    <div class="modal">
+      <h2>Add Photo</h2>
+      <form id="add-photo-form">
+        <div class="field" id="photo-preview-slot"></div>
+        <label>
+          Title
+          <input type="text" id="g-title" required maxlength="80" autocomplete="off">
+        </label>
+        <label>
+          Date
+          <input type="date" id="g-date" required>
+        </label>
+        <div class="field">
+          <span class="field-label">From an experiment? (optional)</span>
+          <select id="g-experiment"></select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="add-photo-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/hairGallery.js"></script>
+</body>
+</html>

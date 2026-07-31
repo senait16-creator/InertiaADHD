@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Product — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="hair-products.html" class="back-link">‹ Products</a>
+
+    <header class="dashboard-header">
+      <h1 id="product-name"></h1>
+      <p class="subtitle" id="product-meta"></p>
+    </header>
+
+    <div class="hair-form">
+      <div id="insight-slot"></div>
+
+      <div class="stat-tile-row" id="stat-tiles"></div>
+
+      <div class="field">
+        <span class="field-label">Lessons that mention this product</span>
+        <div class="stack" id="related-lessons"></div>
+      </div>
+
+      <form id="product-form">
+        <div class="field">
+          <span class="field-label">Notes</span>
+          <textarea id="p-notes" rows="4"></textarea>
+        </div>
+        <div class="field">
+          <label class="field-checkbox">
+            <input type="checkbox" id="p-favorite">
+            <span>Favorite</span>
+          </label>
+        </div>
+        <div class="field">
+          <span class="field-label">Repurchase?</span>
+          <div class="segmented" id="p-repurchase">
+            <button type="button" data-value="Yes" aria-pressed="false">Yes</button>
+            <button type="button" data-value="Maybe" aria-pressed="false">Maybe</button>
+            <button type="button" data-value="No" aria-pressed="false">No</button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="delete-product" style="margin-right:auto; color:var(--danger);">Delete</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script type="module" src="js/hairProduct.js"></script>
+</body>
+</html>

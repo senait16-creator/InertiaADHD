@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Experiments — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="hair.html" class="back-link">‹ Hair</a>
+
+    <header class="dashboard-header">
+      <h1>Experiments</h1>
+      <p class="subtitle">Change one variable at a time. The goal is understanding why something worked — not a perfect routine.</p>
+    </header>
+
+    <div class="stack" id="experiment-list"></div>
+    <p class="subtitle" id="empty-note" hidden>No experiments yet.</p>
+    <button type="button" class="add-row-btn" id="new-exp-btn">+ New Experiment</button>
+  </main>
+
+  <div class="modal-overlay" id="start-exp-modal">
+    <div class="modal">
+      <h2>Start an Experiment</h2>
+      <p class="big-question">What am I changing?</p>
+      <p class="rule-line">Everything else stays the same. Only this changes.</p>
+      <div class="field">
+        <div class="chip-group" id="start-changing-group"></div>
+        <input type="text" id="start-changing-custom" placeholder="What's changing?" hidden>
+      </div>
+      <label>
+        Question (optional) — what am I trying to answer?
+        <input type="text" id="start-question" placeholder="e.g. Does damp hair produce more definition?" autocomplete="off">
+      </label>
+      <label>
+        Success looks like (optional)
+        <input type="text" id="start-success" placeholder="What would I hope to learn?" autocomplete="off">
+      </label>
+      <p class="field-note" id="start-from-wash-note"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="start-exp-cancel">Cancel</button>
+        <button type="button" class="btn-primary" id="start-exp-continue">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/hairExperiments.js"></script>
+</body>
+</html>

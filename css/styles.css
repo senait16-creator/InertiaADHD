@@ -120,6 +120,13 @@ button {
   margin: 0;
 }
 
+.field-note {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin: 0.3rem 0 0;
+  line-height: 1.4;
+}
+
 .project-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -202,6 +209,549 @@ button {
   font-size: 0.95rem;
   font-weight: 600;
   text-align: center;
+}
+
+/* ---------------- Hair (js/hair.js and friends) ---------------- */
+
+.loop-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0 0 1.3rem;
+}
+
+.loop-strip .stage {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.loop-strip .arrow {
+  opacity: 0.5;
+}
+
+.start-exp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 0.95rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  margin-bottom: 1.4rem;
+  box-shadow: var(--shadow);
+}
+
+.start-exp-btn:active {
+  transform: scale(0.98);
+}
+
+/* A draggable panel needs position:relative for .panel-stage/.drag-hint
+   to anchor to, and touch-action:none so a press-drag doesn't also
+   scroll the page — same reasoning as .routine-card. */
+.panel-card.draggable-panel {
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.panel-card.draggable-panel.is-dragging {
+  z-index: 100;
+  cursor: grabbing;
+  box-shadow: 0 10px 24px rgba(43, 42, 39, 0.18);
+  transform: scale(0.97);
+}
+
+.panel-stage {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.panel-card.draggable-panel .drag-hint {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: var(--text-muted);
+  opacity: 0.4;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+
+.center-note {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.big-question {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+}
+
+.rule-line {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 1.2rem;
+}
+
+.testing-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(var(--color-amber), 0.14);
+  border: 1px solid rgba(var(--color-amber), 0.4);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1.2rem;
+  font-size: 0.85rem;
+}
+
+.testing-banner svg {
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--color-amber));
+  flex-shrink: 0;
+}
+
+.linked-wash-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(var(--color-blue), 0.14);
+  border: 1px solid rgba(var(--color-blue), 0.4);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  margin-bottom: 1.2rem;
+  color: var(--text);
+}
+
+.linked-wash-chip svg {
+  width: 13px;
+  height: 13px;
+  color: rgb(var(--color-blue));
+}
+
+.insight-line {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  background: rgba(var(--color-sage), 0.14);
+  border: 1px solid rgba(var(--color-sage), 0.4);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.insight-line svg {
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--color-sage));
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.stat-tile-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+.link-chip {
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.checklist-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.checklist-item svg {
+  width: 14px;
+  height: 14px;
+  color: rgb(var(--color-sage));
+  flex-shrink: 0;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.gallery-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.gallery-photo {
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(135deg, rgba(var(--color-amber), 0.25), rgba(var(--color-lavender), 0.25));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  overflow: hidden;
+}
+
+.gallery-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery-photo svg {
+  width: 30px;
+  height: 30px;
+  opacity: 0.6;
+}
+
+.gallery-caption {
+  padding: 0.6rem 0.7rem;
+}
+
+.gallery-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.gallery-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.lesson-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.lesson-quote-mark {
+  color: rgba(var(--color-sage), 0.5);
+  font-size: 1.6rem;
+  line-height: 1;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.routine-step-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0.9rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.routine-step-row.is-dragging {
+  z-index: 50;
+  box-shadow: 0 8px 20px rgba(43, 42, 39, 0.18);
+}
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(var(--color-sage), 0.18);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-name {
+  flex: 1;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.drag-dots {
+  color: var(--text-muted);
+  opacity: 0.5;
+  letter-spacing: 2px;
+}
+
+.stars {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--border);
+}
+
+.star-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.star-btn.filled {
+  color: rgb(var(--color-amber));
+}
+
+.stars.small .star-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.star-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0;
+}
+
+.star-row-label {
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.short-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.short-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.7rem;
+}
+
+.short-list-item .dot {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.short-list-item [contenteditable] {
+  flex: 1;
+}
+
+.short-list-item .star-btn {
+  color: var(--text-muted);
+}
+
+.conditional-block {
+  border-left: 2px solid rgba(var(--color-blue), 0.4);
+  padding-left: 0.9rem;
+  margin: 0.9rem 0 0;
+}
+
+.section-heading {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 0.9rem;
+}
+
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0 1.3rem;
+}
+
+.segmented {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.segmented button {
+  flex: 1;
+  background: var(--bg);
+  border: none;
+  padding: 0.6rem 0.5rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+
+.segmented button:last-child {
+  border-right: none;
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--accent);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-ghost svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.add-row-btn {
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+}
+
+.add-row-btn:active {
+  transform: scale(0.98);
+}
+
+.tag {
+  font-size: 0.68rem;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.tag.accent {
+  background: rgba(var(--color-sage), 0.18);
+  color: var(--text);
+}
+
+.tag.repeat-yes {
+  background: rgba(var(--color-green), 0.2);
+  color: var(--text);
+}
+
+.tag.repeat-maybe {
+  background: rgba(var(--color-amber), 0.22);
+  color: var(--text);
+}
+
+.tag.repeat-no {
+  background: rgba(179, 85, 74, 0.16);
+  color: var(--danger);
+}
+
+.card-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem;
+}
+
+.card-row.clickable {
+  cursor: pointer;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.15rem;
+}
+
+.card-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.card-meta-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
 }
 
 .panel-bar {
@@ -485,7 +1035,8 @@ button {
   margin-bottom: 1rem;
 }
 
-.modal form input {
+.modal form input,
+.modal form select {
   display: block;
   width: 100%;
   margin-top: 0.35rem;
@@ -495,15 +1046,35 @@ button {
   font-size: 1rem;
   color: var(--text);
   background: var(--bg);
+  font-family: inherit;
 }
 
-.modal form input:focus {
+.modal form input:focus,
+.modal form select:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
 .modal form .field {
   margin-bottom: 1rem;
+}
+
+.modal form .field-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.modal form .field-checkbox input[type="checkbox"] {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  accent-color: var(--accent);
 }
 
 /* Row-list of toggleable behaviors in the "Edit Routine Item" modal
@@ -1886,6 +2457,71 @@ button {
 
 .person-form-actions .btn-primary {
   flex: 1;
+}
+
+/* ---------------- Hair full-page forms (Product detail, Experiment
+   form — see js/hairProduct.js and js/hairExperiment.js) — same shape
+   as .person-form above, since both are plain in-page forms rather
+   than modals, just under a name that doesn't imply "a person." */
+
+.hair-form .field {
+  margin-bottom: 1.4rem;
+}
+
+.hair-form .field-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.hair-form .field-note {
+  margin: 0.4rem 0 0;
+}
+
+.hair-form input[type="text"],
+.hair-form input[type="date"],
+.hair-form input[type="number"],
+.hair-form textarea {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.hair-form textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.hair-form input:focus,
+.hair-form textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.hair-form .field-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.hair-form .field-checkbox input[type="checkbox"] {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  accent-color: var(--accent);
 }
 
 /* ---------------- Video panel (a 'video_panel' kind routine step, e.g.

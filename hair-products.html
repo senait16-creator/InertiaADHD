@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Products — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="hair.html" class="back-link">‹ Hair</a>
+
+    <header class="dashboard-header">
+      <h1>Products</h1>
+      <p class="subtitle">A simple database that gets smarter as you log more experiments.</p>
+    </header>
+
+    <div class="stack" id="product-list"></div>
+    <p class="subtitle" id="empty-note" hidden>No products yet.</p>
+    <button type="button" class="add-row-btn" id="add-product-btn">+ Add Product</button>
+  </main>
+
+  <div class="modal-overlay" id="add-product-modal">
+    <div class="modal">
+      <h2>Add Product</h2>
+      <form id="add-product-form">
+        <label>
+          Name
+          <input type="text" id="p-name" required maxlength="80" autocomplete="off">
+        </label>
+        <label>
+          Brand (optional)
+          <input type="text" id="p-brand" maxlength="60" autocomplete="off">
+        </label>
+        <label>
+          Category (optional)
+          <input type="text" id="p-category" maxlength="60" autocomplete="off" placeholder="e.g. Styler, Leave-In, Sealant">
+        </label>
+        <label>
+          Notes (optional)
+          <textarea id="p-notes" rows="3"></textarea>
+        </label>
+        <div class="field">
+          <label class="field-checkbox">
+            <input type="checkbox" id="p-favorite">
+            <span>Favorite</span>
+          </label>
+        </div>
+        <div class="field">
+          <span class="field-label">Repurchase?</span>
+          <div class="segmented" id="p-repurchase">
+            <button type="button" data-value="Yes" aria-pressed="false">Yes</button>
+            <button type="button" data-value="Maybe" aria-pressed="true">Maybe</button>
+            <button type="button" data-value="No" aria-pressed="false">No</button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="add-product-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/hairProducts.js"></script>
+</body>
+</html>
