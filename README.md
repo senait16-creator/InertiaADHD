@@ -256,11 +256,11 @@ chart's bucket size and the underlying averaging window). It shows:
 
 ### 6. Maintenance
 
-Maintenance (`maintenance.html`) is a list of self-care areas (Hair,
-Relationships, Skin, Nails, Feet, Body, Hygiene — see
-`js/maintenanceAreas.js`). Hair and Relationships are wired up to real
-boards; the rest show a dimmed "soon" row until each gets built the
-same way.
+Maintenance (`maintenance.html`) is a grid of self-care areas (see
+`js/maintenanceAreas.js`) — the same rectangular panel-tile treatment
+used everywhere else in the app (Routines, nav-board, ...), not a
+full-width list. Only areas with a real board built belong in that
+list at all — currently Hair and Relationships.
 
 A category board (`category.html?id=hair`) — Hair's board — has four
 sections: Care, Learn / Links, Products, What I Know, each a plain list
