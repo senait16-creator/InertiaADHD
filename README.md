@@ -260,10 +260,14 @@ Maintenance (`maintenance.html`) is a grid of self-care areas (see
 `js/maintenanceAreas.js`) — the same rectangular panel-tile treatment
 used everywhere else in the app (Routines, nav-board, ...), not a
 full-width list. Only areas with a real board built belong in that
-list at all — currently Hair and Relationships.
+list at all — currently Hair, Hair Care, Skin Care, Body Care, Nail
+Care, Jewelry, and Relationships.
 
 Hair (`hair.html` and friends) is its own experimentation framework,
 not a category board — see "Hair Lab" below.
+
+Hair Care, Skin Care, Body Care, Nail Care, and Jewelry are the
+Maintenance product/cost system — see "Maintenance Products" below.
 
 Relationships (`relationships.html`, `person.html`) is a different
 shape — one profile per person, not a plain list — so it's its own
@@ -386,6 +390,10 @@ hair-experiment.html                                  one experiment (full struc
 hair-gallery.html                                       Results Gallery
 hair-learned.html                                         What I've Learned
 hair-notes.html                                             Notes & Resources
+hair-care.html                                                Maintenance → Hair Care (same hair_products data)
+maintenance-products.html                                       Skin/Body/Nail/Jewelry Care product list (?area=)
+maintenance-product.html                                          one product, generic (?id=&area=)
+maintenance-routine.html                                             a generic area's ordered routine (?area=)
 vision.html                               calm placeholder
 reminders.html                              calm placeholder
 project.html                                    single project view (edit / delete / routine board)
@@ -415,6 +423,11 @@ js/hairExperiment.js                                              one experiment
 js/hairGallery.js                                                   Results Gallery (photo upload)
 js/hairLearned.js                                                     What I've Learned logic
 js/hairNotes.js                                                         Notes & Resources logic
+js/hairCare.js                                                            Hair Care logic (same hair_products data)
+js/maintenanceShared.js                                                     AREAS config + duration/cost helpers
+js/maintenanceProducts.js                                                     generic product list logic
+js/maintenanceProduct.js                                                        generic one-product logic
+js/maintenanceRoutine.js                                                          generic routine logic (drag-reorder)
 js/home.js                                           home screen logic
 js/login.js                                            sign-in logic
 js/setPassword.js                                        set/change password logic
@@ -538,3 +551,36 @@ a full-size purchase) — the structured fields and permanent lessons
 being built now are what any of that would eventually read from. Worth
 noting for later: this framework isn't inherently hair-specific — hair
 is just where it got proven out first.
+
+### Maintenance Products (V1)
+
+A different question than Hair Lab's "why did this happen": for Skin
+Care, Body Care, Nail Care, and Jewelry, "what products do I own, how
+long do they last, what do they cost me over time, and what's actually
+worth repurchasing." Each area (`maintenance-products.html?area=skin`,
+etc.) is a product inventory — Name, Brand, Category, Purchase
+Date/Price/Location, Date Started, Date Finished/Empty, Routine Step,
+Rating (/10), Notes, Repurchase — plus a simple ordered Routine
+(`maintenance-routine.html?area=skin`) for the order products actually
+get used in (e.g. Cleanse, Tone, Moisturize). Estimated Duration and
+Estimated Monthly Cost are never stored, only computed at render time
+from purchase price and the start/finish dates (see
+`estimatedDurationDays`/`estimatedMonthlyCost` in
+`js/maintenanceShared.js`) — and only shown once a product has a full
+start-to-finish life to measure, so nothing is ever guessed from a
+still-in-use product. All four areas share one generic pair of tables
+(`maintenance_products`/`maintenance_routine_steps`, filtered by
+`area`) and one generic set of pages, the same way the old
+category.html board was generic across areas via a `category` column.
+
+Hair Care (`hair-care.html`) is the same system's fifth entry point, but
+deliberately not a fifth table: it's a second, cost-first view onto
+Hair Lab's own `hair_products` (extended with the same purchase/date/
+rating columns) and `hair_routine_steps` — adding or editing a product
+from either Hair Lab's Products panel or Maintenance → Hair Care edits
+the exact same row, on the exact same edit page
+(`hair-product.html`), so the two views can never drift into separate
+records for what's actually one product. Hair Lab keeps showing its
+own experimentation stats (Experiments used, Average results, Most
+common pairing) on that same page; Hair Care just adds the cost lens
+next to them.

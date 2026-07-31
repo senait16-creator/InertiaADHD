@@ -7,6 +7,7 @@ import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
 import { iconMarkup } from "./lucideIcons.js";
 import { escapeHtml, RESULT_FIELDS } from "./hairShared.js";
+import { initChipGroup, estimatedDurationDays, formatDuration, estimatedMonthlyCost, formatMoney } from "./maintenanceShared.js";
 
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("id");
@@ -16,11 +17,22 @@ const metaEl = document.getElementById("product-meta");
 const insightSlot = document.getElementById("insight-slot");
 const statTilesEl = document.getElementById("stat-tiles");
 const relatedLessonsEl = document.getElementById("related-lessons");
+const computedStatsEl = document.getElementById("computed-stats");
 const form = document.getElementById("product-form");
+const purchaseDateInput = document.getElementById("p-purchase-date");
+const purchasePriceInput = document.getElementById("p-purchase-price");
+const purchaseLocationInput = document.getElementById("p-purchase-location");
+const dateStartedInput = document.getElementById("p-date-started");
+const dateFinishedInput = document.getElementById("p-date-finished");
+const routineStepGroupEl = document.getElementById("p-routine-step");
+const routineStepEmptyNote = document.getElementById("p-routine-step-empty");
+const ratingInput = document.getElementById("p-rating");
 const notesInput = document.getElementById("p-notes");
 const favoriteInput = document.getElementById("p-favorite");
 const repurchaseGroup = document.getElementById("p-repurchase");
 const deleteBtn = document.getElementById("delete-product");
+
+let routineStepPicker = null;
 
 let userId = null;
 let product = null;
@@ -59,6 +71,32 @@ async function fetchLessons() {
   if (!isConfigured) return demoStore.listHairLessons();
   const { data, error } = await supabase.from("hair_lessons").select("*").eq("user_id", userId);
   return error ? [] : data;
+}
+
+async function fetchRoutineSteps() {
+  if (!isConfigured) return demoStore.listHairRoutineSteps();
+  const { data, error } = await supabase
+    .from("hair_routine_steps")
+    .select("*")
+    .eq("user_id", userId)
+    .order("sort_order", { ascending: true });
+  return error ? [] : data;
+}
+
+function updateComputedStats() {
+  const days = estimatedDurationDays(dateStartedInput.value || null, dateFinishedInput.value || null);
+  const price = purchasePriceInput.value ? Number(purchasePriceInput.value) : null;
+  const monthly = estimatedMonthlyCost(price, days);
+  computedStatsEl.innerHTML = `
+    <div class="stat-tile">
+      <div class="overall-stat-label">Estimated Duration</div>
+      <div class="overall-stat-value" style="font-size:0.95rem;">${days != null ? escapeHtml(formatDuration(days)) : "—"}</div>
+    </div>
+    <div class="stat-tile">
+      <div class="overall-stat-label">Estimated Monthly Cost</div>
+      <div class="overall-stat-value" style="font-size:0.95rem;">${monthly != null ? formatMoney(monthly) : "—"}</div>
+    </div>
+  `;
 }
 
 async function persistUpdate(fields) {
@@ -114,12 +152,30 @@ function starsReadOnly(value) {
   favoriteInput.checked = !!product.favorite;
   repurchaseGroup.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === (product.repurchase || "Maybe"))));
 
-  const [usedIn, allProducts, lessons] = await Promise.all([
+  purchaseDateInput.value = product.purchase_date || "";
+  purchasePriceInput.value = product.purchase_price ?? "";
+  purchaseLocationInput.value = product.purchase_location || "";
+  dateStartedInput.value = product.date_started || "";
+  dateFinishedInput.value = product.date_finished || "";
+  ratingInput.value = product.rating ?? "";
+  updateComputedStats();
+  [purchaseDateInput, purchasePriceInput, dateStartedInput, dateFinishedInput].forEach((input) =>
+    input.addEventListener("input", updateComputedStats)
+  );
+
+  const [usedIn, allProducts, lessons, routineSteps] = await Promise.all([
     fetchExperimentsUsing(productId),
     fetchAllProducts(),
     fetchLessons(),
+    fetchRoutineSteps(),
   ]);
   const productNameById = new Map(allProducts.map((p) => [p.id, p.name]));
+
+  routineStepEmptyNote.hidden = routineSteps.length > 0;
+  const stepNameById = new Map(routineSteps.map((s) => [s.id, s.name]));
+  const stepIdByName = new Map(routineSteps.map((s) => [s.name, s.id]));
+  routineStepPicker = initChipGroup(routineStepGroupEl, routineSteps.map((s) => s.name), { multi: false });
+  if (product.routine_step_id) routineStepPicker.set(stepNameById.get(product.routine_step_id) || null);
 
   // Stats: how many experiments, their average result (across all six
   // dimensions that were actually rated), and the product most often
@@ -189,7 +245,15 @@ function starsReadOnly(value) {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const selectedStepName = routineStepPicker.get();
     await persistUpdate({
+      purchase_date: purchaseDateInput.value || null,
+      purchase_price: purchasePriceInput.value ? Number(purchasePriceInput.value) : null,
+      purchase_location: purchaseLocationInput.value.trim() || null,
+      date_started: dateStartedInput.value || null,
+      date_finished: dateFinishedInput.value || null,
+      routine_step_id: selectedStepName ? stepIdByName.get(selectedStepName) || null : null,
+      rating: ratingInput.value ? Number(ratingInput.value) : null,
       notes: notesInput.value.trim() || null,
       favorite: favoriteInput.checked,
       repurchase: repurchaseGroup.querySelector('button[aria-pressed="true"]')?.dataset.value || "Maybe",

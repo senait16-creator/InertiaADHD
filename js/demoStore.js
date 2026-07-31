@@ -765,3 +765,122 @@ export function getHairSettings() {
 export function saveHairPanelOrder(panelOrder) {
   localStorage.setItem(HAIR_SETTINGS_KEY, JSON.stringify({ panel_order: panelOrder }));
 }
+
+// ---------------- Maintenance products (Skin/Body/Nail/Jewelry Care) ----------------
+// Shared by every area except Hair (which keeps its own hair_products/
+// hair_routine_steps — see js/maintenanceShared.js), filtered by `area`
+// the same way the rest of this file filters a shared key by category.
+
+const MAINTENANCE_PRODUCTS_KEY = "inertiaadhd_demo_maintenance_products";
+
+function readMaintenanceProducts() {
+  try {
+    const raw = localStorage.getItem(MAINTENANCE_PRODUCTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeMaintenanceProducts(rows) {
+  localStorage.setItem(MAINTENANCE_PRODUCTS_KEY, JSON.stringify(rows));
+}
+
+export function listMaintenanceProducts(area) {
+  return readMaintenanceProducts()
+    .filter((p) => p.area === area)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+export function getMaintenanceProduct(id) {
+  return readMaintenanceProducts().find((p) => p.id === id) || null;
+}
+
+export function addMaintenanceProduct(fields) {
+  const rows = readMaintenanceProducts();
+  const product = {
+    id: makeId(),
+    repurchase: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+  rows.push(product);
+  writeMaintenanceProducts(rows);
+  return product;
+}
+
+export function updateMaintenanceProduct(id, fields) {
+  const rows = readMaintenanceProducts();
+  const product = rows.find((p) => p.id === id);
+  if (!product) return null;
+  Object.assign(product, fields);
+  product.updated_at = new Date().toISOString();
+  writeMaintenanceProducts(rows);
+  return product;
+}
+
+export function deleteMaintenanceProduct(id) {
+  writeMaintenanceProducts(readMaintenanceProducts().filter((p) => p.id !== id));
+}
+
+// ---------------- Maintenance routine steps ----------------
+
+const MAINTENANCE_ROUTINE_KEY = "inertiaadhd_demo_maintenance_routine";
+
+function readMaintenanceRoutineSteps() {
+  try {
+    const raw = localStorage.getItem(MAINTENANCE_ROUTINE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeMaintenanceRoutineSteps(rows) {
+  localStorage.setItem(MAINTENANCE_ROUTINE_KEY, JSON.stringify(rows));
+}
+
+export function listMaintenanceRoutineSteps(area) {
+  return readMaintenanceRoutineSteps()
+    .filter((s) => s.area === area)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function addMaintenanceRoutineStep(area, name) {
+  const rows = readMaintenanceRoutineSteps();
+  const step = {
+    id: makeId(),
+    area,
+    name,
+    sort_order: rows.filter((s) => s.area === area).length,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  rows.push(step);
+  writeMaintenanceRoutineSteps(rows);
+  return step;
+}
+
+export function updateMaintenanceRoutineStep(id, name) {
+  const rows = readMaintenanceRoutineSteps();
+  const step = rows.find((s) => s.id === id);
+  if (!step) return null;
+  step.name = name;
+  step.updated_at = new Date().toISOString();
+  writeMaintenanceRoutineSteps(rows);
+  return step;
+}
+
+export function deleteMaintenanceRoutineStep(id) {
+  writeMaintenanceRoutineSteps(readMaintenanceRoutineSteps().filter((s) => s.id !== id));
+}
+
+export function reorderMaintenanceRoutineSteps(orderedIds) {
+  const rows = readMaintenanceRoutineSteps();
+  orderedIds.forEach((id, index) => {
+    const step = rows.find((s) => s.id === id);
+    if (step) step.sort_order = index;
+  });
+  writeMaintenanceRoutineSteps(rows);
+}

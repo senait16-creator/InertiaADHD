@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hair Care — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="maintenance.html" class="back-link">‹ Maintenance</a>
+
+    <header class="dashboard-header">
+      <h1>Hair Care</h1>
+      <p class="subtitle">What you own, how long it lasts, and what's worth repurchasing — the same products as Hair Lab, viewed cost-first.</p>
+    </header>
+
+    <a href="hair-routine.html" class="link-chip" style="margin-bottom:0.9rem; display:inline-flex;" id="routine-link"></a>
+    <p class="insight-line" id="cost-summary" hidden></p>
+
+    <div class="stack" id="product-list"></div>
+    <p class="subtitle" id="empty-note" hidden>No products yet.</p>
+    <button type="button" class="add-row-btn" id="add-product-btn">+ Add Product</button>
+  </main>
+
+  <div class="modal-overlay" id="add-product-modal">
+    <div class="modal">
+      <h2>Add Product</h2>
+      <form id="add-product-form">
+        <label>
+          Name
+          <input type="text" id="p-name" required maxlength="80" autocomplete="off">
+        </label>
+        <label>
+          Brand
+          <input type="text" id="p-brand" maxlength="60" autocomplete="off">
+        </label>
+        <label>
+          Category
+          <input type="text" id="p-category" maxlength="60" autocomplete="off" placeholder="e.g. Styler, Leave-In, Sealant">
+        </label>
+        <div class="field">
+          <span class="field-label">Repurchase?</span>
+          <div class="segmented" id="p-repurchase">
+            <button type="button" data-value="Yes" aria-pressed="false">Yes</button>
+            <button type="button" data-value="Maybe" aria-pressed="true">Maybe</button>
+            <button type="button" data-value="No" aria-pressed="false">No</button>
+          </div>
+        </div>
+        <p class="field-note">Purchase details, dates, rating, and notes can be filled in from the product's own page — shared with Hair Lab's Products.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="add-product-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/hairCare.js"></script>
+</body>
+</html>

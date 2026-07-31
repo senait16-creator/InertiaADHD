@@ -682,6 +682,24 @@ create policy "Users can delete their own hair products"
   on public.hair_products for delete
   using (auth.uid() = user_id);
 
+-- Purchase/usage/rating fields, added so the same hair_products row can
+-- also be viewed cost-first from Maintenance -> Hair Care (js/hairCare.js)
+-- instead of only the experimentation-first view Hair Lab's own Products
+-- page (js/hairProducts.js) uses — one shared table, two different
+-- screens, never two records for the same product. routine_step_id has
+-- no foreign key, same reasoning as every other cross-entity reference in
+-- this file (e.g. hair_wash_log.experiment_id): deleting a routine step
+-- should never cascade into or orphan a product row. Added separately
+-- (rather than in the create table above) for databases where
+-- hair_products already existed before these columns did.
+alter table public.hair_products add column if not exists purchase_date date;
+alter table public.hair_products add column if not exists purchase_price numeric;
+alter table public.hair_products add column if not exists purchase_location text;
+alter table public.hair_products add column if not exists date_started date;
+alter table public.hair_products add column if not exists date_finished date;
+alter table public.hair_products add column if not exists rating integer;
+alter table public.hair_products add column if not exists routine_step_id uuid;
+
 -- A plain wash history. experiment_id deliberately has no foreign key
 -- (same reasoning as routine_completions.step_id elsewhere in this
 -- file) so deleting an experiment never orphans the wash that led to
@@ -998,3 +1016,136 @@ drop policy if exists "Users can delete their own hair photos" on storage.object
 create policy "Users can delete their own hair photos"
   on storage.objects for delete
   using (bucket_id = 'hair-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ==================== Maintenance products (see js/maintenanceProducts.js and friends) ====================
+-- Skin Care, Body Care, Nail Care, and Jewelry all share these two
+-- generic tables (filtered by `area`), the same way Hair has its own
+-- dedicated hair_products/hair_routine_steps — Hair keeps its own
+-- tables rather than joining this generic pair because Hair Lab's
+-- Products are also referenced by hair_wash_log/hair_experiments and
+-- carry experimentation-specific meaning the other areas don't need.
+-- `area` values are a fixed list ('skin', 'body', 'nail', 'jewelry')
+-- defined in js/maintenanceAreas.js, not a separate categories table,
+-- same reasoning as maintenance_items.category above.
+
+-- One row per step in an area's routine (e.g. Cleanse, Tone, Moisturize
+-- for Skin Care) — what order products actually get used in, reorderable
+-- like every other ordered list in this app.
+create table if not exists public.maintenance_routine_steps (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  area text not null,
+  name text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists maintenance_routine_steps_user_area_sort_idx
+  on public.maintenance_routine_steps (user_id, area, sort_order);
+
+create or replace function public.set_maintenance_routine_steps_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_maintenance_routine_steps_updated_at on public.maintenance_routine_steps;
+create trigger set_maintenance_routine_steps_updated_at
+  before update on public.maintenance_routine_steps
+  for each row
+  execute function public.set_maintenance_routine_steps_updated_at();
+
+alter table public.maintenance_routine_steps enable row level security;
+
+drop policy if exists "Users can view their own maintenance routine steps" on public.maintenance_routine_steps;
+create policy "Users can view their own maintenance routine steps"
+  on public.maintenance_routine_steps for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own maintenance routine steps" on public.maintenance_routine_steps;
+create policy "Users can insert their own maintenance routine steps"
+  on public.maintenance_routine_steps for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own maintenance routine steps" on public.maintenance_routine_steps;
+create policy "Users can update their own maintenance routine steps"
+  on public.maintenance_routine_steps for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own maintenance routine steps" on public.maintenance_routine_steps;
+create policy "Users can delete their own maintenance routine steps"
+  on public.maintenance_routine_steps for delete
+  using (auth.uid() = user_id);
+
+-- A category's product inventory: what you own, what you paid, how long
+-- it lasted, and whether it's worth repurchasing. Estimated Duration and
+-- Estimated Monthly Cost are deliberately not columns here — they're
+-- computed from purchase_price/date_started/date_finished at render time
+-- (see formatDuration/monthlyCost in js/maintenanceShared.js) rather than
+-- stored, so they're never stale. routine_step_id has no foreign key,
+-- same reasoning as hair_products.routine_step_id above.
+create table if not exists public.maintenance_products (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  area text not null,
+  name text not null,
+  brand text,
+  category text,
+  purchase_date date,
+  purchase_price numeric,
+  purchase_location text,
+  date_started date,
+  date_finished date,
+  routine_step_id uuid,
+  rating integer,
+  notes text,
+  repurchase text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists maintenance_products_user_area_idx
+  on public.maintenance_products (user_id, area);
+
+create or replace function public.set_maintenance_products_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_maintenance_products_updated_at on public.maintenance_products;
+create trigger set_maintenance_products_updated_at
+  before update on public.maintenance_products
+  for each row
+  execute function public.set_maintenance_products_updated_at();
+
+alter table public.maintenance_products enable row level security;
+
+drop policy if exists "Users can view their own maintenance products" on public.maintenance_products;
+create policy "Users can view their own maintenance products"
+  on public.maintenance_products for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own maintenance products" on public.maintenance_products;
+create policy "Users can insert their own maintenance products"
+  on public.maintenance_products for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own maintenance products" on public.maintenance_products;
+create policy "Users can update their own maintenance products"
+  on public.maintenance_products for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own maintenance products" on public.maintenance_products;
+create policy "Users can delete their own maintenance products"
+  on public.maintenance_products for delete
+  using (auth.uid() = user_id);

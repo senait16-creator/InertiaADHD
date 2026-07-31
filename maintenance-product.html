@@ -15,7 +15,7 @@
 </head>
 <body>
   <main class="dashboard">
-    <a href="hair-products.html" class="back-link">‹ Products</a>
+    <a href="#" class="back-link" id="back-link">‹ Products</a>
 
     <header class="dashboard-header">
       <h1 id="product-name"></h1>
@@ -23,19 +23,9 @@
     </header>
 
     <div class="hair-form">
-      <div id="insight-slot"></div>
-
-      <div class="stat-tile-row" id="stat-tiles"></div>
-
-      <div class="field">
-        <span class="field-label">Lessons that mention this product</span>
-        <div class="stack" id="related-lessons"></div>
-      </div>
+      <div class="stat-tile-row" id="computed-stats"></div>
 
       <form id="product-form">
-        <div class="section-divider"></div>
-        <p class="field-note">Cost & purchase tracking — also visible from Maintenance → Hair Care.</p>
-        <div class="stat-tile-row" id="computed-stats"></div>
         <label>
           Purchase Date
           <input type="date" id="p-purchase-date">
@@ -59,22 +49,16 @@
         <div class="field">
           <span class="field-label">Routine Step (where it's used)</span>
           <div class="chip-group" id="p-routine-step"></div>
-          <p class="field-note" id="p-routine-step-empty" hidden>No routine steps yet — add some from Hair Routine first.</p>
+          <p class="field-note" id="p-routine-step-empty" hidden>No routine steps yet — add some from the routine page first.</p>
         </div>
         <label>
           Rating (out of 10)
           <input type="number" id="p-rating" min="1" max="10" step="1">
         </label>
-        <div class="field">
-          <span class="field-label">Notes</span>
+        <label>
+          Notes
           <textarea id="p-notes" rows="4"></textarea>
-        </div>
-        <div class="field">
-          <label class="field-checkbox">
-            <input type="checkbox" id="p-favorite">
-            <span>Favorite</span>
-          </label>
-        </div>
+        </label>
         <div class="field">
           <span class="field-label">Repurchase?</span>
           <div class="segmented" id="p-repurchase">
@@ -91,6 +75,6 @@
     </div>
   </main>
 
-  <script type="module" src="js/hairProduct.js"></script>
+  <script type="module" src="js/maintenanceProduct.js"></script>
 </body>
 </html>
