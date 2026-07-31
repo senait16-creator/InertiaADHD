@@ -37,8 +37,8 @@ async function fetchWashLog() {
 }
 
 async function fetchProducts() {
-  if (!isConfigured) return demoStore.listHairProducts();
-  const { data, error } = await supabase.from("hair_products").select("*").eq("user_id", userId);
+  if (!isConfigured) return demoStore.listInventoryItems("hair");
+  const { data, error } = await supabase.from("inventory_items").select("*").eq("user_id", userId).eq("area", "hair");
   return error ? [] : data;
 }
 
@@ -148,7 +148,7 @@ const startExpModal = wireStartExperimentModal({
   },
   // product_ids, not names, so the draft handed to hair-experiment.html
   // stays consistent with how hair_experiments.product_ids references
-  // hair_products throughout — a renamed product never breaks this link.
+  // inventory_items throughout — a renamed product never breaks this link.
   getExtra: () => (pendingWashLink ? { fromWashId: pendingWashLink.id, productIds: pendingWashLink.product_ids || [] } : {}),
 });
 

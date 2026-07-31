@@ -72,7 +72,7 @@ export const RESULT_FIELDS = [
 ];
 export const DEFAULT_PANEL_ORDER = ["routine", "products", "washlog", "experiments", "gallery", "learned", "notes"];
 export const PANEL_META = {
-  routine: { label: "Hair Routine", color: "sage", icon: "clipboard-check", stage: "Routine", href: "hair-routine.html" },
+  routine: { label: "Hair Routine", color: "sage", icon: "clipboard-check", stage: "Routine", href: "maintenance-routine.html?area=hair" },
   products: { label: "Products", color: "lavender", icon: "bottle", stage: null, href: "hair-products.html" },
   washlog: { label: "Wash Log", color: "blue", icon: "history", stage: "Observation", href: "hair-washlog.html" },
   experiments: { label: "Experiments", color: "amber", icon: "flask", stage: "Experiment", href: "hair-experiments.html" },

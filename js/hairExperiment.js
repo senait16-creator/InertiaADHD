@@ -163,8 +163,8 @@ saveLessonBtn.addEventListener("click", async () => {
 });
 
 async function fetchProducts() {
-  if (!isConfigured) return demoStore.listHairProducts();
-  const { data, error } = await supabase.from("hair_products").select("*").eq("user_id", userId);
+  if (!isConfigured) return demoStore.listInventoryItems("hair");
+  const { data, error } = await supabase.from("inventory_items").select("*").eq("user_id", userId).eq("area", "hair");
   return error ? [] : data;
 }
 

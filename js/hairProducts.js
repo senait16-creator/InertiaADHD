@@ -1,12 +1,16 @@
-// Products — a simple database (name, brand, category, notes,
-// favorite, repurchase), added manually for now. A "paste a product
-// URL and its details/photo appear" flow is the planned next step once
-// the rest of Hair is built (see the README's Hair Lab section) —
-// deliberately not this file's job yet.
+// Hair Lab's Products panel — lists Inventory items in the "hair" area
+// (not a Hair-only product database anymore; see the README's
+// "Inventory" section). Adding a product here creates an Inventory item
+// AND its "hair" maintenance_usage row in one step (so it shows up in
+// Maintenance -> Hair Care immediately, and Repurchase has somewhere to
+// live) — the two are just two views of the same underlying records.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
+import { iconMarkup } from "./lucideIcons.js";
 import { escapeHtml } from "./hairShared.js";
+
+document.getElementById("inventory-link").innerHTML = `${iconMarkup("link")} View in Inventory`;
 
 const listEl = document.getElementById("product-list");
 const emptyNote = document.getElementById("empty-note");
@@ -18,15 +22,15 @@ const nameInput = document.getElementById("p-name");
 const brandInput = document.getElementById("p-brand");
 const categoryInput = document.getElementById("p-category");
 const notesInput = document.getElementById("p-notes");
-const favoriteInput = document.getElementById("p-favorite");
 const repurchaseGroup = document.getElementById("p-repurchase");
 
 let userId = null;
-let products = [];
+let items = [];
+let usageByItemId = new Map();
 
-async function fetchProducts() {
-  if (!isConfigured) return demoStore.listHairProducts();
-  const { data, error } = await supabase.from("hair_products").select("*").eq("user_id", userId);
+async function fetchItems() {
+  if (!isConfigured) return demoStore.listInventoryItems("hair");
+  const { data, error } = await supabase.from("inventory_items").select("*").eq("user_id", userId).eq("area", "hair");
   if (error) {
     console.error("Failed to load hair products:", error);
     return [];
@@ -34,11 +38,17 @@ async function fetchProducts() {
   return data.sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
-async function persistAdd(fields) {
-  if (!isConfigured) return demoStore.addHairProduct(fields);
+async function fetchUsages() {
+  if (!isConfigured) return demoStore.listMaintenanceUsage("hair");
+  const { data, error } = await supabase.from("maintenance_usage").select("*").eq("user_id", userId).eq("area", "hair");
+  return error ? [] : data;
+}
+
+async function persistAddItem(fields) {
+  if (!isConfigured) return demoStore.addInventoryItem({ area: "hair", ...fields });
   const { data, error } = await supabase
-    .from("hair_products")
-    .insert({ user_id: userId, ...fields })
+    .from("inventory_items")
+    .insert({ user_id: userId, area: "hair", ...fields })
     .select()
     .single();
   if (error) {
@@ -48,16 +58,29 @@ async function persistAdd(fields) {
   return data;
 }
 
+async function persistAddUsage(itemId, repurchase) {
+  const fields = { area: "hair", inventory_item_id: itemId, repurchase };
+  if (!isConfigured) return demoStore.addMaintenanceUsage(fields);
+  const { data, error } = await supabase
+    .from("maintenance_usage")
+    .insert({ user_id: userId, ...fields })
+    .select()
+    .single();
+  return error ? null : data;
+}
+
 function render() {
-  emptyNote.hidden = products.length > 0;
-  listEl.innerHTML = products
+  emptyNote.hidden = items.length > 0;
+  listEl.innerHTML = items
     .map((p) => {
-      const repeatClass = p.repurchase === "Yes" ? "repeat-yes" : p.repurchase === "Maybe" ? "repeat-maybe" : "repeat-no";
+      const usage = usageByItemId.get(p.id);
+      const repurchase = usage?.repurchase;
+      const repeatClass = repurchase === "Yes" ? "repeat-yes" : repurchase === "Maybe" ? "repeat-maybe" : "repeat-no";
       return `
       <a class="card-row clickable" href="hair-product.html?id=${encodeURIComponent(p.id)}" style="display:block; text-decoration:none; color:inherit;">
-        <div class="card-title">${p.favorite ? "★ " : ""}${escapeHtml(p.name)}</div>
+        <div class="card-title">${escapeHtml(p.name)}</div>
         <div class="card-sub">${escapeHtml(p.category || "")}${p.brand ? " · " + escapeHtml(p.brand) : ""}</div>
-        ${p.repurchase ? `<div class="card-meta-row"><span class="tag ${repeatClass}">Repurchase: ${escapeHtml(p.repurchase)}</span></div>` : ""}
+        ${repurchase ? `<div class="card-meta-row"><span class="tag ${repeatClass}">Repurchase: ${escapeHtml(repurchase)}</span></div>` : ""}
       </a>
     `;
     })
@@ -89,17 +112,17 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = nameInput.value.trim();
   if (!name) return;
-  const fields = {
+  const item = await persistAddItem({
     name,
     brand: brandInput.value.trim() || null,
     category: categoryInput.value.trim() || null,
     notes: notesInput.value.trim() || null,
-    favorite: favoriteInput.checked,
-    repurchase: repurchaseGroup.querySelector('button[aria-pressed="true"]')?.dataset.value || "Maybe",
-  };
-  const created = await persistAdd(fields);
-  if (created) {
-    products.push(created);
+  });
+  if (item) {
+    const repurchase = repurchaseGroup.querySelector('button[aria-pressed="true"]')?.dataset.value || "Maybe";
+    const usage = await persistAddUsage(item.id, repurchase);
+    items.push(item);
+    if (usage) usageByItemId.set(item.id, usage);
     render();
     closeModal();
   }
@@ -111,6 +134,8 @@ form.addEventListener("submit", async (e) => {
     if (!session) return;
     userId = session.user.id;
   }
-  products = await fetchProducts();
+  const [fetchedItems, usages] = await Promise.all([fetchItems(), fetchUsages()]);
+  items = fetchedItems;
+  usageByItemId = new Map(usages.map((u) => [u.inventory_item_id, u]));
   render();
 })();

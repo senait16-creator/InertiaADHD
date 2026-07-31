@@ -19,8 +19,10 @@
 
     <header class="dashboard-header">
       <h1>Products</h1>
-      <p class="subtitle">A simple database that gets smarter as you log more experiments.</p>
+      <p class="subtitle">Products you own, from Inventory's Hair Products category — the same list Maintenance → Hair Care shows, viewed here through an experimentation lens.</p>
     </header>
+
+    <a href="inventory-items.html?area=hair" class="link-chip" style="margin-bottom:0.9rem; display:inline-flex;" id="inventory-link"></a>
 
     <div class="stack" id="product-list"></div>
     <p class="subtitle" id="empty-note" hidden>No products yet.</p>
@@ -47,12 +49,6 @@
           Notes (optional)
           <textarea id="p-notes" rows="3"></textarea>
         </label>
-        <div class="field">
-          <label class="field-checkbox">
-            <input type="checkbox" id="p-favorite">
-            <span>Favorite</span>
-          </label>
-        </div>
         <div class="field">
           <span class="field-label">Repurchase?</span>
           <div class="segmented" id="p-repurchase">

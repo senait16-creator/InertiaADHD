@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Inventory — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="inventory.html" class="back-link">‹ Inventory</a>
+
+    <header class="dashboard-header">
+      <h1 id="page-title">Items</h1>
+      <p class="subtitle">What you own in this category.</p>
+    </header>
+
+    <div class="stack" id="item-list"></div>
+    <p class="subtitle" id="empty-note" hidden>No items yet.</p>
+    <button type="button" class="add-row-btn" id="add-item-btn">+ Add Item</button>
+  </main>
+
+  <div class="modal-overlay" id="add-item-modal">
+    <div class="modal">
+      <h2>Add Item</h2>
+      <form id="add-item-form">
+        <label>
+          Name
+          <input type="text" id="i-name" required maxlength="80" autocomplete="off">
+        </label>
+        <label>
+          Brand
+          <input type="text" id="i-brand" maxlength="60" autocomplete="off">
+        </label>
+        <label>
+          Category
+          <input type="text" id="i-category" maxlength="60" autocomplete="off" placeholder="e.g. Serum, Leave-In, Ring">
+        </label>
+        <label>
+          Quantity or Size
+          <input type="text" id="i-quantity" maxlength="60" autocomplete="off" placeholder="e.g. 8 oz, 2 pack">
+        </label>
+        <label>
+          Condition / Status
+          <input type="text" id="i-condition" maxlength="60" autocomplete="off" placeholder="e.g. New, In Use, Empty">
+        </label>
+        <label>
+          Notes
+          <textarea id="i-notes" rows="3"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="add-item-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/inventoryItems.js"></script>
+</body>
+</html>

@@ -1,8 +1,9 @@
-// Generic routine-step list, shared by Skin Care, Body Care, Nail Care,
-// and Jewelry (?area=skin|body|nail|jewelry) — what order products
-// actually get used in (e.g. Cleanse, Tone, Moisturize). Same
-// drag-reorder pattern as js/hairRoutine.js, parameterized by area
-// instead of being Hair-only.
+// Generic routine-step list, shared by every area — Hair (?area=hair,
+// this is now Hair Lab's own Hair Routine panel too), Skin Care, Body
+// Care, Nail Care, and Jewelry — what order products actually get used
+// in (e.g. Cleanse, Tone, Moisturize). Same drag-reorder pattern as
+// js/routineBoard.js, parameterized by area instead of one table per
+// screen.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
@@ -25,7 +26,7 @@ const addBtn = document.getElementById("add-step-btn");
 
 let userId = null;
 let steps = [];
-// Same reasoning as nodeById in js/hairRoutine.js: render() must reuse
+// Same reasoning as nodeById in js/routineBoard.js: render() must reuse
 // each step's existing DOM node rather than recreating it, or a node
 // being actively dragged (holding pointer capture) gets destroyed
 // mid-gesture the moment a reorder redraw happens.
@@ -144,7 +145,7 @@ function render() {
   });
 }
 
-// Press-and-drag to reorder — same algorithm as js/hairRoutine.js.
+// Press-and-drag to reorder — same algorithm as js/routineBoard.js.
 let drag = null;
 listEl.addEventListener("pointerdown", (e) => {
   if (e.target.closest("[contenteditable], button")) return;

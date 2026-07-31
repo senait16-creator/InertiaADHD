@@ -445,117 +445,10 @@ export function deleteStepVideo(id) {
 
 // ==================== Hair (see js/hair.js and friends) ====================
 
-// ---------------- Hair routine steps ----------------
-
-const HAIR_ROUTINE_KEY = "inertiaadhd_demo_hair_routine";
-
-function readHairRoutine() {
-  try {
-    const raw = localStorage.getItem(HAIR_ROUTINE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeHairRoutine(steps) {
-  localStorage.setItem(HAIR_ROUTINE_KEY, JSON.stringify(steps));
-}
-
-export function listHairRoutineSteps() {
-  return readHairRoutine().sort((a, b) => a.sort_order - b.sort_order);
-}
-
-export function addHairRoutineStep(name) {
-  const steps = readHairRoutine();
-  const step = {
-    id: makeId(),
-    name,
-    sort_order: steps.length,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-  steps.push(step);
-  writeHairRoutine(steps);
-  return step;
-}
-
-export function updateHairRoutineStep(id, name) {
-  const steps = readHairRoutine();
-  const step = steps.find((s) => s.id === id);
-  if (!step) return null;
-  step.name = name;
-  step.updated_at = new Date().toISOString();
-  writeHairRoutine(steps);
-  return step;
-}
-
-export function deleteHairRoutineStep(id) {
-  writeHairRoutine(readHairRoutine().filter((s) => s.id !== id));
-}
-
-export function reorderHairRoutineSteps(orderedIds) {
-  const steps = readHairRoutine();
-  orderedIds.forEach((id, index) => {
-    const step = steps.find((s) => s.id === id);
-    if (step) step.sort_order = index;
-  });
-  writeHairRoutine(steps);
-}
-
-// ---------------- Hair products ----------------
-
-const HAIR_PRODUCTS_KEY = "inertiaadhd_demo_hair_products";
-
-function readHairProducts() {
-  try {
-    const raw = localStorage.getItem(HAIR_PRODUCTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeHairProducts(products) {
-  localStorage.setItem(HAIR_PRODUCTS_KEY, JSON.stringify(products));
-}
-
-export function listHairProducts() {
-  return readHairProducts().sort((a, b) => a.created_at.localeCompare(b.created_at));
-}
-
-export function getHairProduct(id) {
-  return readHairProducts().find((p) => p.id === id) || null;
-}
-
-export function addHairProduct(fields) {
-  const products = readHairProducts();
-  const product = {
-    id: makeId(),
-    favorite: false,
-    repurchase: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    ...fields,
-  };
-  products.push(product);
-  writeHairProducts(products);
-  return product;
-}
-
-export function updateHairProduct(id, fields) {
-  const products = readHairProducts();
-  const product = products.find((p) => p.id === id);
-  if (!product) return null;
-  Object.assign(product, fields);
-  product.updated_at = new Date().toISOString();
-  writeHairProducts(products);
-  return product;
-}
-
-export function deleteHairProduct(id) {
-  writeHairProducts(readHairProducts().filter((p) => p.id !== id));
-}
+// hair_routine_steps and hair_products used to live here. Both are
+// gone — Hair's routine is now just listMaintenanceRoutineSteps("hair")
+// further down, and Hair's products are now Inventory items
+// (listInventoryItems("hair")), same as every other care area.
 
 // ---------------- Hair wash log ----------------
 
@@ -766,65 +659,199 @@ export function saveHairPanelOrder(panelOrder) {
   localStorage.setItem(HAIR_SETTINGS_KEY, JSON.stringify({ panel_order: panelOrder }));
 }
 
-// ---------------- Maintenance products (Skin/Body/Nail/Jewelry Care) ----------------
-// Shared by every area except Hair (which keeps its own hair_products/
-// hair_routine_steps — see js/maintenanceShared.js), filtered by `area`
-// the same way the rest of this file filters a shared key by category.
+// ---------------- Inventory items ----------------
+// The reusable product identity — what do I own — shared by every area
+// including Hair (area "hair"), not a per-area duplicate. See the
+// README's "Inventory" section.
 
-const MAINTENANCE_PRODUCTS_KEY = "inertiaadhd_demo_maintenance_products";
+const INVENTORY_ITEMS_KEY = "inertiaadhd_demo_inventory_items";
 
-function readMaintenanceProducts() {
+function readInventoryItems() {
   try {
-    const raw = localStorage.getItem(MAINTENANCE_PRODUCTS_KEY);
+    const raw = localStorage.getItem(INVENTORY_ITEMS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
-function writeMaintenanceProducts(rows) {
-  localStorage.setItem(MAINTENANCE_PRODUCTS_KEY, JSON.stringify(rows));
+function writeInventoryItems(rows) {
+  localStorage.setItem(INVENTORY_ITEMS_KEY, JSON.stringify(rows));
 }
 
-export function listMaintenanceProducts(area) {
-  return readMaintenanceProducts()
-    .filter((p) => p.area === area)
+export function listInventoryItems(area) {
+  return readInventoryItems()
+    .filter((i) => i.area === area)
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
-export function getMaintenanceProduct(id) {
-  return readMaintenanceProducts().find((p) => p.id === id) || null;
+// Unfiltered — a Maintenance area's "use an existing item" picker draws
+// from every category you own, not just the one matching this area (the
+// same jar of coconut oil can be filed under Body Care in Inventory and
+// still get used in a Hair routine).
+export function listAllInventoryItems() {
+  return readInventoryItems().sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
-export function addMaintenanceProduct(fields) {
-  const rows = readMaintenanceProducts();
-  const product = {
+export function getInventoryItem(id) {
+  return readInventoryItems().find((i) => i.id === id) || null;
+}
+
+export function addInventoryItem(fields) {
+  const rows = readInventoryItems();
+  const item = {
+    id: makeId(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+  rows.push(item);
+  writeInventoryItems(rows);
+  return item;
+}
+
+export function updateInventoryItem(id, fields) {
+  const rows = readInventoryItems();
+  const item = rows.find((i) => i.id === id);
+  if (!item) return null;
+  Object.assign(item, fields);
+  item.updated_at = new Date().toISOString();
+  writeInventoryItems(rows);
+  return item;
+}
+
+export function deleteInventoryItem(id) {
+  writeInventoryItems(readInventoryItems().filter((i) => i.id !== id));
+  // Cascades, matching the real schema's "on delete cascade": a purchase
+  // or usage row is meaningless without the item it's about.
+  writeInventoryPurchases(readInventoryPurchases().filter((p) => p.inventory_item_id !== id));
+  writeMaintenanceUsage(readMaintenanceUsage().filter((u) => u.inventory_item_id !== id));
+}
+
+// ---------------- Inventory purchases ----------------
+// One row per individually purchased container of an item — see the
+// schema comment on inventory_purchases for why this is separate from
+// the item's identity above.
+
+const INVENTORY_PURCHASES_KEY = "inertiaadhd_demo_inventory_purchases";
+
+function readInventoryPurchases() {
+  try {
+    const raw = localStorage.getItem(INVENTORY_PURCHASES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeInventoryPurchases(rows) {
+  localStorage.setItem(INVENTORY_PURCHASES_KEY, JSON.stringify(rows));
+}
+
+export function listInventoryPurchases(itemId) {
+  return readInventoryPurchases()
+    .filter((p) => p.inventory_item_id === itemId)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export function addInventoryPurchase(itemId, fields) {
+  const rows = readInventoryPurchases();
+  const purchase = {
+    id: makeId(),
+    inventory_item_id: itemId,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+  rows.push(purchase);
+  writeInventoryPurchases(rows);
+  return purchase;
+}
+
+export function updateInventoryPurchase(id, fields) {
+  const rows = readInventoryPurchases();
+  const purchase = rows.find((p) => p.id === id);
+  if (!purchase) return null;
+  Object.assign(purchase, fields);
+  purchase.updated_at = new Date().toISOString();
+  writeInventoryPurchases(rows);
+  return purchase;
+}
+
+export function deleteInventoryPurchase(id) {
+  writeInventoryPurchases(readInventoryPurchases().filter((p) => p.id !== id));
+}
+
+// ---------------- Maintenance usage ----------------
+// How one Inventory item performs in one maintenance area — routine
+// step, rating, performance notes, repurchase decision for THIS area,
+// not the item itself. The same inventory_item_id can have a usage row
+// in more than one area.
+
+const MAINTENANCE_USAGE_KEY = "inertiaadhd_demo_maintenance_usage";
+
+function readMaintenanceUsage() {
+  try {
+    const raw = localStorage.getItem(MAINTENANCE_USAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeMaintenanceUsage(rows) {
+  localStorage.setItem(MAINTENANCE_USAGE_KEY, JSON.stringify(rows));
+}
+
+export function listMaintenanceUsage(area) {
+  return readMaintenanceUsage()
+    .filter((u) => u.area === area)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+export function getMaintenanceUsage(id) {
+  return readMaintenanceUsage().find((u) => u.id === id) || null;
+}
+
+export function getMaintenanceUsageForItem(itemId, area) {
+  return readMaintenanceUsage().find((u) => u.inventory_item_id === itemId && u.area === area) || null;
+}
+
+export function listMaintenanceUsageForItem(itemId) {
+  return readMaintenanceUsage().filter((u) => u.inventory_item_id === itemId);
+}
+
+export function addMaintenanceUsage(fields) {
+  const rows = readMaintenanceUsage();
+  const usage = {
     id: makeId(),
     repurchase: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...fields,
   };
-  rows.push(product);
-  writeMaintenanceProducts(rows);
-  return product;
+  rows.push(usage);
+  writeMaintenanceUsage(rows);
+  return usage;
 }
 
-export function updateMaintenanceProduct(id, fields) {
-  const rows = readMaintenanceProducts();
-  const product = rows.find((p) => p.id === id);
-  if (!product) return null;
-  Object.assign(product, fields);
-  product.updated_at = new Date().toISOString();
-  writeMaintenanceProducts(rows);
-  return product;
+export function updateMaintenanceUsage(id, fields) {
+  const rows = readMaintenanceUsage();
+  const usage = rows.find((u) => u.id === id);
+  if (!usage) return null;
+  Object.assign(usage, fields);
+  usage.updated_at = new Date().toISOString();
+  writeMaintenanceUsage(rows);
+  return usage;
 }
 
-export function deleteMaintenanceProduct(id) {
-  writeMaintenanceProducts(readMaintenanceProducts().filter((p) => p.id !== id));
+export function deleteMaintenanceUsage(id) {
+  writeMaintenanceUsage(readMaintenanceUsage().filter((u) => u.id !== id));
 }
 
 // ---------------- Maintenance routine steps ----------------
+// area "hair" is Hair Lab's own Hair Routine panel now too, not a
+// separate hair_routine_steps store — one routine system for every area.
 
 const MAINTENANCE_ROUTINE_KEY = "inertiaadhd_demo_maintenance_routine";
 
@@ -845,6 +872,12 @@ export function listMaintenanceRoutineSteps(area) {
   return readMaintenanceRoutineSteps()
     .filter((s) => s.area === area)
     .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+// Unfiltered — used only to resolve a routine step's name for display
+// (e.g. an inventory item's read-only "Used In" list spans every area).
+export function listAllMaintenanceRoutineSteps() {
+  return readMaintenanceRoutineSteps();
 }
 
 export function addMaintenanceRoutineStep(area, name) {

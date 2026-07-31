@@ -44,8 +44,8 @@ async function savePanelOrder(userId, order) {
 async function fetchPanelCounts(userId) {
   if (!isConfigured) {
     return {
-      routine: demoStore.listHairRoutineSteps().length,
-      products: demoStore.listHairProducts().length,
+      routine: demoStore.listMaintenanceRoutineSteps("hair").length,
+      products: demoStore.listInventoryItems("hair").length,
       washlog: demoStore.listHairWashLog().length,
       experiments: demoStore.listHairExperiments().length,
       gallery: demoStore.listHairGallery().length,
@@ -53,22 +53,28 @@ async function fetchPanelCounts(userId) {
       notes: demoStore.listHairNotes().length,
     };
   }
-  const tables = {
-    routine: "hair_routine_steps",
-    products: "hair_products",
-    washlog: "hair_wash_log",
-    experiments: "hair_experiments",
-    gallery: "hair_gallery",
-    learned: "hair_lessons",
-    notes: "hair_notes",
-  };
-  const entries = await Promise.all(
-    Object.entries(tables).map(async ([key, table]) => {
+  // routine and products are now the generic, area-filtered tables (see
+  // the README's "Inventory" section) rather than Hair-only ones, so
+  // they need an extra area filter the rest of these tables don't.
+  const [routineCount, productsCount, ...rest] = await Promise.all([
+    supabase.from("maintenance_routine_steps").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("area", "hair"),
+    supabase.from("inventory_items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("area", "hair"),
+    ...Object.entries({
+      washlog: "hair_wash_log",
+      experiments: "hair_experiments",
+      gallery: "hair_gallery",
+      learned: "hair_lessons",
+      notes: "hair_notes",
+    }).map(async ([key, table]) => {
       const { count } = await supabase.from(table).select("id", { count: "exact", head: true }).eq("user_id", userId);
       return [key, count ?? 0];
-    })
-  );
-  return Object.fromEntries(entries);
+    }),
+  ]);
+  return {
+    routine: routineCount.count ?? 0,
+    products: productsCount.count ?? 0,
+    ...Object.fromEntries(rest),
+  };
 }
 
 function panelCountLabel(key, count) {

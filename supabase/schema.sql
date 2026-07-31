@@ -572,133 +572,16 @@ create policy "Users can delete their own step videos"
 -- from experiments, a results photo gallery, and free-form notes. See
 -- the README's "Hair Lab" section for the full design rationale.
 
--- One row per step in the current routine (Shampoo, Conditioner, ...) —
--- not an experiment, just what you actually do, reorderable like any
--- other list in this app.
-create table if not exists public.hair_routine_steps (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  sort_order integer not null default 0,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create index if not exists hair_routine_steps_user_sort_idx
-  on public.hair_routine_steps (user_id, sort_order);
-
-create or replace function public.set_hair_routine_steps_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
-
-drop trigger if exists set_hair_routine_steps_updated_at on public.hair_routine_steps;
-create trigger set_hair_routine_steps_updated_at
-  before update on public.hair_routine_steps
-  for each row
-  execute function public.set_hair_routine_steps_updated_at();
-
-alter table public.hair_routine_steps enable row level security;
-
-drop policy if exists "Users can view their own hair routine steps" on public.hair_routine_steps;
-create policy "Users can view their own hair routine steps"
-  on public.hair_routine_steps for select
-  using (auth.uid() = user_id);
-
-drop policy if exists "Users can insert their own hair routine steps" on public.hair_routine_steps;
-create policy "Users can insert their own hair routine steps"
-  on public.hair_routine_steps for insert
-  with check (auth.uid() = user_id);
-
-drop policy if exists "Users can update their own hair routine steps" on public.hair_routine_steps;
-create policy "Users can update their own hair routine steps"
-  on public.hair_routine_steps for update
-  using (auth.uid() = user_id);
-
-drop policy if exists "Users can delete their own hair routine steps" on public.hair_routine_steps;
-create policy "Users can delete their own hair routine steps"
-  on public.hair_routine_steps for delete
-  using (auth.uid() = user_id);
-
--- A growing personal product database — referenced by id (not name)
--- from hair_wash_log.product_ids and hair_experiments.product_ids
--- below, so renaming a product never breaks those links.
-create table if not exists public.hair_products (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
-  brand text,
-  category text,
-  notes text,
-  favorite boolean not null default false,
-  repurchase text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create index if not exists hair_products_user_idx
-  on public.hair_products (user_id);
-
-create or replace function public.set_hair_products_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
-
-drop trigger if exists set_hair_products_updated_at on public.hair_products;
-create trigger set_hair_products_updated_at
-  before update on public.hair_products
-  for each row
-  execute function public.set_hair_products_updated_at();
-
-alter table public.hair_products enable row level security;
-
-drop policy if exists "Users can view their own hair products" on public.hair_products;
-create policy "Users can view their own hair products"
-  on public.hair_products for select
-  using (auth.uid() = user_id);
-
-drop policy if exists "Users can insert their own hair products" on public.hair_products;
-create policy "Users can insert their own hair products"
-  on public.hair_products for insert
-  with check (auth.uid() = user_id);
-
-drop policy if exists "Users can update their own hair products" on public.hair_products;
-create policy "Users can update their own hair products"
-  on public.hair_products for update
-  using (auth.uid() = user_id);
-
-drop policy if exists "Users can delete their own hair products" on public.hair_products;
-create policy "Users can delete their own hair products"
-  on public.hair_products for delete
-  using (auth.uid() = user_id);
-
--- Purchase/usage/rating fields, added so the same hair_products row can
--- also be viewed cost-first from Maintenance -> Hair Care (js/hairCare.js)
--- instead of only the experimentation-first view Hair Lab's own Products
--- page (js/hairProducts.js) uses — one shared table, two different
--- screens, never two records for the same product. routine_step_id has
--- no foreign key, same reasoning as every other cross-entity reference in
--- this file (e.g. hair_wash_log.experiment_id): deleting a routine step
--- should never cascade into or orphan a product row. Added separately
--- (rather than in the create table above) for databases where
--- hair_products already existed before these columns did.
-alter table public.hair_products add column if not exists purchase_date date;
-alter table public.hair_products add column if not exists purchase_price numeric;
-alter table public.hair_products add column if not exists purchase_location text;
-alter table public.hair_products add column if not exists date_started date;
-alter table public.hair_products add column if not exists date_finished date;
-alter table public.hair_products add column if not exists rating integer;
-alter table public.hair_products add column if not exists routine_step_id uuid;
+-- hair_routine_steps and hair_products used to live here. Both are gone
+-- (dropped below, no data to migrate): Hair's routine is now just
+-- maintenance_routine_steps rows with area = 'hair' (see the Inventory/
+-- Maintenance section further down), and Hair's products are now
+-- Inventory items with area = 'hair' — one shared source of truth for
+-- "what products do I own" across Hair Lab, Maintenance -> Hair Care,
+-- and every other care area, instead of a Hair-only copy. See the
+-- README's "Inventory" section for the full rationale.
+drop table if exists public.hair_routine_steps cascade;
+drop table if exists public.hair_products cascade;
 
 -- A plain wash history. experiment_id deliberately has no foreign key
 -- (same reasoning as routine_completions.step_id elsewhere in this
@@ -1017,20 +900,156 @@ create policy "Users can delete their own hair photos"
   on storage.objects for delete
   using (bucket_id = 'hair-photos' and (storage.foldername(name))[1] = auth.uid()::text);
 
--- ==================== Maintenance products (see js/maintenanceProducts.js and friends) ====================
--- Skin Care, Body Care, Nail Care, and Jewelry all share these two
--- generic tables (filtered by `area`), the same way Hair has its own
--- dedicated hair_products/hair_routine_steps — Hair keeps its own
--- tables rather than joining this generic pair because Hair Lab's
--- Products are also referenced by hair_wash_log/hair_experiments and
--- carry experimentation-specific meaning the other areas don't need.
--- `area` values are a fixed list ('skin', 'body', 'nail', 'jewelry')
--- defined in js/maintenanceAreas.js, not a separate categories table,
--- same reasoning as maintenance_items.category above.
+-- ==================== Inventory + Maintenance usage (see js/inventory*.js and js/maintenance*.js) ====================
+-- Three separate concepts, on purpose (see the README's "Inventory"
+-- section): Inventory answers "what do I own" (inventory_items,
+-- inventory_purchases), Maintenance answers "how do I care for and use
+-- what I own" (maintenance_usage, maintenance_routine_steps), and Hair
+-- Lab's own tables (hair_wash_log, hair_experiments, ...) answer "how do
+-- I test and improve a routine" — referencing Inventory items rather
+-- than duplicating them. `area` values are a fixed list ('hair', 'skin',
+-- 'body', 'nail', 'jewelry', ...) defined in js/maintenanceShared.js,
+-- not a separate categories table, same reasoning as
+-- maintenance_items.category further up this file.
+
+-- maintenance_products used to live here, one row per product per area.
+-- Gone (dropped below, no data to migrate): a product is now an
+-- Inventory item, and this table's old purchase/rating/notes/repurchase
+-- columns are now maintenance_usage, referencing that item instead of
+-- duplicating its identity.
+drop table if exists public.maintenance_products cascade;
+
+-- The reusable product identity: what it is, not what you paid or how
+-- you're using it. One row per distinct product you own, shared by
+-- every screen that touches it (Hair Lab's Products panel, Maintenance
+-- -> Hair Care/Skin Care/etc., and hair_wash_log/hair_experiments'
+-- product_ids arrays) — editing it here updates everywhere at once.
+create table if not exists public.inventory_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  area text not null,
+  name text not null,
+  brand text,
+  category text,
+  quantity_or_size text,
+  condition text,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists inventory_items_user_area_idx
+  on public.inventory_items (user_id, area);
+
+create or replace function public.set_inventory_items_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_inventory_items_updated_at on public.inventory_items;
+create trigger set_inventory_items_updated_at
+  before update on public.inventory_items
+  for each row
+  execute function public.set_inventory_items_updated_at();
+
+alter table public.inventory_items enable row level security;
+
+drop policy if exists "Users can view their own inventory items" on public.inventory_items;
+create policy "Users can view their own inventory items"
+  on public.inventory_items for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own inventory items" on public.inventory_items;
+create policy "Users can insert their own inventory items"
+  on public.inventory_items for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own inventory items" on public.inventory_items;
+create policy "Users can update their own inventory items"
+  on public.inventory_items for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own inventory items" on public.inventory_items;
+create policy "Users can delete their own inventory items"
+  on public.inventory_items for delete
+  using (auth.uid() = user_id);
+
+-- One row per individually purchased container of an item (a specific
+-- bottle or jar, not the reusable product identity above) — "how long
+-- did THIS one last" is a property of the purchase, not the product, so
+-- an item can be rebought over and over with a fresh purchase row each
+-- time rather than overwriting the last one's dates/price. A real
+-- foreign key (unlike the loose cross-entity references elsewhere in
+-- this file) because a purchase genuinely can't exist without its item —
+-- deleting the item should take its purchase history with it. Estimated
+-- Duration and Estimated Monthly Cost are computed from purchase_price/
+-- date_started/date_finished at render time (see
+-- estimatedDurationDays/estimatedMonthlyCost in js/maintenanceShared.js)
+-- rather than stored, so they're never stale.
+create table if not exists public.inventory_purchases (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  inventory_item_id uuid not null references public.inventory_items(id) on delete cascade,
+  purchase_date date,
+  purchase_price numeric,
+  purchase_location text,
+  date_started date,
+  date_finished date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists inventory_purchases_item_idx
+  on public.inventory_purchases (inventory_item_id);
+
+create or replace function public.set_inventory_purchases_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_inventory_purchases_updated_at on public.inventory_purchases;
+create trigger set_inventory_purchases_updated_at
+  before update on public.inventory_purchases
+  for each row
+  execute function public.set_inventory_purchases_updated_at();
+
+alter table public.inventory_purchases enable row level security;
+
+drop policy if exists "Users can view their own inventory purchases" on public.inventory_purchases;
+create policy "Users can view their own inventory purchases"
+  on public.inventory_purchases for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own inventory purchases" on public.inventory_purchases;
+create policy "Users can insert their own inventory purchases"
+  on public.inventory_purchases for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own inventory purchases" on public.inventory_purchases;
+create policy "Users can update their own inventory purchases"
+  on public.inventory_purchases for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own inventory purchases" on public.inventory_purchases;
+create policy "Users can delete their own inventory purchases"
+  on public.inventory_purchases for delete
+  using (auth.uid() = user_id);
 
 -- One row per step in an area's routine (e.g. Cleanse, Tone, Moisturize
 -- for Skin Care) — what order products actually get used in, reorderable
--- like every other ordered list in this app.
+-- like every other ordered list in this app. area = 'hair' is Hair Lab's
+-- own Hair Routine panel now too, not a separate hair_routine_steps
+-- table — one routine system for every area.
 create table if not exists public.maintenance_routine_steps (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -1082,25 +1101,25 @@ create policy "Users can delete their own maintenance routine steps"
   on public.maintenance_routine_steps for delete
   using (auth.uid() = user_id);
 
--- A category's product inventory: what you own, what you paid, how long
--- it lasted, and whether it's worth repurchasing. Estimated Duration and
--- Estimated Monthly Cost are deliberately not columns here — they're
--- computed from purchase_price/date_started/date_finished at render time
--- (see formatDuration/monthlyCost in js/maintenanceShared.js) rather than
--- stored, so they're never stale. routine_step_id has no foreign key,
--- same reasoning as hair_products.routine_step_id above.
-create table if not exists public.maintenance_products (
+-- How one Inventory item performs in one maintenance area — not the
+-- product itself (that's inventory_items), just this area's routine
+-- step, rating, performance notes, and repurchase decision for it. The
+-- same item can have a usage row in more than one area (a jar of
+-- coconut oil rated well for Body Care and rated poorly for Hair Care,
+-- each with its own independent rating/notes/repurchase), which is the
+-- whole point of separating the two — under the old maintenance_products
+-- table this meant either sharing one rating across contexts or
+-- creating a duplicate product record per area. A real foreign key to
+-- inventory_items (unlike routine_step_id, which stays a loose reference
+-- like every other cross-entity link in this file): a usage row is
+-- meaningless without its item, so deleting the item takes its usage
+-- rows with it, while deleting a routine step never touches the usage
+-- rows that happen to point at it.
+create table if not exists public.maintenance_usage (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   area text not null,
-  name text not null,
-  brand text,
-  category text,
-  purchase_date date,
-  purchase_price numeric,
-  purchase_location text,
-  date_started date,
-  date_finished date,
+  inventory_item_id uuid not null references public.inventory_items(id) on delete cascade,
   routine_step_id uuid,
   rating integer,
   notes text,
@@ -1109,10 +1128,13 @@ create table if not exists public.maintenance_products (
   updated_at timestamptz not null default now()
 );
 
-create index if not exists maintenance_products_user_area_idx
-  on public.maintenance_products (user_id, area);
+create index if not exists maintenance_usage_user_area_idx
+  on public.maintenance_usage (user_id, area);
 
-create or replace function public.set_maintenance_products_updated_at()
+create index if not exists maintenance_usage_item_idx
+  on public.maintenance_usage (inventory_item_id);
+
+create or replace function public.set_maintenance_usage_updated_at()
 returns trigger
 language plpgsql
 as $$
@@ -1122,30 +1144,30 @@ begin
 end;
 $$;
 
-drop trigger if exists set_maintenance_products_updated_at on public.maintenance_products;
-create trigger set_maintenance_products_updated_at
-  before update on public.maintenance_products
+drop trigger if exists set_maintenance_usage_updated_at on public.maintenance_usage;
+create trigger set_maintenance_usage_updated_at
+  before update on public.maintenance_usage
   for each row
-  execute function public.set_maintenance_products_updated_at();
+  execute function public.set_maintenance_usage_updated_at();
 
-alter table public.maintenance_products enable row level security;
+alter table public.maintenance_usage enable row level security;
 
-drop policy if exists "Users can view their own maintenance products" on public.maintenance_products;
-create policy "Users can view their own maintenance products"
-  on public.maintenance_products for select
+drop policy if exists "Users can view their own maintenance usage" on public.maintenance_usage;
+create policy "Users can view their own maintenance usage"
+  on public.maintenance_usage for select
   using (auth.uid() = user_id);
 
-drop policy if exists "Users can insert their own maintenance products" on public.maintenance_products;
-create policy "Users can insert their own maintenance products"
-  on public.maintenance_products for insert
+drop policy if exists "Users can insert their own maintenance usage" on public.maintenance_usage;
+create policy "Users can insert their own maintenance usage"
+  on public.maintenance_usage for insert
   with check (auth.uid() = user_id);
 
-drop policy if exists "Users can update their own maintenance products" on public.maintenance_products;
-create policy "Users can update their own maintenance products"
-  on public.maintenance_products for update
+drop policy if exists "Users can update their own maintenance usage" on public.maintenance_usage;
+create policy "Users can update their own maintenance usage"
+  on public.maintenance_usage for update
   using (auth.uid() = user_id);
 
-drop policy if exists "Users can delete their own maintenance products" on public.maintenance_products;
-create policy "Users can delete their own maintenance products"
-  on public.maintenance_products for delete
+drop policy if exists "Users can delete their own maintenance usage" on public.maintenance_usage;
+create policy "Users can delete their own maintenance usage"
+  on public.maintenance_usage for delete
   using (auth.uid() = user_id);

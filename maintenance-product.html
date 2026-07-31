@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Product — InertiaADHD</title>
+  <title>Usage — InertiaADHD</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-32.png" sizes="32x32">
@@ -18,57 +18,37 @@
     <a href="#" class="back-link" id="back-link">‹ Products</a>
 
     <header class="dashboard-header">
-      <h1 id="product-name"></h1>
-      <p class="subtitle" id="product-meta"></p>
+      <h1 id="item-name"></h1>
+      <p class="subtitle" id="item-meta"></p>
     </header>
 
     <div class="hair-form">
-      <div class="stat-tile-row" id="computed-stats"></div>
+      <a href="#" class="link-chip" id="item-link" style="margin-bottom:0.9rem; display:inline-flex;"></a>
 
-      <form id="product-form">
-        <label>
-          Purchase Date
-          <input type="date" id="p-purchase-date">
-        </label>
-        <label>
-          Purchase Price
-          <input type="number" id="p-purchase-price" min="0" step="0.01">
-        </label>
-        <label>
-          Purchase Location
-          <input type="text" id="p-purchase-location" maxlength="80" autocomplete="off">
-        </label>
-        <label>
-          Date Started
-          <input type="date" id="p-date-started">
-        </label>
-        <label>
-          Date Finished / Empty
-          <input type="date" id="p-date-finished">
-        </label>
+      <form id="usage-form">
         <div class="field">
           <span class="field-label">Routine Step (where it's used)</span>
-          <div class="chip-group" id="p-routine-step"></div>
-          <p class="field-note" id="p-routine-step-empty" hidden>No routine steps yet — add some from the routine page first.</p>
+          <div class="chip-group" id="u-routine-step"></div>
+          <p class="field-note" id="u-routine-step-empty" hidden>No routine steps yet — add some from the routine page first.</p>
         </div>
         <label>
           Rating (out of 10)
-          <input type="number" id="p-rating" min="1" max="10" step="1">
+          <input type="number" id="u-rating" min="1" max="10" step="1">
         </label>
         <label>
-          Notes
-          <textarea id="p-notes" rows="4"></textarea>
+          Performance Notes
+          <textarea id="u-notes" rows="4" placeholder="How does it perform here specifically?"></textarea>
         </label>
         <div class="field">
-          <span class="field-label">Repurchase?</span>
-          <div class="segmented" id="p-repurchase">
+          <span class="field-label">Repurchase? (for this use)</span>
+          <div class="segmented" id="u-repurchase">
             <button type="button" data-value="Yes" aria-pressed="false">Yes</button>
             <button type="button" data-value="Maybe" aria-pressed="false">Maybe</button>
             <button type="button" data-value="No" aria-pressed="false">No</button>
           </div>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="delete-product" style="margin-right:auto; color:var(--danger);">Delete</button>
+          <button type="button" class="btn-secondary" id="delete-usage" style="margin-right:auto; color:var(--danger);">Remove from this routine</button>
           <button type="submit" class="btn-primary">Save</button>
         </div>
       </form>

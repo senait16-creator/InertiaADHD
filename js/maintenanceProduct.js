@@ -1,15 +1,16 @@
-// Generic product detail/edit — full purchase & usage record, shared by
-// Skin Care, Body Care, Nail Care, and Jewelry. Estimated Duration and
-// Estimated Monthly Cost are computed live from the dates/price below
-// (see js/maintenanceShared.js) rather than stored, so they can never
-// drift out of sync with the fields they're derived from.
+// One maintenance_usage row: how an Inventory item performs in THIS
+// area's routine — routine step, rating, performance notes, repurchase
+// decision for this use. The item's identity/purchase history lives on
+// its Inventory page (linked below, read-only from here); "Remove from
+// this routine" deletes only this usage row, never the underlying item.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
-import { AREAS, escapeHtml, initChipGroup, estimatedDurationDays, formatDuration, estimatedMonthlyCost, formatMoney } from "./maintenanceShared.js";
+import { iconMarkup } from "./lucideIcons.js";
+import { AREAS, escapeHtml, initChipGroup } from "./maintenanceShared.js";
 
 const params = new URLSearchParams(window.location.search);
-const productId = params.get("id");
+const usageId = params.get("id");
 const area = params.get("area");
 const areaMeta = AREAS[area];
 
@@ -20,34 +21,35 @@ if (!areaMeta) {
 
 document.getElementById("back-link").href = `maintenance-products.html?area=${encodeURIComponent(area)}`;
 
-const nameEl = document.getElementById("product-name");
-const metaEl = document.getElementById("product-meta");
-const computedStatsEl = document.getElementById("computed-stats");
-const form = document.getElementById("product-form");
-const purchaseDateInput = document.getElementById("p-purchase-date");
-const purchasePriceInput = document.getElementById("p-purchase-price");
-const purchaseLocationInput = document.getElementById("p-purchase-location");
-const dateStartedInput = document.getElementById("p-date-started");
-const dateFinishedInput = document.getElementById("p-date-finished");
-const routineStepGroupEl = document.getElementById("p-routine-step");
-const routineStepEmptyNote = document.getElementById("p-routine-step-empty");
-const ratingInput = document.getElementById("p-rating");
-const notesInput = document.getElementById("p-notes");
-const repurchaseGroup = document.getElementById("p-repurchase");
-const deleteBtn = document.getElementById("delete-product");
+const nameEl = document.getElementById("item-name");
+const metaEl = document.getElementById("item-meta");
+const itemLink = document.getElementById("item-link");
+const form = document.getElementById("usage-form");
+const routineStepGroupEl = document.getElementById("u-routine-step");
+const routineStepEmptyNote = document.getElementById("u-routine-step-empty");
+const ratingInput = document.getElementById("u-rating");
+const notesInput = document.getElementById("u-notes");
+const repurchaseGroup = document.getElementById("u-repurchase");
+const deleteBtn = document.getElementById("delete-usage");
 
 let userId = null;
-let product = null;
+let usage = null;
 let routineStepPicker = null;
 
-async function fetchProduct() {
-  if (!isConfigured) return demoStore.getMaintenanceProduct(productId);
-  const { data, error } = await supabase.from("maintenance_products").select("*").eq("id", productId).single();
+async function fetchUsage() {
+  if (!isConfigured) return demoStore.getMaintenanceUsage(usageId);
+  const { data, error } = await supabase.from("maintenance_usage").select("*").eq("id", usageId).single();
   if (error) {
-    console.error("Failed to load product:", error);
+    console.error("Failed to load usage record:", error);
     return null;
   }
   return data;
+}
+
+async function fetchItem(itemId) {
+  if (!isConfigured) return demoStore.getInventoryItem(itemId);
+  const { data, error } = await supabase.from("inventory_items").select("*").eq("id", itemId).single();
+  return error ? null : data;
 }
 
 async function fetchRoutineSteps() {
@@ -62,40 +64,24 @@ async function fetchRoutineSteps() {
 }
 
 async function persistUpdate(fields) {
-  if (!isConfigured) return demoStore.updateMaintenanceProduct(productId, fields);
+  if (!isConfigured) return demoStore.updateMaintenanceUsage(usageId, fields);
   try {
-    await supabase.from("maintenance_products").update(fields).eq("id", productId);
+    await supabase.from("maintenance_usage").update(fields).eq("id", usageId);
   } catch (error) {
-    console.error("Failed to save product:", error);
+    console.error("Failed to save usage record:", error);
   }
 }
 
 async function persistDelete() {
   if (!isConfigured) {
-    demoStore.deleteMaintenanceProduct(productId);
+    demoStore.deleteMaintenanceUsage(usageId);
     return;
   }
   try {
-    await supabase.from("maintenance_products").delete().eq("id", productId);
+    await supabase.from("maintenance_usage").delete().eq("id", usageId);
   } catch (error) {
-    console.error("Failed to delete product:", error);
+    console.error("Failed to delete usage record:", error);
   }
-}
-
-function updateComputedStats() {
-  const days = estimatedDurationDays(dateStartedInput.value || null, dateFinishedInput.value || null);
-  const price = purchasePriceInput.value ? Number(purchasePriceInput.value) : null;
-  const monthly = estimatedMonthlyCost(price, days);
-  computedStatsEl.innerHTML = `
-    <div class="stat-tile">
-      <div class="overall-stat-label">Estimated Duration</div>
-      <div class="overall-stat-value" style="font-size:0.95rem;">${days != null ? escapeHtml(formatDuration(days)) : "—"}</div>
-    </div>
-    <div class="stat-tile">
-      <div class="overall-stat-label">Estimated Monthly Cost</div>
-      <div class="overall-stat-value" style="font-size:0.95rem;">${monthly != null ? formatMoney(monthly) : "—"}</div>
-    </div>
-  `;
 }
 
 (async function init() {
@@ -105,35 +91,28 @@ function updateComputedStats() {
     userId = session.user.id;
   }
 
-  const [fetchedProduct, routineSteps] = await Promise.all([fetchProduct(), fetchRoutineSteps()]);
-  product = fetchedProduct;
-  if (!product) {
+  usage = await fetchUsage();
+  if (!usage) {
     window.location.href = `maintenance-products.html?area=${encodeURIComponent(area)}`;
     return;
   }
 
-  nameEl.textContent = product.name;
-  metaEl.textContent = [product.category, product.brand].filter(Boolean).join(" · ");
+  const [item, routineSteps] = await Promise.all([fetchItem(usage.inventory_item_id), fetchRoutineSteps()]);
 
-  purchaseDateInput.value = product.purchase_date || "";
-  purchasePriceInput.value = product.purchase_price ?? "";
-  purchaseLocationInput.value = product.purchase_location || "";
-  dateStartedInput.value = product.date_started || "";
-  dateFinishedInput.value = product.date_finished || "";
-  ratingInput.value = product.rating ?? "";
-  notesInput.value = product.notes || "";
-  repurchaseGroup.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === (product.repurchase || "Maybe"))));
+  nameEl.textContent = item ? item.name : "(deleted item)";
+  metaEl.textContent = item ? [item.category, item.brand].filter(Boolean).join(" · ") : "";
+  itemLink.href = `inventory-item.html?id=${encodeURIComponent(usage.inventory_item_id)}&area=${encodeURIComponent(area)}`;
+  itemLink.innerHTML = `${iconMarkup("link")} View in Inventory`;
 
   routineStepEmptyNote.hidden = routineSteps.length > 0;
   const stepNameById = new Map(routineSteps.map((s) => [s.id, s.name]));
-  routineStepPicker = initChipGroup(routineStepGroupEl, routineSteps.map((s) => s.name), { multi: false });
-  if (product.routine_step_id) routineStepPicker.set(stepNameById.get(product.routine_step_id) || null);
   const stepIdByName = new Map(routineSteps.map((s) => [s.name, s.id]));
+  routineStepPicker = initChipGroup(routineStepGroupEl, routineSteps.map((s) => s.name), { multi: false });
+  if (usage.routine_step_id) routineStepPicker.set(stepNameById.get(usage.routine_step_id) || null);
 
-  updateComputedStats();
-  [purchaseDateInput, purchasePriceInput, dateStartedInput, dateFinishedInput].forEach((input) =>
-    input.addEventListener("input", updateComputedStats)
-  );
+  ratingInput.value = usage.rating ?? "";
+  notesInput.value = usage.notes || "";
+  repurchaseGroup.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === (usage.repurchase || "Maybe"))));
 
   repurchaseGroup.addEventListener("click", (e) => {
     const btn = e.target.closest("button");
@@ -146,11 +125,6 @@ function updateComputedStats() {
     e.preventDefault();
     const selectedStepName = routineStepPicker.get();
     await persistUpdate({
-      purchase_date: purchaseDateInput.value || null,
-      purchase_price: purchasePriceInput.value ? Number(purchasePriceInput.value) : null,
-      purchase_location: purchaseLocationInput.value.trim() || null,
-      date_started: dateStartedInput.value || null,
-      date_finished: dateFinishedInput.value || null,
       routine_step_id: selectedStepName ? stepIdByName.get(selectedStepName) || null : null,
       rating: ratingInput.value ? Number(ratingInput.value) : null,
       notes: notesInput.value.trim() || null,

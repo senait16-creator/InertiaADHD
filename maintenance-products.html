@@ -19,47 +19,26 @@
 
     <header class="dashboard-header">
       <h1 id="page-title">Products</h1>
-      <p class="subtitle">What you own, how long it lasts, and what's worth repurchasing.</p>
+      <p class="subtitle">How the products you own are used in this routine — see Inventory for ownership details.</p>
     </header>
 
     <a href="#" class="link-chip" id="routine-link" style="margin-bottom:0.9rem; display:inline-flex;"></a>
     <p class="insight-line" id="cost-summary" hidden></p>
 
-    <div class="stack" id="product-list"></div>
-    <p class="subtitle" id="empty-note" hidden>No products yet.</p>
-    <button type="button" class="add-row-btn" id="add-product-btn">+ Add Product</button>
+    <div class="stack" id="usage-list"></div>
+    <p class="subtitle" id="empty-note" hidden>Nothing used here yet.</p>
+    <button type="button" class="add-row-btn" id="add-usage-btn">+ Use an Inventory Item</button>
   </main>
 
-  <div class="modal-overlay" id="add-product-modal">
+  <div class="modal-overlay" id="add-usage-modal">
     <div class="modal">
-      <h2>Add Product</h2>
-      <form id="add-product-form">
-        <label>
-          Name
-          <input type="text" id="p-name" required maxlength="80" autocomplete="off">
-        </label>
-        <label>
-          Brand
-          <input type="text" id="p-brand" maxlength="60" autocomplete="off">
-        </label>
-        <label>
-          Category
-          <input type="text" id="p-category" maxlength="60" autocomplete="off">
-        </label>
-        <div class="field">
-          <span class="field-label">Repurchase?</span>
-          <div class="segmented" id="p-repurchase">
-            <button type="button" data-value="Yes" aria-pressed="false">Yes</button>
-            <button type="button" data-value="Maybe" aria-pressed="true">Maybe</button>
-            <button type="button" data-value="No" aria-pressed="false">No</button>
-          </div>
-        </div>
-        <p class="field-note">Purchase details, dates, rating, and notes can be filled in from the product's own page.</p>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="add-product-cancel">Cancel</button>
-          <button type="submit" class="btn-primary">Save</button>
-        </div>
-      </form>
+      <h2>Use an Inventory Item</h2>
+      <div class="stack" id="pick-item-list"></div>
+      <p class="field-note" id="pick-item-empty" hidden>Every item you own in this category is already in use here.</p>
+      <a href="#" class="link-chip" id="add-new-item-link" style="margin-top:0.8rem; display:inline-flex;"></a>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="add-usage-cancel">Cancel</button>
+      </div>
     </div>
   </div>
 

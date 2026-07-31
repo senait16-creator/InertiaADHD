@@ -23,9 +23,12 @@
     </header>
 
     <div class="hair-form">
+      <a href="#" class="link-chip" id="item-link" style="margin-bottom:0.9rem; display:inline-flex;"></a>
+
       <div id="insight-slot"></div>
 
       <div class="stat-tile-row" id="stat-tiles"></div>
+      <div class="stat-tile-row" id="cost-stats"></div>
 
       <div class="field">
         <span class="field-label">Lessons that mention this product</span>
@@ -34,28 +37,6 @@
 
       <form id="product-form">
         <div class="section-divider"></div>
-        <p class="field-note">Cost & purchase tracking — also visible from Maintenance → Hair Care.</p>
-        <div class="stat-tile-row" id="computed-stats"></div>
-        <label>
-          Purchase Date
-          <input type="date" id="p-purchase-date">
-        </label>
-        <label>
-          Purchase Price
-          <input type="number" id="p-purchase-price" min="0" step="0.01">
-        </label>
-        <label>
-          Purchase Location
-          <input type="text" id="p-purchase-location" maxlength="80" autocomplete="off">
-        </label>
-        <label>
-          Date Started
-          <input type="date" id="p-date-started">
-        </label>
-        <label>
-          Date Finished / Empty
-          <input type="date" id="p-date-finished">
-        </label>
         <div class="field">
           <span class="field-label">Routine Step (where it's used)</span>
           <div class="chip-group" id="p-routine-step"></div>
@@ -66,14 +47,8 @@
           <input type="number" id="p-rating" min="1" max="10" step="1">
         </label>
         <div class="field">
-          <span class="field-label">Notes</span>
+          <span class="field-label">Notes (how it performs for hair)</span>
           <textarea id="p-notes" rows="4"></textarea>
-        </div>
-        <div class="field">
-          <label class="field-checkbox">
-            <input type="checkbox" id="p-favorite">
-            <span>Favorite</span>
-          </label>
         </div>
         <div class="field">
           <span class="field-label">Repurchase?</span>
