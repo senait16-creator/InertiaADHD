@@ -41,10 +41,38 @@ async function savePanelOrder(userId, order) {
   }
 }
 
+// Steps in the current routine version's items (see the README's
+// "Versioned Routines" section) — a chained lookup (routine -> current
+// version -> its items), not a single-table count like the rest of
+// fetchPanelCounts below.
+async function fetchRoutineStepCount(userId) {
+  if (!isConfigured) {
+    const routine = demoStore.getOrCreateRoutine("hair");
+    const version = demoStore.getCurrentRoutineVersion(routine.id);
+    return version ? demoStore.listVersionItems(version.id).length : 0;
+  }
+  const { data: routines } = await supabase.from("routines").select("id").eq("user_id", userId).eq("area", "hair");
+  const routine = routines && routines[0];
+  if (!routine) return 0;
+  const { data: version } = await supabase
+    .from("routine_versions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("routine_id", routine.id)
+    .is("ended_at", null)
+    .maybeSingle();
+  if (!version) return 0;
+  const { count } = await supabase
+    .from("routine_version_items")
+    .select("id", { count: "exact", head: true })
+    .eq("routine_version_id", version.id);
+  return count ?? 0;
+}
+
 async function fetchPanelCounts(userId) {
   if (!isConfigured) {
     return {
-      routine: demoStore.listMaintenanceRoutineSteps("hair").length,
+      routine: await fetchRoutineStepCount(userId),
       products: demoStore.listInventoryItems("hair").length,
       washlog: demoStore.listHairWashLog().length,
       experiments: demoStore.listHairExperiments().length,
@@ -53,11 +81,11 @@ async function fetchPanelCounts(userId) {
       notes: demoStore.listHairNotes().length,
     };
   }
-  // routine and products are now the generic, area-filtered tables (see
-  // the README's "Inventory" section) rather than Hair-only ones, so
-  // they need an extra area filter the rest of these tables don't.
+  // products is the generic, area-filtered inventory_items table (see
+  // the README's "Inventory" section) rather than a Hair-only one, so it
+  // needs an extra area filter the rest of these tables don't.
   const [routineCount, productsCount, ...rest] = await Promise.all([
-    supabase.from("maintenance_routine_steps").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("area", "hair"),
+    fetchRoutineStepCount(userId),
     supabase.from("inventory_items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("area", "hair"),
     ...Object.entries({
       washlog: "hair_wash_log",
@@ -71,7 +99,7 @@ async function fetchPanelCounts(userId) {
     }),
   ]);
   return {
-    routine: routineCount.count ?? 0,
+    routine: routineCount,
     products: productsCount.count ?? 0,
     ...Object.fromEntries(rest),
   };

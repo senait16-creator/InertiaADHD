@@ -446,8 +446,8 @@ export function deleteStepVideo(id) {
 // ==================== Hair (see js/hair.js and friends) ====================
 
 // hair_routine_steps and hair_products used to live here. Both are
-// gone — Hair's routine is now just listMaintenanceRoutineSteps("hair")
-// further down, and Hair's products are now Inventory items
+// gone — Hair's routine is now just getOrCreateRoutine("hair") and its
+// versioned items further down, and Hair's products are now Inventory items
 // (listInventoryItems("hair")), same as every other care area.
 
 // ---------------- Hair wash log ----------------
@@ -889,71 +889,270 @@ export function deleteMaintenanceUsage(id) {
   writeMaintenanceUsage(readMaintenanceUsage().filter((u) => u.id !== id));
 }
 
-// ---------------- Maintenance routine steps ----------------
-// area "hair" is Hair Lab's own Hair Routine panel now too, not a
-// separate hair_routine_steps store — one routine system for every area.
+// ---------------- Stickers ----------------
+// A small reusable image, created once and referenced from inventory
+// items and routine version items rather than re-uploaded per place —
+// see the README's "Stickers" section.
 
-const MAINTENANCE_ROUTINE_KEY = "inertiaadhd_demo_maintenance_routine";
+const STICKERS_KEY = "inertiaadhd_demo_stickers";
 
-function readMaintenanceRoutineSteps() {
+function readStickers() {
   try {
-    const raw = localStorage.getItem(MAINTENANCE_ROUTINE_KEY);
+    const raw = localStorage.getItem(STICKERS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
-function writeMaintenanceRoutineSteps(rows) {
-  localStorage.setItem(MAINTENANCE_ROUTINE_KEY, JSON.stringify(rows));
+function writeStickers(rows) {
+  localStorage.setItem(STICKERS_KEY, JSON.stringify(rows));
 }
 
-export function listMaintenanceRoutineSteps(area) {
-  return readMaintenanceRoutineSteps()
-    .filter((s) => s.area === area)
-    .sort((a, b) => a.sort_order - b.sort_order);
+export function listStickers() {
+  return readStickers().sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
-// Unfiltered — used only to resolve a routine step's name for display
-// (e.g. an inventory item's read-only "Used In" list spans every area).
-export function listAllMaintenanceRoutineSteps() {
-  return readMaintenanceRoutineSteps();
+export function getSticker(id) {
+  return readStickers().find((s) => s.id === id) || null;
 }
 
-export function addMaintenanceRoutineStep(area, name) {
-  const rows = readMaintenanceRoutineSteps();
-  const step = {
+export function addSticker(fields) {
+  const rows = readStickers();
+  const sticker = {
     id: makeId(),
-    area,
-    name,
-    sort_order: rows.filter((s) => s.area === area).length,
+    sticker_type: "product",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    ...fields,
   };
-  rows.push(step);
-  writeMaintenanceRoutineSteps(rows);
-  return step;
+  rows.push(sticker);
+  writeStickers(rows);
+  return sticker;
 }
 
-export function updateMaintenanceRoutineStep(id, name) {
-  const rows = readMaintenanceRoutineSteps();
-  const step = rows.find((s) => s.id === id);
-  if (!step) return null;
-  step.name = name;
-  step.updated_at = new Date().toISOString();
-  writeMaintenanceRoutineSteps(rows);
-  return step;
+export function updateSticker(id, fields) {
+  const rows = readStickers();
+  const sticker = rows.find((s) => s.id === id);
+  if (!sticker) return null;
+  Object.assign(sticker, fields);
+  sticker.updated_at = new Date().toISOString();
+  writeStickers(rows);
+  return sticker;
 }
 
-export function deleteMaintenanceRoutineStep(id) {
-  writeMaintenanceRoutineSteps(readMaintenanceRoutineSteps().filter((s) => s.id !== id));
+export function deleteSticker(id) {
+  writeStickers(readStickers().filter((s) => s.id !== id));
 }
 
-export function reorderMaintenanceRoutineSteps(orderedIds) {
-  const rows = readMaintenanceRoutineSteps();
-  orderedIds.forEach((id, index) => {
-    const step = rows.find((s) => s.id === id);
-    if (step) step.sort_order = index;
-  });
-  writeMaintenanceRoutineSteps(rows);
+// Checked before allowing a delete from the Sticker Library — a sticker
+// still referenced anywhere should not silently vanish out from under
+// whatever's using it.
+export function isStickerInUse(id) {
+  const usedByItem = readInventoryItems().some((i) => i.sticker_id === id);
+  const usedByRoutine = readRoutineVersionItems().some((vi) => vi.sticker_id === id);
+  return usedByItem || usedByRoutine;
+}
+
+// ---------------- Routines / Routine Versions / Routine Version Items ----------------
+// One routine per area (e.g. the Skin Care routine), versioned rather
+// than a single overwritten list — see startNewRoutineVersion below and
+// the README's "Versioned Routines" section. area "hair" is Hair Lab's
+// own Hair Routine panel too, same system as every other area.
+
+const ROUTINES_KEY = "inertiaadhd_demo_routines";
+const ROUTINE_VERSIONS_KEY = "inertiaadhd_demo_routine_versions";
+const ROUTINE_VERSION_ITEMS_KEY = "inertiaadhd_demo_routine_version_items";
+
+function readRoutines() {
+  try {
+    const raw = localStorage.getItem(ROUTINES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+function writeRoutines(rows) {
+  localStorage.setItem(ROUTINES_KEY, JSON.stringify(rows));
+}
+function readRoutineVersions() {
+  try {
+    const raw = localStorage.getItem(ROUTINE_VERSIONS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+function writeRoutineVersions(rows) {
+  localStorage.setItem(ROUTINE_VERSIONS_KEY, JSON.stringify(rows));
+}
+function readRoutineVersionItems() {
+  try {
+    const raw = localStorage.getItem(ROUTINE_VERSION_ITEMS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+function writeRoutineVersionItems(rows) {
+  localStorage.setItem(ROUTINE_VERSION_ITEMS_KEY, JSON.stringify(rows));
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Creates the routine (and its first, empty, current version) on first
+// use — every area gets one lazily rather than needing to be seeded.
+export function getOrCreateRoutine(area) {
+  const routines = readRoutines();
+  let routine = routines.find((r) => r.area === area);
+  if (!routine) {
+    routine = { id: makeId(), area, name: `${area} routine`, created_at: new Date().toISOString() };
+    routines.push(routine);
+    writeRoutines(routines);
+  }
+  const versions = readRoutineVersions();
+  const hasCurrent = versions.some((v) => v.routine_id === routine.id && !v.ended_at);
+  if (!hasCurrent) {
+    versions.push({
+      id: makeId(),
+      routine_id: routine.id,
+      version_number: versions.filter((v) => v.routine_id === routine.id).length + 1,
+      started_at: todayStr(),
+      ended_at: null,
+      notes: null,
+      created_at: new Date().toISOString(),
+    });
+    writeRoutineVersions(versions);
+  }
+  return routine;
+}
+
+export function getCurrentRoutineVersion(routineId) {
+  return readRoutineVersions().find((v) => v.routine_id === routineId && !v.ended_at) || null;
+}
+
+export function getRoutineVersion(id) {
+  return readRoutineVersions().find((v) => v.id === id) || null;
+}
+
+export function listRoutineVersions(routineId) {
+  return readRoutineVersions()
+    .filter((v) => v.routine_id === routineId)
+    .sort((a, b) => a.version_number - b.version_number);
+}
+
+export function listVersionItems(versionId) {
+  return readRoutineVersionItems()
+    .filter((i) => i.routine_version_id === versionId)
+    .sort((a, b) => a.position - b.position);
+}
+
+// Which *currently active* routines include this item — used by
+// inventory-item.html's "Used In" section. Closed (past) versions don't
+// count here; that history lives on each area's own History page.
+export function listCurrentRoutineMembershipsForItem(itemId) {
+  const versions = readRoutineVersions();
+  const routines = readRoutines();
+  return readRoutineVersionItems()
+    .filter((vi) => vi.inventory_item_id === itemId)
+    .map((vi) => {
+      const version = versions.find((v) => v.id === vi.routine_version_id);
+      if (!version || version.ended_at) return null;
+      const routine = routines.find((r) => r.id === version.routine_id);
+      if (!routine) return null;
+      return { area: routine.area, section: vi.section };
+    })
+    .filter(Boolean);
+}
+
+// Wipes and re-inserts a version's whole item list in one call — routine
+// sizes are small, so "replace everything" is simpler and safer than
+// diffing inserts/moves/deletes against what was there before.
+export function replaceVersionItems(versionId, items) {
+  const others = readRoutineVersionItems().filter((i) => i.routine_version_id !== versionId);
+  const rows = items.map((it) => ({
+    id: makeId(),
+    routine_version_id: versionId,
+    created_at: new Date().toISOString(),
+    ...it,
+  }));
+  writeRoutineVersionItems([...others, ...rows]);
+  return rows;
+}
+
+// "Update current version": edits apply in place, no new version row.
+export function updateCurrentVersionItems(versionId, items, notes) {
+  if (notes !== undefined) {
+    const versions = readRoutineVersions();
+    const v = versions.find((x) => x.id === versionId);
+    if (v) {
+      v.notes = notes;
+      writeRoutineVersions(versions);
+    }
+  }
+  return replaceVersionItems(versionId, items);
+}
+
+// "Start a new version": closes the current version (ended_at = today)
+// and opens a fresh one holding the edited items — the closed version's
+// own items are never touched, so it stays an accurate historical
+// snapshot forever.
+export function startNewRoutineVersion(routineId, items, notes) {
+  const versions = readRoutineVersions();
+  const current = versions.find((v) => v.routine_id === routineId && !v.ended_at);
+  if (current) current.ended_at = todayStr();
+  const maxVersion = Math.max(0, ...versions.filter((v) => v.routine_id === routineId).map((v) => v.version_number));
+  const next = {
+    id: makeId(),
+    routine_id: routineId,
+    version_number: maxVersion + 1,
+    started_at: todayStr(),
+    ended_at: null,
+    notes: notes || null,
+    created_at: new Date().toISOString(),
+  };
+  versions.push(next);
+  writeRoutineVersions(versions);
+  replaceVersionItems(next.id, items);
+  return next;
+}
+
+// ---------------- Maintenance logs ----------------
+// One entry per day per area — locked to whichever routine version was
+// active when saved (routine_version_id), never the live current one.
+
+const MAINTENANCE_LOGS_KEY = "inertiaadhd_demo_maintenance_logs";
+
+function readMaintenanceLogs() {
+  try {
+    const raw = localStorage.getItem(MAINTENANCE_LOGS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+function writeMaintenanceLogs(rows) {
+  localStorage.setItem(MAINTENANCE_LOGS_KEY, JSON.stringify(rows));
+}
+
+export function listMaintenanceLogs(area) {
+  return readMaintenanceLogs()
+    .filter((l) => l.area === area)
+    .sort((a, b) => b.log_date.localeCompare(a.log_date));
+}
+
+export function addMaintenanceLog(fields) {
+  const rows = readMaintenanceLogs();
+  const log = {
+    id: makeId(),
+    log_date: todayStr(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...fields,
+  };
+  rows.push(log);
+  writeMaintenanceLogs(rows);
+  return log;
 }

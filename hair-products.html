@@ -24,7 +24,7 @@
 
     <a href="inventory-items.html?area=hair" class="link-chip" style="margin-bottom:0.9rem; display:inline-flex;" id="inventory-link"></a>
 
-    <div class="stack" id="product-list"></div>
+    <div class="item-gallery-grid" id="product-list"></div>
     <p class="subtitle" id="empty-note" hidden>No products yet.</p>
     <button type="button" class="add-row-btn" id="add-product-btn">+ Add Product</button>
   </main>
@@ -32,6 +32,13 @@
   <div class="modal-overlay" id="add-product-modal">
     <div class="modal">
       <h2>Add Product</h2>
+      <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+        <div class="sticker-badge" id="item-sticker-preview">🏷️</div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary" id="choose-sticker-btn">Choose Sticker</button>
+          <button type="button" class="btn-secondary" id="create-sticker-btn">+ Create New</button>
+        </div>
+      </div>
       <form id="add-product-form">
         <label>
           Name

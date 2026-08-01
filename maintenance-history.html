@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Routine — InertiaADHD</title>
+  <title>Routine History — InertiaADHD</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-32.png" sizes="32x32">
@@ -15,17 +15,17 @@
 </head>
 <body>
   <main class="dashboard">
-    <a href="#" class="back-link" id="back-link">‹ Products</a>
+    <a href="#" class="back-link" id="back-link">‹ Back</a>
 
     <header class="dashboard-header">
-      <h1 id="page-title">Routine</h1>
-      <p class="subtitle">The order you actually use these products in.</p>
+      <h1 id="page-title">Routine — History</h1>
+      <p class="subtitle">Every real change gets its own version. A quick fix doesn't.</p>
     </header>
 
-    <div class="stack" id="routine-list"></div>
-    <button type="button" class="add-row-btn" id="add-step-btn">+ Add Step</button>
+    <div class="version-timeline" id="timeline"></div>
+    <p class="subtitle" id="empty-note" hidden>No history yet — edit your routine to start one.</p>
   </main>
 
-  <script type="module" src="js/maintenanceRoutine.js"></script>
+  <script type="module" src="js/maintenanceHistory.js"></script>
 </body>
 </html>

@@ -1,16 +1,18 @@
-// One Inventory item: its identity (editable), Photos (upload or, on a
-// phone, take a picture directly — see the file input's `capture`
-// attribute), Purchase Instances (one row per bought container, each
-// with its own computed Estimated Duration/Monthly Cost), and a
-// read-only "Used In" list of the Maintenance areas this item has a
-// usage record in — editing a usage record (rating, notes, repurchase)
-// happens on that area's own maintenance-product.html, not here, since
-// this page is about the item itself, not how any one area is using it.
+// One Inventory item: its Sticker, identity (editable), Photos (upload
+// or, on a phone, take a picture directly — see the file input's
+// `capture` attribute), Purchase Instances (one row per bought
+// container, each with its own computed Estimated Duration/Monthly
+// Cost), and a read-only "Used In" list of the Maintenance areas whose
+// *current* Active Routine includes this item — editing routine
+// membership happens on that area's own maintenance-home.html, not
+// here, since this page is about the item itself, not any one area's
+// routine.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
 import { iconMarkup } from "./lucideIcons.js";
 import { AREAS, escapeHtml, estimatedDurationDays, formatDuration, estimatedMonthlyCost, formatMoney } from "./maintenanceShared.js";
+import * as stickers from "./stickerShared.js";
 
 const params = new URLSearchParams(window.location.search);
 const itemId = params.get("id");
@@ -26,12 +28,14 @@ document.getElementById("back-link").href = `inventory-items.html?area=${encodeU
 
 const nameEl = document.getElementById("item-name");
 const metaEl = document.getElementById("item-meta");
+const stickerPreview = document.getElementById("item-sticker-preview");
 const form = document.getElementById("item-form");
 const nameInput = document.getElementById("i-name");
 const brandInput = document.getElementById("i-brand");
 const categoryInput = document.getElementById("i-category");
-const quantityInput = document.getElementById("i-quantity");
-const conditionInput = document.getElementById("i-condition");
+const sizeInput = document.getElementById("i-size");
+const statusPickerEl = document.getElementById("i-status");
+const urlInput = document.getElementById("i-url");
 const notesInput = document.getElementById("i-notes");
 const deleteBtn = document.getElementById("delete-item");
 
@@ -92,16 +96,21 @@ async function fetchPhotos() {
   return data.sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
-async function fetchUsages() {
-  if (!isConfigured) return demoStore.listMaintenanceUsageForItem(itemId);
-  const { data, error } = await supabase.from("maintenance_usage").select("*").eq("inventory_item_id", itemId);
-  return error ? [] : data;
-}
-
-async function fetchAllRoutineSteps() {
-  if (!isConfigured) return demoStore.listAllMaintenanceRoutineSteps();
-  const { data, error } = await supabase.from("maintenance_routine_steps").select("*").eq("user_id", userId);
-  return error ? [] : data;
+// Which currently-active routines include this item — a real FK chain
+// (routine_version_items -> routine_versions -> routines), so Supabase's
+// nested select can do the join in one request.
+async function fetchRoutineMemberships() {
+  if (!isConfigured) return demoStore.listCurrentRoutineMembershipsForItem(itemId);
+  const { data, error } = await supabase
+    .from("routine_version_items")
+    .select("section, routine_versions!inner(ended_at, routines!inner(area))")
+    .eq("inventory_item_id", itemId)
+    .is("routine_versions.ended_at", null);
+  if (error) {
+    console.error("Failed to load routine memberships:", error);
+    return [];
+  }
+  return data.map((row) => ({ area: row.routine_versions.routines.area, section: row.section }));
 }
 
 async function persistItemUpdate(fields) {
@@ -283,20 +292,15 @@ function renderPurchases() {
     .join("");
 }
 
-function renderUsages(usages, stepNameById) {
-  usageEmptyNote.hidden = usages.length > 0;
-  usageListEl.innerHTML = usages
-    .map((u) => {
-      const usageAreaMeta = AREAS[u.area];
-      const stepName = u.routine_step_id ? stepNameById.get(u.routine_step_id) : null;
-      const parts = [];
-      if (stepName) parts.push(escapeHtml(stepName));
-      if (u.rating != null) parts.push(`${u.rating}/10`);
-      if (u.repurchase) parts.push(`Repurchase: ${escapeHtml(u.repurchase)}`);
+function renderMemberships(memberships) {
+  usageEmptyNote.hidden = memberships.length > 0;
+  usageListEl.innerHTML = memberships
+    .map((m) => {
+      const meta = AREAS[m.area];
       return `
-      <a class="card-row clickable" href="maintenance-product.html?id=${encodeURIComponent(u.id)}&area=${encodeURIComponent(u.area)}" style="display:block; text-decoration:none; color:inherit;">
-        <div class="card-title">${escapeHtml(usageAreaMeta ? usageAreaMeta.label : u.area)}</div>
-        <div class="card-sub">${parts.join(" · ") || "No rating yet"}</div>
+      <a class="card-row clickable" href="maintenance-home.html?area=${encodeURIComponent(m.area)}" style="display:block; text-decoration:none; color:inherit;">
+        <div class="card-title">${escapeHtml(meta ? meta.label : m.area)}</div>
+        <div class="card-sub">${escapeHtml(m.section)}</div>
       </a>
     `;
     })
@@ -361,9 +365,20 @@ purchaseForm.addEventListener("submit", async (e) => {
 });
 
 deleteBtn.addEventListener("click", async () => {
-  if (!confirm(`Delete "${item.name}"? This also removes its purchase history and any routine assignments.`)) return;
+  if (!confirm(`Delete "${item.name}"? This also removes its purchase history and photos. Any routine that includes it keeps the sticker, just without a linked product page.`)) return;
   await persistItemDelete();
   window.location.href = `inventory-items.html?area=${encodeURIComponent(area)}`;
+});
+
+const statusPicker = stickers.initChipGroup(statusPickerEl, stickers.STATUS_OPTIONS, { multi: false });
+let pendingStickerId = null;
+stickers.wireStickerField({
+  previewEl: stickerPreview,
+  chooseBtn: document.getElementById("choose-sticker-btn"),
+  createBtn: document.getElementById("create-sticker-btn"),
+  onChange: (s) => {
+    pendingStickerId = s.id;
+  },
 });
 
 form.addEventListener("submit", async (e) => {
@@ -374,9 +389,11 @@ form.addEventListener("submit", async (e) => {
     name,
     brand: brandInput.value.trim() || null,
     category: categoryInput.value.trim() || null,
-    quantity_or_size: quantityInput.value.trim() || null,
-    condition: conditionInput.value.trim() || null,
+    size: sizeInput.value.trim() || null,
+    status: statusPicker.get() || null,
+    source_url: urlInput.value.trim() || null,
     notes: notesInput.value.trim() || null,
+    sticker_id: pendingStickerId,
   };
   await persistItemUpdate(fields);
   Object.assign(item, fields);
@@ -390,13 +407,13 @@ form.addEventListener("submit", async (e) => {
     if (!session) return;
     userId = session.user.id;
   }
+  stickers.setUserId(userId);
 
-  const [fetchedItem, fetchedPurchases, fetchedPhotos, usages, routineSteps] = await Promise.all([
+  const [fetchedItem, fetchedPurchases, fetchedPhotos, memberships] = await Promise.all([
     fetchItem(),
     fetchPurchases(),
     fetchPhotos(),
-    fetchUsages(),
-    fetchAllRoutineSteps(),
+    fetchRoutineMemberships(),
   ]);
   item = fetchedItem;
   if (!item) {
@@ -411,13 +428,17 @@ form.addEventListener("submit", async (e) => {
   nameInput.value = item.name;
   brandInput.value = item.brand || "";
   categoryInput.value = item.category || "";
-  quantityInput.value = item.quantity_or_size || "";
-  conditionInput.value = item.condition || "";
+  sizeInput.value = item.size || "";
+  urlInput.value = item.source_url || "";
   notesInput.value = item.notes || "";
+  statusPicker.set(item.status || null);
+  pendingStickerId = item.sticker_id || null;
+  if (item.sticker_id) {
+    const s = await stickers.fetchStickerById(item.sticker_id);
+    if (s) stickerPreview.innerHTML = stickers.stickerBadgeHtml(s);
+  }
 
   renderPurchases();
   renderPhotos();
-
-  const stepNameById = new Map(routineSteps.map((s) => [s.id, s.name]));
-  renderUsages(usages, stepNameById);
+  renderMemberships(memberships);
 })();

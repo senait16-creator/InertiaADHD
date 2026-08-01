@@ -979,6 +979,23 @@ create policy "Users can delete their own inventory items"
   on public.inventory_items for delete
   using (auth.uid() = user_id);
 
+-- Sticker support (see js/stickerShared.js and the README's "Stickers"
+-- section): sticker_id has no foreign key, same reasoning as every
+-- other cross-entity reference in this file — deleting a sticker is a
+-- Sticker Library action, not something that should ever silently blank
+-- out an inventory item. status replaces the old free-text condition
+-- column with a fixed picklist (New/In Use/Almost Empty/Empty/Finished/
+-- Repurchase Needed/Archived), validated app-side like every other
+-- fixed-list field in this app (no db-level enum). size replaces
+-- quantity_or_size (same field, clearer name). Dropped rather than left
+-- unused since no real data exists yet to carry over.
+alter table public.inventory_items add column if not exists sticker_id uuid;
+alter table public.inventory_items add column if not exists status text;
+alter table public.inventory_items add column if not exists size text;
+alter table public.inventory_items add column if not exists source_url text;
+alter table public.inventory_items drop column if exists condition;
+alter table public.inventory_items drop column if exists quantity_or_size;
+
 -- One row per individually purchased container of an item (a specific
 -- bottle or jar, not the reusable product identity above) — "how long
 -- did THIS one last" is a property of the purchase, not the product, so
@@ -1231,4 +1248,292 @@ create policy "Users can update their own maintenance usage"
 drop policy if exists "Users can delete their own maintenance usage" on public.maintenance_usage;
 create policy "Users can delete their own maintenance usage"
   on public.maintenance_usage for delete
+  using (auth.uid() = user_id);
+
+-- routine_step_id is superseded by routine_version_items membership
+-- (see the Stickers section below) — which routine a rating applies to
+-- is now visible directly from the versioned routine itself, so a
+-- separate pointer here would just be one more place to go stale.
+alter table public.maintenance_usage drop column if exists routine_step_id;
+
+-- ==================== Stickers + Versioned Routines (see js/stickerShared.js and friends) ====================
+-- A sticker is a small reusable image (a die-cut product icon, ~256-384px,
+-- ideally transparent) — created once, then reused across Inventory items
+-- and routine steps rather than re-uploaded per place it's used. Deleting
+-- a sticker is a Sticker Library action (see js/stickerShared.js's
+-- isStickerInUse), never automatic: an inventory item or a routine
+-- version's sticker_id both stay put even if the sticker they point at
+-- is later deleted (loose references, like the rest of this file) —
+-- what actually blocks deletion is the app checking first.
+create table if not exists public.stickers (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  image_path text,
+  sticker_type text not null default 'product',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists stickers_user_idx on public.stickers (user_id);
+
+create or replace function public.set_stickers_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_stickers_updated_at on public.stickers;
+create trigger set_stickers_updated_at
+  before update on public.stickers
+  for each row
+  execute function public.set_stickers_updated_at();
+
+alter table public.stickers enable row level security;
+
+drop policy if exists "Users can view their own stickers" on public.stickers;
+create policy "Users can view their own stickers"
+  on public.stickers for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own stickers" on public.stickers;
+create policy "Users can insert their own stickers"
+  on public.stickers for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own stickers" on public.stickers;
+create policy "Users can update their own stickers"
+  on public.stickers for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own stickers" on public.stickers;
+create policy "Users can delete their own stickers"
+  on public.stickers for delete
+  using (auth.uid() = user_id);
+
+-- Storage bucket for sticker images. Same public-read /
+-- per-user-folder-scoped-write pattern as hair-photos/inventory-photos
+-- above (see uploadSticker in js/stickerShared.js).
+insert into storage.buckets (id, name, public)
+values ('stickers', 'stickers', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Anyone can view stickers" on storage.objects;
+create policy "Anyone can view stickers"
+  on storage.objects for select
+  using (bucket_id = 'stickers');
+
+drop policy if exists "Users can upload their own stickers" on storage.objects;
+create policy "Users can upload their own stickers"
+  on storage.objects for insert
+  with check (bucket_id = 'stickers' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Users can delete their own sticker uploads" on storage.objects;
+create policy "Users can delete their own sticker uploads"
+  on storage.objects for delete
+  using (bucket_id = 'stickers' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- maintenance_routine_steps used to live here: one flat ordered list per
+-- area, no sections, no history. Gone (dropped below, no data to
+-- migrate) — a routine is now versioned (routine_versions) with each
+-- version holding its own ordered, sectioned list of items
+-- (routine_version_items), so "what did I use in May" and "what am I
+-- using now" are both answerable instead of only the latter. area =
+-- 'hair' is Hair Lab's own Hair Routine panel too, same as before — one
+-- routine system for every area, not a Hair-only table.
+drop table if exists public.maintenance_routine_steps cascade;
+
+-- One routine per area (e.g. the "Skin Care" routine, area = 'skin').
+-- Not much more than a name and an area — routine_versions below is
+-- where the actual content lives.
+create table if not exists public.routines (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  area text not null,
+  name text not null,
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists routines_user_area_idx
+  on public.routines (user_id, area);
+
+alter table public.routines enable row level security;
+
+drop policy if exists "Users can view their own routines" on public.routines;
+create policy "Users can view their own routines"
+  on public.routines for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own routines" on public.routines;
+create policy "Users can insert their own routines"
+  on public.routines for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own routines" on public.routines;
+create policy "Users can update their own routines"
+  on public.routines for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own routines" on public.routines;
+create policy "Users can delete their own routines"
+  on public.routines for delete
+  using (auth.uid() = user_id);
+
+-- One row per era of a routine. ended_at null means it's the current,
+-- active version — starting a new version closes the previous one by
+-- setting its ended_at (see startNewRoutineVersion in
+-- js/stickerShared.js) rather than ever overwriting a version's items in
+-- place. A real foreign key to routines (unlike the loose references
+-- elsewhere in this file): a version is structurally owned by its
+-- routine, so deleting the routine takes its whole history with it.
+create table if not exists public.routine_versions (
+  id uuid primary key default gen_random_uuid(),
+  routine_id uuid not null references public.routines(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  version_number integer not null,
+  started_at date not null default current_date,
+  ended_at date,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists routine_versions_routine_idx
+  on public.routine_versions (routine_id, version_number);
+
+alter table public.routine_versions enable row level security;
+
+drop policy if exists "Users can view their own routine versions" on public.routine_versions;
+create policy "Users can view their own routine versions"
+  on public.routine_versions for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own routine versions" on public.routine_versions;
+create policy "Users can insert their own routine versions"
+  on public.routine_versions for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own routine versions" on public.routine_versions;
+create policy "Users can update their own routine versions"
+  on public.routine_versions for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own routine versions" on public.routine_versions;
+create policy "Users can delete their own routine versions"
+  on public.routine_versions for delete
+  using (auth.uid() = user_id);
+
+-- One row per sticker/item in one version's ordered list. `section`
+-- (e.g. 'morning', 'night', 'weekly') is free text, not a fixed list —
+-- a routine's sections are whatever the user names them.
+-- inventory_item_id and sticker_id are both loose references (no
+-- foreign key, unlike this table's real FK to routine_versions): once a
+-- version is closed, its items are a historical snapshot — deleting the
+-- Inventory item or the sticker later must never change how that
+-- snapshot reads (see the README's "preserve routine snapshots" note).
+-- sticker_id is the visual snapshot; inventory_item_id is what lets a
+-- log or history entry still link through to the live product page when
+-- the item still exists.
+create table if not exists public.routine_version_items (
+  id uuid primary key default gen_random_uuid(),
+  routine_version_id uuid not null references public.routine_versions(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  inventory_item_id uuid,
+  sticker_id uuid,
+  section text not null default 'default',
+  position integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists routine_version_items_version_idx
+  on public.routine_version_items (routine_version_id, section, position);
+
+alter table public.routine_version_items enable row level security;
+
+drop policy if exists "Users can view their own routine version items" on public.routine_version_items;
+create policy "Users can view their own routine version items"
+  on public.routine_version_items for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own routine version items" on public.routine_version_items;
+create policy "Users can insert their own routine version items"
+  on public.routine_version_items for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own routine version items" on public.routine_version_items;
+create policy "Users can update their own routine version items"
+  on public.routine_version_items for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own routine version items" on public.routine_version_items;
+create policy "Users can delete their own routine version items"
+  on public.routine_version_items for delete
+  using (auth.uid() = user_id);
+
+-- One log entry per day per area. routine_version_id is a loose
+-- snapshot reference (no foreign key) — locked to whichever version was
+-- active when the entry was saved, so editing or starting a new routine
+-- version later never changes how a past log reads (see
+-- routine_version_items above for the same reasoning). condition/
+-- dryness/irritation/breakouts are free text (a small fixed picklist
+-- per field, validated app-side) so this table reads for hair or body
+-- logs too, not only skin.
+create table if not exists public.maintenance_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  area text not null,
+  log_date date not null default current_date,
+  routine_version_id uuid,
+  condition text,
+  dryness text,
+  irritation text,
+  breakouts text,
+  notes text,
+  photo_url text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists maintenance_logs_user_area_date_idx
+  on public.maintenance_logs (user_id, area, log_date);
+
+create or replace function public.set_maintenance_logs_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_maintenance_logs_updated_at on public.maintenance_logs;
+create trigger set_maintenance_logs_updated_at
+  before update on public.maintenance_logs
+  for each row
+  execute function public.set_maintenance_logs_updated_at();
+
+alter table public.maintenance_logs enable row level security;
+
+drop policy if exists "Users can view their own maintenance logs" on public.maintenance_logs;
+create policy "Users can view their own maintenance logs"
+  on public.maintenance_logs for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own maintenance logs" on public.maintenance_logs;
+create policy "Users can insert their own maintenance logs"
+  on public.maintenance_logs for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own maintenance logs" on public.maintenance_logs;
+create policy "Users can update their own maintenance logs"
+  on public.maintenance_logs for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own maintenance logs" on public.maintenance_logs;
+create policy "Users can delete their own maintenance logs"
+  on public.maintenance_logs for delete
   using (auth.uid() = user_id);

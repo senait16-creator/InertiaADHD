@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Log — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="#" class="back-link" id="back-link">‹ Back</a>
+
+    <header class="dashboard-header">
+      <h1 id="page-title">Today's Log</h1>
+      <p class="subtitle">The routine snapshot below is locked to whatever version is active right now — editing the routine later never changes this entry.</p>
+    </header>
+
+    <div class="log-snapshot-card">
+      <span class="field-note" style="margin:0;">Routine used · <span id="log-today-date"></span></span>
+      <div class="routine-hero-row" id="log-snapshot" style="margin-top:0.6rem;"></div>
+    </div>
+
+    <form id="log-form">
+      <div class="field" style="margin-top:1rem;">
+        <span class="field-label">Condition</span>
+        <div class="severity-row" data-field="condition">
+          <button type="button" class="severity-chip" data-value="Great">Great</button>
+          <button type="button" class="severity-chip" data-value="Good">Good</button>
+          <button type="button" class="severity-chip" data-value="Okay">Okay</button>
+          <button type="button" class="severity-chip" data-value="Rough">Rough</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:0.9rem;">
+        <span class="field-label">Dryness</span>
+        <div class="severity-row" data-field="dryness">
+          <button type="button" class="severity-chip" data-value="None">None</button>
+          <button type="button" class="severity-chip" data-value="Mild">Mild</button>
+          <button type="button" class="severity-chip" data-value="Noticeable">Noticeable</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:0.9rem;">
+        <span class="field-label">Irritation</span>
+        <div class="severity-row" data-field="irritation">
+          <button type="button" class="severity-chip" data-value="None">None</button>
+          <button type="button" class="severity-chip" data-value="Mild">Mild</button>
+          <button type="button" class="severity-chip" data-value="Noticeable">Noticeable</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:0.9rem;">
+        <span class="field-label">Breakouts</span>
+        <div class="severity-row" data-field="breakouts">
+          <button type="button" class="severity-chip" data-value="None">None</button>
+          <button type="button" class="severity-chip" data-value="A few">A few</button>
+          <button type="button" class="severity-chip" data-value="A lot">A lot</button>
+        </div>
+      </div>
+      <label style="display:block; margin-top:0.9rem;">
+        Notes
+        <textarea id="log-notes" rows="2" placeholder="Anything worth remembering about today…"></textarea>
+      </label>
+      <div class="field" style="margin-top:0.9rem;">
+        <span class="field-label">Progress photo (optional)</span>
+        <div id="log-photo-preview" style="width:70px; height:70px; border-radius:12px; border:1.5px dashed var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; margin-top:0.4rem; overflow:hidden;">＋</div>
+        <input type="file" id="log-photo-input" accept="image/*" capture="environment" hidden>
+      </div>
+      <div class="modal-actions" style="margin-top:1rem;">
+        <button type="submit" class="btn-primary">Save Log Entry</button>
+      </div>
+    </form>
+
+    <div class="section-divider"></div>
+
+    <h2 style="font-size:1.05rem;">Past Entries</h2>
+    <div id="log-history"></div>
+    <p class="subtitle" id="log-empty-note" hidden>No entries yet.</p>
+  </main>
+
+  <script type="module" src="js/maintenanceLog.js"></script>
+</body>
+</html>

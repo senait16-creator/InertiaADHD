@@ -23,6 +23,14 @@
     </header>
 
     <div class="hair-form">
+      <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+        <div class="sticker-badge hero" id="item-sticker-preview">🏷️</div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary" id="choose-sticker-btn">Choose Sticker</button>
+          <button type="button" class="btn-secondary" id="create-sticker-btn">+ Create New</button>
+        </div>
+      </div>
+
       <a href="#" class="link-chip" id="item-link" style="margin-bottom:0.9rem; display:inline-flex;"></a>
 
       <div id="insight-slot"></div>
@@ -35,13 +43,14 @@
         <div class="stack" id="related-lessons"></div>
       </div>
 
+      <div class="field">
+        <span class="field-label">Used In</span>
+        <div class="stack" id="usage-list"></div>
+        <p class="field-note" id="usage-empty-note" hidden>Not in Hair Routine yet — add it from Hair's Active Routine.</p>
+      </div>
+
       <form id="product-form">
         <div class="section-divider"></div>
-        <div class="field">
-          <span class="field-label">Routine Step (where it's used)</span>
-          <div class="chip-group" id="p-routine-step"></div>
-          <p class="field-note" id="p-routine-step-empty" hidden>No routine steps yet — add some from Hair Routine first.</p>
-        </div>
         <label>
           Rating (out of 10)
           <input type="number" id="p-rating" min="1" max="10" step="1">

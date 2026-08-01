@@ -23,6 +23,13 @@
     </header>
 
     <div class="hair-form">
+      <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+        <div class="sticker-badge hero" id="item-sticker-preview">🏷️</div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary" id="choose-sticker-btn">Choose Sticker</button>
+          <button type="button" class="btn-secondary" id="create-sticker-btn">+ Create New</button>
+        </div>
+      </div>
       <form id="item-form">
         <label>
           Name
@@ -37,12 +44,16 @@
           <input type="text" id="i-category" maxlength="60" autocomplete="off">
         </label>
         <label>
-          Quantity or Size
-          <input type="text" id="i-quantity" maxlength="60" autocomplete="off">
+          Size
+          <input type="text" id="i-size" maxlength="60" autocomplete="off" placeholder="e.g. 8 oz">
         </label>
+        <div class="field">
+          <span class="field-label">Status</span>
+          <div class="chip-group" id="i-status"></div>
+        </div>
         <label>
-          Condition / Status
-          <input type="text" id="i-condition" maxlength="60" autocomplete="off">
+          Source URL <span class="field-note" style="display:inline; margin:0;">(a reference only — not where the sticker comes from)</span>
+          <input type="text" id="i-url" autocomplete="off" placeholder="https://…">
         </label>
         <label>
           Notes
@@ -78,7 +89,7 @@
       <div class="field">
         <span class="field-label">Used In</span>
         <div class="stack" id="usage-list"></div>
-        <p class="field-note" id="usage-empty-note" hidden>Not assigned to a routine yet — add it from that area's Maintenance page.</p>
+        <p class="field-note" id="usage-empty-note" hidden>Not in any current routine yet — add it from a Maintenance area's Active Routine.</p>
       </div>
     </div>
   </main>

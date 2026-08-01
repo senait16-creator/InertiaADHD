@@ -9,6 +9,7 @@ import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
 import { iconMarkup } from "./lucideIcons.js";
 import { escapeHtml } from "./hairShared.js";
+import * as stickers from "./stickerShared.js";
 
 document.getElementById("inventory-link").innerHTML = `${iconMarkup("link")} View in Inventory`;
 
@@ -18,6 +19,7 @@ const addBtn = document.getElementById("add-product-btn");
 const modal = document.getElementById("add-product-modal");
 const form = document.getElementById("add-product-form");
 const cancelBtn = document.getElementById("add-product-cancel");
+const stickerPreview = document.getElementById("item-sticker-preview");
 const nameInput = document.getElementById("p-name");
 const brandInput = document.getElementById("p-brand");
 const categoryInput = document.getElementById("p-category");
@@ -27,6 +29,8 @@ const repurchaseGroup = document.getElementById("p-repurchase");
 let userId = null;
 let items = [];
 let usageByItemId = new Map();
+let stickerById = new Map();
+let pendingStickerId = null;
 
 async function fetchItems() {
   if (!isConfigured) return demoStore.listInventoryItems("hair");
@@ -76,11 +80,13 @@ function render() {
       const usage = usageByItemId.get(p.id);
       const repurchase = usage?.repurchase;
       const repeatClass = repurchase === "Yes" ? "repeat-yes" : repurchase === "Maybe" ? "repeat-maybe" : "repeat-no";
+      const s = p.sticker_id ? stickerById.get(p.sticker_id) : null;
       return `
-      <a class="card-row clickable" href="hair-product.html?id=${encodeURIComponent(p.id)}" style="display:block; text-decoration:none; color:inherit;">
-        <div class="card-title">${escapeHtml(p.name)}</div>
-        <div class="card-sub">${escapeHtml(p.category || "")}${p.brand ? " · " + escapeHtml(p.brand) : ""}</div>
-        ${repurchase ? `<div class="card-meta-row"><span class="tag ${repeatClass}">Repurchase: ${escapeHtml(repurchase)}</span></div>` : ""}
+      <a class="item-gallery-card" href="hair-product.html?id=${encodeURIComponent(p.id)}">
+        <div class="sticker-badge hero">${s?.image_path ? `<img src="${escapeHtml(s.image_path)}" alt="">` : "🏷️"}</div>
+        <span class="name">${escapeHtml(p.name)}</span>
+        <span class="brand">${escapeHtml(p.brand || "")}</span>
+        ${repurchase ? `<span class="tag ${repeatClass}">Repurchase: ${escapeHtml(repurchase)}</span>` : ""}
       </a>
     `;
     })
@@ -89,6 +95,8 @@ function render() {
 
 function openModal() {
   form.reset();
+  pendingStickerId = null;
+  stickerPreview.innerHTML = "🏷️";
   repurchaseGroup.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.value === "Maybe")));
   modal.classList.add("open");
   nameInput.focus();
@@ -108,6 +116,17 @@ repurchaseGroup.addEventListener("click", (e) => {
   btn.setAttribute("aria-pressed", "true");
 });
 
+stickers.wireStickerField({
+  previewEl: stickerPreview,
+  chooseBtn: document.getElementById("choose-sticker-btn"),
+  createBtn: document.getElementById("create-sticker-btn"),
+  onChange: (s) => {
+    pendingStickerId = s.id;
+    stickerById.set(s.id, s);
+    if (!nameInput.value.trim()) nameInput.value = s.name;
+  },
+});
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = nameInput.value.trim();
@@ -117,6 +136,7 @@ form.addEventListener("submit", async (e) => {
     brand: brandInput.value.trim() || null,
     category: categoryInput.value.trim() || null,
     notes: notesInput.value.trim() || null,
+    sticker_id: pendingStickerId,
   });
   if (item) {
     const repurchase = repurchaseGroup.querySelector('button[aria-pressed="true"]')?.dataset.value || "Maybe";
@@ -134,8 +154,14 @@ form.addEventListener("submit", async (e) => {
     if (!session) return;
     userId = session.user.id;
   }
+  stickers.setUserId(userId);
   const [fetchedItems, usages] = await Promise.all([fetchItems(), fetchUsages()]);
   items = fetchedItems;
   usageByItemId = new Map(usages.map((u) => [u.inventory_item_id, u]));
+  const stickerIds = [...new Set(items.map((i) => i.sticker_id).filter(Boolean))];
+  for (const id of stickerIds) {
+    const s = await stickers.fetchStickerById(id);
+    if (s) stickerById.set(id, s);
+  }
   render();
 })();

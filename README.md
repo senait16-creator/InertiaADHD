@@ -394,11 +394,11 @@ hair-gallery.html                                     Results Gallery
 hair-learned.html                                       What I've Learned
 hair-notes.html                                           Notes & Resources
 inventory.html                                              Inventory home (category grid)
-inventory-items.html                                          Inventory item list (?area=)
-inventory-item.html                                             one item: identity + purchases + "used in"
-maintenance-products.html                                         a Maintenance area's usage list (?area=)
-maintenance-product.html                                            one usage record, generic (?id=&area=)
-maintenance-routine.html                                              a generic area's ordered routine (?area=)
+inventory-items.html                                          Inventory item list, sticker gallery (?area=)
+inventory-item.html                                             one item: sticker + identity + purchases + "used in"
+maintenance-home.html                                             a Maintenance area's Active Routine + Items gallery (?area=)
+maintenance-history.html                                            a Maintenance area's routine version timeline (?area=)
+maintenance-log.html                                                  a Maintenance area's log entries + locked snapshot (?area=)
 vision.html                               calm placeholder
 reminders.html                              calm placeholder
 project.html                                    single project view (edit / delete / routine board)
@@ -428,12 +428,13 @@ js/hairGallery.js                                                 Results Galler
 js/hairLearned.js                                                   What I've Learned logic
 js/hairNotes.js                                                       Notes & Resources logic
 js/inventory.js                                                         Inventory home logic
-js/inventoryItems.js                                                      Inventory item list logic
-js/inventoryItem.js                                                         one item: identity + purchases logic
+js/inventoryItems.js                                                      Inventory item list + sticker gallery logic
+js/inventoryItem.js                                                         one item: sticker + identity + purchases logic
 js/maintenanceShared.js                                                       AREAS config + duration/cost helpers
-js/maintenanceProducts.js                                                       generic usage list logic
-js/maintenanceProduct.js                                                          generic one-usage-record logic
-js/maintenanceRoutine.js                                                            generic routine logic (drag-reorder)
+js/stickerShared.js                                                             Sticker Library: shared choose/create modals + crop
+js/maintenanceHome.js                                                             Active Routine (view/edit) + Items gallery logic
+js/maintenanceHistory.js                                                            routine version timeline logic
+js/maintenanceLog.js                                                                  log entry + locked snapshot logic
 js/home.js                                           home screen logic
 js/login.js                                            sign-in logic
 js/setPassword.js                                        set/change password logic
@@ -508,16 +509,18 @@ Observation ("what happened?"), Learning ("what do I now know?") — shown
 as a small loop strip at the top of `hair.html`.
 
 Seven panels, reorderable by press-and-drag (order persisted per-user
-in `hair_settings`): **Hair Routine** (`maintenance-routine.html?area=hair`)
-— the current process, a plain ordered step list, not an experiment;
-the exact same generic routine page every Maintenance area uses, not a
-Hair-only one. **Products** (`hair-products.html`/`hair-product.html`)
-— Inventory items filed under Hair Products, manually added
-(name/brand/category/notes); a product's detail page computes (never
-asks you to track) Experiments Used, Average Results, Most Common
-Pairing, and a one-sentence insight ("Works best when hair is very
-damp") that only appears once 2+ well-rated experiments using it agree
-on a moisture level — silence until there's real signal, same
+in `hair_settings`): **Hair Routine** (`maintenance-home.html?area=hair`)
+— the current process as a sticker-forward Active Routine, not an
+experiment; the exact same generic Maintenance area page every other
+category uses (Active Routine + Items gallery + History + Log), not a
+Hair-only one — see "Stickers, Versioned Routines & Logs" below.
+**Products** (`hair-products.html`/`hair-product.html`) — Inventory
+items filed under Hair Products, sticker-forward like everywhere else,
+manually added (name/brand/category/notes); a product's detail page
+computes (never asks you to track) Experiments Used, Average Results,
+Most Common Pairing, and a one-sentence insight ("Works best when hair
+is very damp") that only appears once 2+ well-rated experiments using
+it agree on a moisture level — silence until there's real signal, same
 restraint as Insights (section 5). See "Inventory" below for why
 products live there instead of a Hair-only table.
 **Wash Log** (`hair-washlog.html`) — plain history entries (products
@@ -568,8 +571,9 @@ past hair without every new category needing its own bespoke system:
 
 - **Inventory** (`inventory.html` and friends) answers "what do I own."
 - **Maintenance** (the Hair Care/Skin Care/Body Care/Nail Care/Jewelry
-  tiles) answers "how do I care for and use what I own," by
-  *referencing* Inventory items rather than duplicating them.
+  tiles) answers "how do I care for and use what I own, in what order,
+  and how has that changed over time," by *referencing* Inventory items
+  rather than duplicating them.
 - **Hair Lab's own tables** (Experiments, Wash Log) answer "how do I
   test and improve a routine before adopting it" — also referencing
   Inventory items, not a Hair-only product copy.
@@ -577,59 +581,149 @@ past hair without every new category needing its own bespoke system:
 Inventory is the single source of truth for products across the whole
 app, including Hair Lab. It has three levels, on purpose, not two:
 
-- **`inventory_items`** — the reusable product identity: Name, Brand,
-  Category, Quantity/Size, Condition, Notes. One row per distinct
-  product, shared by every screen that touches it.
+- **`inventory_items`** — the reusable product identity: Sticker, Name,
+  Brand, Category, Size, Status, Source URL, Notes. One row per
+  distinct product, shared by every screen that touches it. **Status**
+  is a fixed picklist (New / In Use / Almost Empty / Empty / Finished /
+  Repurchase Needed / Archived), not free text — chosen so the gallery
+  can reliably hide Finished items by default and offer a one-tap
+  "Repurchase?" suggestion once something reads Empty, neither of which
+  is possible with an open-ended Condition field.
 - **`inventory_item_photos`** — a small gallery per item (upload a
   file, or on a phone, take a picture directly — the file input's
-  `capture` attribute opens the camera). Not every item needs a
-  routine or a cost, so this one lives directly under Inventory rather
-  than any Maintenance area.
+  `capture` attribute opens the camera). Separate from the item's
+  Sticker (below): photos are "documentation," a sticker is
+  "recognition" — the small icon you actually scan a shelf of items by.
+  Not every item needs a routine or a cost, so this one lives directly
+  under Inventory rather than any Maintenance area.
 - **`inventory_purchases`** — one row per individually bought
   container of that item (a specific bottle or jar), each with its own
   Purchase Date/Price/Location and Date Started/Finished. Kept
   separate from the item's identity because "how long did *this* jar
   last" is a property of the jar, not the product — rebuying the same
   item logs a fresh purchase row rather than overwriting the last
-  one's dates. Estimated Duration and Estimated Monthly Cost are never
-  stored, only computed at render time from a purchase's price and
-  dates (see `estimatedDurationDays`/`estimatedMonthlyCost` in
+  one's dates. Adding an item with a Price Paid filled in (on
+  `maintenance-home.html`'s Add Item form) creates one of these rows
+  behind the scenes rather than a separate flat field, so it's never a
+  second source of truth for price. Estimated Duration and Estimated
+  Monthly Cost are never stored, only computed at render time from a
+  purchase's price and dates (see
+  `estimatedDurationDays`/`estimatedMonthlyCost` in
   `js/maintenanceShared.js`), and only once a purchase has a full
   start-to-finish life to measure.
 - **`maintenance_usage`** — how one item performs in *one* maintenance
-  area: Routine Step, Rating (/10), Performance Notes, Repurchase — for
-  that area specifically. The same item can have more than one usage
-  row: a jar of coconut oil might be rated 9/10 and marked Repurchase
-  for Body Care, and 4/10 and marked "don't repurchase" for Hair Care,
-  at the same time, without two separate product records.
+  area, beyond Status: Rating (/10), Performance Notes, Repurchase.
+  Currently edited from Hair Lab's own product page only (it doesn't
+  have an obvious home on the generic sticker/gallery pages below, and
+  nothing else in the app reads it) — a jar of coconut oil can still be
+  rated 9/10 for Body Care and 4/10 for Hair Care at the same time,
+  without two separate product records, if that ever gets its own
+  generic surface again.
 
-Skin Care, Body Care, Nail Care, and Jewelry (`maintenance-products.html?area=skin`,
-etc.) share one generic set of pages over these tables — a usage list
-("+ Use an Inventory Item" picks an existing item rather than creating
-a new product record; a shortcut jumps to Inventory if it doesn't
-exist yet) plus a simple ordered Routine
-(`maintenance-routine.html?area=skin`) for the order products actually
-get used in (e.g. Cleanse, Tone, Moisturize). The item picker searches
-*every* Inventory category, not just the current area's — the whole
-point is that an item filed under Body Care can still show up when
-assigning Hair Care's routine.
+### Stickers, Versioned Routines & Logs
 
-Hair Care (`maintenance-products.html?area=hair`) is the same generic
-system's fifth area, no special-casing at all — it reads/writes the
-exact same `inventory_items`/`maintenance_usage` rows Hair Lab's own
-Products panel (`hair-products.html`/`hair-product.html`) does, just
-through the generic pages instead of Hair Lab's experimentation-flavored
-one. Hair Lab's product page composes all three tables plus its own
-stats (Experiments used, Average results, Most common pairing,
-Lessons that mention this product) computed from `hair_experiments`/
-`hair_wash_log`, whose `product_ids` arrays reference
-`inventory_items` directly — adding or editing a product from either
-Hair Lab or Maintenance → Hair Care touches the exact same rows, so the
-two views can never drift into separate records for one product.
+The generic Maintenance area page (`maintenance-home.html?area=skin`,
+`?area=hair`, etc. — one page, `js/maintenanceHome.js`, used by every
+area including Hair Care) merges what used to be three separate pages
+(a products list, a product detail page, a plain routine list) into
+one: an **Active Routine** widget on top, an **Items** gallery below,
+plus links to that area's **History** (`maintenance-history.html`) and
+**Log** (`maintenance-log.html`). The goal is a complete feedback loop
+— own it, recognize it, use it in order, know when it ran out or
+changed, see how the routine evolved over time, and correlate skin/hair
+changes with routine changes — rather than a flat inventory list.
+
+**Stickers** (`stickers` table, `js/stickerShared.js`) are the visual
+identity you actually recognize things by — a small square image
+(photograph or upload → drag-to-reposition + pinch-to-zoom crop →
+saved as a ~320px WebP, JPEG fallback where a browser can't encode
+WebP on canvas) attached to an Inventory item, a routine step, or
+nothing at all (a placeholder step). Deliberately **not** its own page
+in the nav — `js/stickerShared.js` injects one shared pair of modals
+(Choose / Create) into any page that needs them once, so the crop UI
+and the Sticker Library list exist in exactly one place instead of
+being duplicated per page. Deleting a sticker is blocked while it's
+still referenced by any Inventory item or routine step
+(`isStickerInUse`). Background removal is an explicit **V2**: the
+create-sticker modal has a "Remove background" checkbox, visibly
+present but disabled and labeled a no-op — doing it well needs either a
+client-side ML model (this app's first real dependency) or a
+server-side proxy, the same category of deferred work as Hair Lab's
+voice capture and product search.
+
+**Routines** are versioned, not a single mutable list —
+`routines` (one per area) → `routine_versions` (`ended_at IS NULL`
+marks the current one; a version has a `version_number` and optional
+`notes`) → `routine_version_items` (which items/stickers are in the
+version, grouped into free-text `section`s like "Morning"/"Night", each
+with a `position` for order). Tapping **Edit** on the Active Routine
+widget reveals a sectioned builder — drag chips to reorder, tap a **+**
+to insert (from Inventory or straight from the Sticker Library), tap a
+step for its detail with a Remove option. Tapping **Done** with real
+changes prompts a choice, not a silent save: **Update current
+version** (fixing a typo or wrong sticker — the version stays one
+entry in History) or **Start a new version** (an actual product swap —
+closes today's version and opens the next one). Nothing about a closed
+version is ever touched again, which is what makes History
+trustworthy. `routine_version_items` deliberately keeps two *loose*
+(no foreign key) references — `inventory_item_id` and `sticker_id` — in
+the same row, so a closed version stays an accurate historical snapshot
+even if the linked Inventory item or sticker is later deleted; the
+sticker is the visual record, the item link is just a convenience while
+it still exists. **History** (`maintenance-history.html`) is a
+read-only timeline of every version, oldest reasoning first, each with
+its date range, notes, and the stickers that were in it.
+
+**Logs** (`maintenance_logs`, `maintenance-log.html`) are periodic
+check-ins, not tied to any one product: Condition/Dryness/Irritation/
+Breakouts (severity chips, not numeric scores), free-text Notes, and an
+optional progress photo. Each log entry stores a loose
+`routine_version_id` reference and renders that **exact version's**
+sticker row inline as a permanent snapshot — editing the routine later,
+even starting a whole new version, never changes what an old log entry
+visually shows, which is the entire point: a log from three weeks ago
+should still show what you were using three weeks ago, not what you
+switched to since.
+
+The item gallery on `maintenance-home.html` hides Status = Finished by
+default behind a "Show Finished (N)" toggle, and offers a one-tap
+"Repurchase?" suggestion chip once an item's Status reads Empty rather
+than asking you to notice and update it yourself. An item's **Used In**
+list (shown on both `inventory-item.html` and Hair Lab's own
+`hair-product.html`) now reflects which areas' *current* routine
+versions include it — derived from `routine_version_items` joined
+through `routine_versions`/`routines` (`listCurrentRoutineMembershipsForItem`
+in demo mode; a nested Supabase select in real mode) — rather than the
+old flat per-area usage list, since "where does this actually live in
+my routine right now" is what that section is for.
+
+Skin Care, Body Care, Nail Care, and Jewelry
+(`maintenance-home.html?area=skin`, etc.) share this one generic page
+over these tables. Hair Care (`maintenance-home.html?area=hair`) is the
+same generic system's fifth area, no special-casing at all — it
+reads/writes the exact same `inventory_items` rows (and, for its own
+Rating/Notes/Repurchase fields, the same `maintenance_usage` rows) Hair
+Lab's own Products panel (`hair-products.html`/`hair-product.html`)
+does, just through the generic page instead of Hair Lab's
+experimentation-flavored one. Hair Lab's product page composes
+purchases, the sticker, and its own stats (Experiments used, Average
+results, Most common pairing, Lessons that mention this product)
+computed from `hair_experiments`/`hair_wash_log`, whose `product_ids`
+arrays reference `inventory_items` directly — adding or editing a
+product from either Hair Lab or Maintenance → Hair Care touches the
+exact same rows, so the two views can never drift into separate
+records for one product.
 
 Not every Inventory category has a Maintenance area — Shoes is
-Inventory-only (`inventory-items.html?area=shoes`, no
-"how do I care for it" routine), the first of the "eventually" list
-from the original request (clothing, tech, fitness equipment, books,
-...): categories can exist in Inventory without ever needing a
-Maintenance tile.
+Inventory-only (`inventory-items.html?area=shoes`, no "how do I care
+for it" routine), the first of the "eventually" list from the original
+request (clothing, tech, fitness equipment, books, ...): categories can
+exist in Inventory without ever needing a Maintenance tile.
+
+Explicitly **not v1** here too: background removal beyond the labeled
+no-op checkbox above; a "Last used" date on gallery cards (no honest
+per-item signal exists yet to compute it from); tap-to-expand full item
+detail from a gallery card; a "Skipped routine today" toggle on the Log
+form; and a shelf/storage-location visual metaphor for the gallery —
+all deferred until real day-to-day use surfaces whether they're
+actually needed, rather than designed speculatively up front.

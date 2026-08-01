@@ -2675,3 +2675,402 @@ button {
   width: 18px;
   height: 18px;
 }
+
+/* ==================== Stickers + Active Routine + versioned history + logs ==================== */
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.sticker-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.sticker-tile .s-actions button {
+  font-size: 0.62rem;
+  padding: 0.15rem 0.4rem;
+}
+
+/* A round, photo-capable badge — the visual unit reused everywhere a
+   sticker appears (routine widget, item gallery, version history). */
+.sticker-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: rgba(var(--color-sage), 0.16);
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 4px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: none;
+  font-size: 22px;
+}
+
+.sticker-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sticker-badge.hero {
+  width: 92px;
+  height: 92px;
+  font-size: 36px;
+  border-width: 3px;
+}
+
+.sticker-badge.sm {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
+.sticker-badge.pickable {
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.sticker-badge.pickable:hover {
+  transform: translateY(-2px);
+}
+
+/* Active Routine — view mode (calm) and edit mode (builder) share the
+   same row layout, just with insert buttons and drag affordances added
+   in edit mode. */
+.routine-hero-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.routine-hero-row .plus-sep {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.routine-builder-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 20px 8px;
+  margin-top: 10px;
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  min-height: 130px;
+}
+
+.routine-step-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: grab;
+}
+
+.routine-step-chip.dragging {
+  opacity: 0.35;
+}
+
+.routine-step-chip .step-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  max-width: 76px;
+  text-align: center;
+}
+
+.insert-btn {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.insert-btn:hover {
+  background: rgba(var(--color-amber), 0.3);
+  border-color: transparent;
+  color: var(--text);
+  transform: scale(1.15);
+}
+
+.routine-section-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.routine-section-tab {
+  border: 1.5px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.routine-section-tab.active {
+  background: rgba(var(--color-lavender), 0.3);
+  color: var(--text);
+  border-color: transparent;
+}
+
+/* Item gallery — reuses .gallery-grid/.gallery-card's shape (already
+   used by Results Gallery) with a status pill added under the caption. */
+.item-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.item-gallery-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 16px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.item-gallery-card:hover {
+  border-color: rgba(var(--color-lavender), 0.5);
+}
+
+.item-gallery-card .name {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.item-gallery-card .brand {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.status-tag {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: white;
+}
+
+.status-tag.status-New,
+.status-tag.status-InUse {
+  background: rgba(var(--color-green), 0.85);
+}
+
+.status-tag.status-AlmostEmpty {
+  background: rgba(var(--color-amber), 0.9);
+  color: var(--text);
+}
+
+.status-tag.status-Empty,
+.status-tag.status-Finished,
+.status-tag.status-Archived {
+  background: var(--text-muted);
+}
+
+.status-tag.status-RepurchaseNeeded {
+  background: var(--danger);
+}
+
+.status-suggest-btn {
+  font-size: 0.66rem;
+  background: rgba(var(--color-amber), 0.2);
+  color: var(--text);
+  border: 1px solid rgba(var(--color-amber), 0.4);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* Version history timeline */
+.version-timeline {
+  margin-top: 16px;
+}
+
+.version-entry {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px dashed var(--border);
+}
+
+.version-entry:first-child {
+  border-top: none;
+}
+
+.version-rail {
+  flex: none;
+  width: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.version-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(var(--color-lavender), 0.7);
+  margin-top: 5px;
+}
+
+.version-entry.current .version-dot {
+  background: rgb(var(--color-sage));
+  box-shadow: 0 0 0 4px rgba(var(--color-sage), 0.25);
+}
+
+.version-body {
+  flex: 1;
+}
+
+.version-dates {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.version-entry.current .version-dates {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.version-sticker-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.version-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.version-choice-card {
+  flex: 1;
+  min-width: 200px;
+  text-align: left;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.version-choice-card:hover {
+  border-color: rgba(var(--color-lavender), 0.6);
+}
+
+.version-choice-card strong {
+  display: block;
+  font-size: 0.85rem;
+}
+
+.version-choice-card span {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* Log entry */
+.log-snapshot-card {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+
+.severity-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.severity-chip {
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.severity-chip[aria-checked="true"] {
+  background: rgba(var(--color-lavender), 0.3);
+  color: var(--text);
+  border-color: transparent;
+}
+
+.log-entry-row {
+  padding: 12px 0;
+  border-top: 1px dashed var(--border);
+}
+
+.log-entry-row:first-child {
+  border-top: none;
+}
+
+/* Status chip picker (Add Item form) — same .chip base as everywhere
+   else, colored per value once selected. */
+.chip[data-value="New"][aria-checked="true"],
+.chip[data-value="In Use"][aria-checked="true"] {
+  background: rgba(var(--color-green), 0.28);
+  color: var(--text);
+}
+.chip[data-value="Almost Empty"][aria-checked="true"] {
+  background: rgba(var(--color-amber), 0.3);
+  color: var(--text);
+}
+.chip[data-value="Empty"][aria-checked="true"],
+.chip[data-value="Finished"][aria-checked="true"],
+.chip[data-value="Archived"][aria-checked="true"] {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.chip[data-value="Repurchase Needed"][aria-checked="true"] {
+  background: rgba(179, 85, 74, 0.22);
+  color: var(--danger);
+}

@@ -22,7 +22,7 @@
       <p class="subtitle">What you own in this category.</p>
     </header>
 
-    <div class="stack" id="item-list"></div>
+    <div class="item-gallery-grid" id="item-list"></div>
     <p class="subtitle" id="empty-note" hidden>No items yet.</p>
     <button type="button" class="add-row-btn" id="add-item-btn">+ Add Item</button>
   </main>
@@ -30,6 +30,13 @@
   <div class="modal-overlay" id="add-item-modal">
     <div class="modal">
       <h2>Add Item</h2>
+      <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+        <div class="sticker-badge" id="item-sticker-preview">🏷️</div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary" id="choose-sticker-btn">Choose Sticker</button>
+          <button type="button" class="btn-secondary" id="create-sticker-btn">+ Create New</button>
+        </div>
+      </div>
       <form id="add-item-form">
         <label>
           Name
@@ -44,13 +51,13 @@
           <input type="text" id="i-category" maxlength="60" autocomplete="off" placeholder="e.g. Serum, Leave-In, Ring">
         </label>
         <label>
-          Quantity or Size
-          <input type="text" id="i-quantity" maxlength="60" autocomplete="off" placeholder="e.g. 8 oz, 2 pack">
+          Size
+          <input type="text" id="i-size" maxlength="60" autocomplete="off" placeholder="e.g. 8 oz, 2 pack">
         </label>
-        <label>
-          Condition / Status
-          <input type="text" id="i-condition" maxlength="60" autocomplete="off" placeholder="e.g. New, In Use, Empty">
-        </label>
+        <div class="field">
+          <span class="field-label">Status</span>
+          <div class="chip-group" id="i-status"></div>
+        </div>
         <label>
           Notes
           <textarea id="i-notes" rows="3"></textarea>

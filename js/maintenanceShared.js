@@ -1,5 +1,5 @@
 // Shared pieces across the generic Maintenance product/routine pages
-// (js/maintenanceProducts.js and friends) — and reused by the Hair Lab's
+// (js/maintenanceHome.js and friends) — and reused by the Hair Lab's
 // own product page (js/hairProduct.js) too, since Estimated Duration and
 // Estimated Monthly Cost are computed the same way regardless of which
 // area an inventory item/purchase belongs to. Kept separate from
@@ -57,7 +57,7 @@ export function initChipGroup(container, options, { multi }) {
 
 // The areas that use the generic Inventory/Maintenance system —
 // including Hair now: Maintenance -> Hair Care is just
-// maintenance-products.html?area=hair like any other area, and Hair
+// maintenance-home.html?area=hair like any other area, and Hair
 // Lab's own Products panel reads the same Inventory items filtered to
 // area "hair". `inventoryLabel` differs slightly from `label` where the
 // natural English name isn't the same on both sides (e.g. Inventory's
