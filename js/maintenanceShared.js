@@ -55,20 +55,24 @@ export function initChipGroup(container, options, { multi }) {
   };
 }
 
-// The five areas that use the generic Inventory/Maintenance system —
+// The areas that use the generic Inventory/Maintenance system —
 // including Hair now: Maintenance -> Hair Care is just
 // maintenance-products.html?area=hair like any other area, and Hair
 // Lab's own Products panel reads the same Inventory items filtered to
 // area "hair". `inventoryLabel` differs slightly from `label` where the
 // natural English name isn't the same on both sides (e.g. Inventory's
 // "Nail Supplies" vs Maintenance's "Nail Care") — same area key either
-// way, just a per-context display string.
+// way, just a per-context display string. Shoes is Inventory-only (no
+// Maintenance tile in js/maintenanceAreas.js) — it's "what do I own,"
+// not something with a care routine, so `label` here is just a fallback
+// in case a usage record ever references it.
 export const AREAS = {
   hair: { label: "Hair Care", inventoryLabel: "Hair Products", icon: "crown", color: "lavender" },
   skin: { label: "Skin Care", inventoryLabel: "Skin Care", icon: "droplets", color: "blue" },
   body: { label: "Body Care", inventoryLabel: "Body Care", icon: "dumbbell", color: "sage" },
   nail: { label: "Nail Care", inventoryLabel: "Nail Supplies", icon: "sparkles", color: "green" },
   jewelry: { label: "Jewelry", inventoryLabel: "Jewelry", icon: "award", color: "lavender" },
+  shoes: { label: "Shoes", inventoryLabel: "Shoes", icon: "footprints", color: "amber" },
 };
 
 const MS_PER_DAY = 86400000;

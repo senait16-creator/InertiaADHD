@@ -1045,6 +1045,67 @@ create policy "Users can delete their own inventory purchases"
   on public.inventory_purchases for delete
   using (auth.uid() = user_id);
 
+-- One row per photo of an item (see js/inventoryItem.js) — a shoe often
+-- wants more than one angle, so this is a small gallery per item rather
+-- than a single photo_url column. Same real-FK-cascade reasoning as
+-- inventory_purchases: a photo is meaningless without its item.
+-- photo_url points at Supabase Storage (the "inventory-photos" bucket
+-- below) rather than storing image bytes in the table.
+create table if not exists public.inventory_item_photos (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  inventory_item_id uuid not null references public.inventory_items(id) on delete cascade,
+  photo_url text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists inventory_item_photos_item_idx
+  on public.inventory_item_photos (inventory_item_id);
+
+alter table public.inventory_item_photos enable row level security;
+
+drop policy if exists "Users can view their own inventory item photos" on public.inventory_item_photos;
+create policy "Users can view their own inventory item photos"
+  on public.inventory_item_photos for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own inventory item photos" on public.inventory_item_photos;
+create policy "Users can insert their own inventory item photos"
+  on public.inventory_item_photos for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own inventory item photos" on public.inventory_item_photos;
+create policy "Users can update their own inventory item photos"
+  on public.inventory_item_photos for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own inventory item photos" on public.inventory_item_photos;
+create policy "Users can delete their own inventory item photos"
+  on public.inventory_item_photos for delete
+  using (auth.uid() = user_id);
+
+-- Storage bucket for inventory_item_photos (see photo_url above). Same
+-- public-read / per-user-folder-scoped-write pattern as the hair-photos
+-- bucket further up this file (see uploadPhoto in js/inventoryItem.js).
+insert into storage.buckets (id, name, public)
+values ('inventory-photos', 'inventory-photos', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Anyone can view inventory photos" on storage.objects;
+create policy "Anyone can view inventory photos"
+  on storage.objects for select
+  using (bucket_id = 'inventory-photos');
+
+drop policy if exists "Users can upload their own inventory photos" on storage.objects;
+create policy "Users can upload their own inventory photos"
+  on storage.objects for insert
+  with check (bucket_id = 'inventory-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Users can delete their own inventory photos" on storage.objects;
+create policy "Users can delete their own inventory photos"
+  on storage.objects for delete
+  using (bucket_id = 'inventory-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+
 -- One row per step in an area's routine (e.g. Cleanse, Tone, Moisturize
 -- for Skin Care) — what order products actually get used in, reorderable
 -- like every other ordered list in this app. area = 'hair' is Hair Lab's

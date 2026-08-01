@@ -1,13 +1,15 @@
-// One Inventory item: its identity (editable), its Purchase Instances
-// (one row per bought container, each with its own computed Estimated
-// Duration/Monthly Cost), and a read-only "Used In" list of the
-// Maintenance areas this item has a usage record in — editing a usage
-// record (rating, notes, repurchase) happens on that area's own
-// maintenance-product.html, not here, since this page is about the item
-// itself, not how any one area is using it.
+// One Inventory item: its identity (editable), Photos (upload or, on a
+// phone, take a picture directly — see the file input's `capture`
+// attribute), Purchase Instances (one row per bought container, each
+// with its own computed Estimated Duration/Monthly Cost), and a
+// read-only "Used In" list of the Maintenance areas this item has a
+// usage record in — editing a usage record (rating, notes, repurchase)
+// happens on that area's own maintenance-product.html, not here, since
+// this page is about the item itself, not how any one area is using it.
 import { supabase, isConfigured } from "./supabaseClient.js";
 import { requireSession } from "./auth.js";
 import * as demoStore from "./demoStore.js";
+import { iconMarkup } from "./lucideIcons.js";
 import { AREAS, escapeHtml, estimatedDurationDays, formatDuration, estimatedMonthlyCost, formatMoney } from "./maintenanceShared.js";
 
 const params = new URLSearchParams(window.location.search);
@@ -49,9 +51,15 @@ const puFinishedInput = document.getElementById("pu-date-finished");
 const usageListEl = document.getElementById("usage-list");
 const usageEmptyNote = document.getElementById("usage-empty-note");
 
+const photoGridEl = document.getElementById("photo-grid");
+const photoEmptyNote = document.getElementById("photo-empty-note");
+const addPhotoBtn = document.getElementById("add-photo-btn");
+const photoInput = document.getElementById("photo-input");
+
 let userId = null;
 let item = null;
 let purchases = [];
+let photos = [];
 let editingPurchaseId = null;
 
 async function fetchItem() {
@@ -69,6 +77,16 @@ async function fetchPurchases() {
   const { data, error } = await supabase.from("inventory_purchases").select("*").eq("inventory_item_id", itemId);
   if (error) {
     console.error("Failed to load purchases:", error);
+    return [];
+  }
+  return data.sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+async function fetchPhotos() {
+  if (!isConfigured) return demoStore.listInventoryItemPhotos(itemId);
+  const { data, error } = await supabase.from("inventory_item_photos").select("*").eq("inventory_item_id", itemId);
+  if (error) {
+    console.error("Failed to load photos:", error);
     return [];
   }
   return data.sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -141,6 +159,106 @@ async function persistPurchaseDelete(id) {
     console.error("Failed to delete purchase:", error);
   }
 }
+
+// Downscales to a max edge of 900px and re-encodes as JPEG — same
+// approach as js/hairGallery.js's resizeImage, keeps demo mode's
+// localStorage data: URLs small and keeps real uploads quick.
+function resizeImage(file, maxEdge = 900) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = () => {
+      img.onload = () => {
+        const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve({ blob, dataUrl: canvas.toDataURL("image/jpeg", 0.85) }), "image/jpeg", 0.85);
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadPhoto(blob) {
+  if (!isConfigured) return null; // demo mode stores the data: URL directly instead
+  const path = `${userId}/${Date.now()}.jpg`;
+  const { error } = await supabase.storage.from("inventory-photos").upload(path, blob, { contentType: "image/jpeg" });
+  if (error) {
+    console.error("Failed to upload photo:", error);
+    return null;
+  }
+  const { data } = supabase.storage.from("inventory-photos").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function persistPhotoAdd(photoUrl) {
+  if (!isConfigured) return demoStore.addInventoryItemPhoto(itemId, photoUrl);
+  const { data, error } = await supabase
+    .from("inventory_item_photos")
+    .insert({ user_id: userId, inventory_item_id: itemId, photo_url: photoUrl })
+    .select()
+    .single();
+  if (error) {
+    console.error("Failed to save photo:", error);
+    return null;
+  }
+  return data;
+}
+
+async function persistPhotoDelete(id) {
+  if (!isConfigured) {
+    demoStore.deleteInventoryItemPhoto(id);
+    return;
+  }
+  try {
+    await supabase.from("inventory_item_photos").delete().eq("id", id);
+  } catch (error) {
+    console.error("Failed to delete photo:", error);
+  }
+}
+
+function renderPhotos() {
+  photoEmptyNote.hidden = photos.length > 0;
+  photoGridEl.innerHTML = photos
+    .map(
+      (p) => `
+    <div class="gallery-card">
+      <div class="gallery-photo">${p.photo_url ? `<img src="${escapeHtml(p.photo_url)}" alt="">` : iconMarkup("camera")}</div>
+      <div class="gallery-caption">
+        <button type="button" class="btn-ghost" data-remove-photo="${p.id}">Remove</button>
+      </div>
+    </div>`
+    )
+    .join("");
+}
+
+addPhotoBtn.addEventListener("click", () => photoInput.click());
+photoInput.addEventListener("change", async () => {
+  const file = photoInput.files[0];
+  photoInput.value = "";
+  if (!file) return;
+  const { blob, dataUrl } = await resizeImage(file);
+  const uploadedUrl = await uploadPhoto(blob);
+  const created = await persistPhotoAdd(uploadedUrl || dataUrl);
+  if (created) {
+    photos.unshift(created);
+    renderPhotos();
+  }
+});
+photoGridEl.addEventListener("click", (e) => {
+  const removeBtn = e.target.closest("[data-remove-photo]");
+  if (!removeBtn) return;
+  const id = removeBtn.dataset.removePhoto;
+  persistPhotoDelete(id);
+  photos = photos.filter((p) => p.id !== id);
+  renderPhotos();
+});
 
 function renderPurchases() {
   purchaseEmptyNote.hidden = purchases.length > 0;
@@ -273,9 +391,10 @@ form.addEventListener("submit", async (e) => {
     userId = session.user.id;
   }
 
-  const [fetchedItem, fetchedPurchases, usages, routineSteps] = await Promise.all([
+  const [fetchedItem, fetchedPurchases, fetchedPhotos, usages, routineSteps] = await Promise.all([
     fetchItem(),
     fetchPurchases(),
+    fetchPhotos(),
     fetchUsages(),
     fetchAllRoutineSteps(),
   ]);
@@ -285,6 +404,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
   purchases = fetchedPurchases;
+  photos = fetchedPhotos;
 
   nameEl.textContent = item.name;
   metaEl.textContent = [item.category, item.brand].filter(Boolean).join(" · ");
@@ -296,6 +416,7 @@ form.addEventListener("submit", async (e) => {
   notesInput.value = item.notes || "";
 
   renderPurchases();
+  renderPhotos();
 
   const stepNameById = new Map(routineSteps.map((s) => [s.id, s.name]));
   renderUsages(usages, stepNameById);

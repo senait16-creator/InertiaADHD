@@ -722,10 +722,12 @@ export function updateInventoryItem(id, fields) {
 
 export function deleteInventoryItem(id) {
   writeInventoryItems(readInventoryItems().filter((i) => i.id !== id));
-  // Cascades, matching the real schema's "on delete cascade": a purchase
-  // or usage row is meaningless without the item it's about.
+  // Cascades, matching the real schema's "on delete cascade": a
+  // purchase, usage, or photo row is meaningless without the item it's
+  // about.
   writeInventoryPurchases(readInventoryPurchases().filter((p) => p.inventory_item_id !== id));
   writeMaintenanceUsage(readMaintenanceUsage().filter((u) => u.inventory_item_id !== id));
+  writeInventoryItemPhotos(readInventoryItemPhotos().filter((p) => p.inventory_item_id !== id));
 }
 
 // ---------------- Inventory purchases ----------------
@@ -780,6 +782,44 @@ export function updateInventoryPurchase(id, fields) {
 
 export function deleteInventoryPurchase(id) {
   writeInventoryPurchases(readInventoryPurchases().filter((p) => p.id !== id));
+}
+
+// ---------------- Inventory item photos ----------------
+// A small gallery per item — a shoe often wants more than one angle.
+// photo_url is a data: URL in demo mode (no Supabase Storage to upload
+// to), same as js/hairGallery.js's demo-mode fallback.
+
+const INVENTORY_ITEM_PHOTOS_KEY = "inertiaadhd_demo_inventory_item_photos";
+
+function readInventoryItemPhotos() {
+  try {
+    const raw = localStorage.getItem(INVENTORY_ITEM_PHOTOS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeInventoryItemPhotos(rows) {
+  localStorage.setItem(INVENTORY_ITEM_PHOTOS_KEY, JSON.stringify(rows));
+}
+
+export function listInventoryItemPhotos(itemId) {
+  return readInventoryItemPhotos()
+    .filter((p) => p.inventory_item_id === itemId)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export function addInventoryItemPhoto(itemId, photoUrl) {
+  const rows = readInventoryItemPhotos();
+  const photo = { id: makeId(), inventory_item_id: itemId, photo_url: photoUrl, created_at: new Date().toISOString() };
+  rows.push(photo);
+  writeInventoryItemPhotos(rows);
+  return photo;
+}
+
+export function deleteInventoryItemPhoto(id) {
+  writeInventoryItemPhotos(readInventoryItemPhotos().filter((p) => p.id !== id));
 }
 
 // ---------------- Maintenance usage ----------------

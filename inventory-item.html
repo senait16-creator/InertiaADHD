@@ -57,6 +57,16 @@
       <div class="section-divider"></div>
 
       <div class="field">
+        <span class="field-label">Photos</span>
+        <div class="gallery-grid" id="photo-grid"></div>
+        <p class="field-note" id="photo-empty-note" hidden>No photos yet.</p>
+        <button type="button" class="add-row-btn" id="add-photo-btn" style="margin-top:0.7rem;">+ Add Photo</button>
+        <input type="file" id="photo-input" accept="image/*" capture="environment" hidden>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="field">
         <span class="field-label">Purchases</span>
         <div class="stack" id="purchase-list"></div>
         <p class="field-note" id="purchase-empty-note" hidden>No purchases logged yet.</p>

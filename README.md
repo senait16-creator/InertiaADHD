@@ -580,6 +580,11 @@ app, including Hair Lab. It has three levels, on purpose, not two:
 - **`inventory_items`** — the reusable product identity: Name, Brand,
   Category, Quantity/Size, Condition, Notes. One row per distinct
   product, shared by every screen that touches it.
+- **`inventory_item_photos`** — a small gallery per item (upload a
+  file, or on a phone, take a picture directly — the file input's
+  `capture` attribute opens the camera). Not every item needs a
+  routine or a cost, so this one lives directly under Inventory rather
+  than any Maintenance area.
 - **`inventory_purchases`** — one row per individually bought
   container of that item (a specific bottle or jar), each with its own
   Purchase Date/Price/Location and Date Started/Finished. Kept
@@ -621,3 +626,10 @@ Lessons that mention this product) computed from `hair_experiments`/
 `inventory_items` directly — adding or editing a product from either
 Hair Lab or Maintenance → Hair Care touches the exact same rows, so the
 two views can never drift into separate records for one product.
+
+Not every Inventory category has a Maintenance area — Shoes is
+Inventory-only (`inventory-items.html?area=shoes`, no
+"how do I care for it" routine), the first of the "eventually" list
+from the original request (clothing, tech, fitness equipment, books,
+...): categories can exist in Inventory without ever needing a
+Maintenance tile.
