@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Wash Log — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="hair.html" class="back-link">‹ Hair</a>
+
+    <header class="dashboard-header">
+      <h1>Wash Log</h1>
+      <p class="subtitle">A simple history — no analytics or charts, just what happened and how it felt.</p>
+    </header>
+
+    <div class="stack" id="wash-list"></div>
+    <p class="subtitle" id="empty-note" hidden>Nothing logged yet.</p>
+    <button type="button" class="add-row-btn" id="add-wash-btn">+ Log a Wash</button>
+  </main>
+
+  <div class="modal-overlay" id="add-wash-modal">
+    <div class="modal">
+      <h2>Log a Wash</h2>
+      <form id="add-wash-form">
+        <label>
+          Date
+          <input type="date" id="w-date" required>
+        </label>
+        <div class="field">
+          <span class="field-label">Products used</span>
+          <div class="chip-group" id="w-products"></div>
+          <p class="field-note" id="w-products-empty" hidden>No products yet — add some from the Products panel first.</p>
+        </div>
+        <label>
+          Style before washing (optional)
+          <input type="text" id="w-style-before" maxlength="80" autocomplete="off">
+        </label>
+        <label>
+          Notes (optional)
+          <textarea id="w-notes" rows="3"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="add-wash-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="start-exp-modal">
+    <div class="modal">
+      <h2>Start an Experiment</h2>
+      <p class="big-question">What am I changing?</p>
+      <p class="rule-line">Everything else stays the same. Only this changes.</p>
+      <div class="field">
+        <div class="chip-group" id="start-changing-group"></div>
+        <input type="text" id="start-changing-custom" placeholder="What's changing?" hidden>
+      </div>
+      <label>
+        Question (optional) — what am I trying to answer?
+        <input type="text" id="start-question" placeholder="e.g. Does damp hair produce more definition?" autocomplete="off">
+      </label>
+      <label>
+        Success looks like (optional)
+        <input type="text" id="start-success" placeholder="What would I hope to learn?" autocomplete="off">
+      </label>
+      <p class="field-note" id="start-from-wash-note"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="start-exp-cancel">Cancel</button>
+        <button type="button" class="btn-primary" id="start-exp-continue">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/hairWashLog.js"></script>
+</body>
+</html>

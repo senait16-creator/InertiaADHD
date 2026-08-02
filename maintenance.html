@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Home — InertiaADHD</title>
+  <title>Maintenance — InertiaADHD</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-32.png" sizes="32x32">
@@ -15,19 +15,15 @@
 </head>
 <body>
   <main class="dashboard">
-    <p class="demo-banner" id="demo-banner" hidden>
-      Preview mode — sample data stored only on this device. Add your Supabase keys in
-      <code>js/supabaseClient.js</code> to connect a real account.
-    </p>
-    <p class="demo-banner" id="migration-notice" hidden></p>
+    <a href="index.html" class="back-link">‹ Back</a>
 
     <header class="dashboard-header">
-      <h1 id="greeting">Good morning, Senait</h1>
+      <h1>Maintenance</h1>
     </header>
 
-    <div id="home-content"></div>
+    <div class="panel-grid" id="entry-list"></div>
   </main>
 
-  <script type="module" src="js/home.js"></script>
+  <script type="module" src="js/maintenance.js"></script>
 </body>
 </html>

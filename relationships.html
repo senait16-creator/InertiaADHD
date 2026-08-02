@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Relationships — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="maintenance.html" class="back-link">‹ Maintenance</a>
+
+    <header class="dashboard-header">
+      <h1>Relationships</h1>
+      <p class="subtitle">Who's part of your life right now.</p>
+    </header>
+
+    <div class="filter-scroll" id="filter-scroll" role="tablist" aria-label="Filter people"></div>
+
+    <div class="person-list" id="person-list"></div>
+    <p class="empty-note" id="empty-note" hidden>Nobody here yet.</p>
+
+    <button type="button" class="add-person-row" id="add-person-btn">+ Add Person</button>
+  </main>
+
+  <div class="modal-overlay" id="person-action-modal">
+    <div class="modal action-modal">
+      <div id="action-menu-view">
+        <h2 id="action-menu-title">Person</h2>
+        <button type="button" class="action-menu-item" id="action-edit-btn">Edit</button>
+        <button type="button" class="action-menu-item danger" id="action-delete-btn">Delete</button>
+        <button type="button" class="btn-secondary action-cancel" id="action-cancel-btn-1">Cancel</button>
+      </div>
+      <div id="action-confirm-view" hidden>
+        <p class="confirm-text" id="confirm-text">Delete this person?</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="action-cancel-btn-2">Cancel</button>
+          <button type="button" class="btn-danger" id="action-confirm-delete-btn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/relationships.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Person — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="project-page">
+    <div class="page-top-row">
+      <a href="relationships.html" class="back-link">‹ Relationships</a>
+      <button type="button" class="overflow-btn" id="overflow-btn" aria-label="More actions" hidden>⋯</button>
+    </div>
+
+    <h1 id="page-title">Add Person</h1>
+
+    <form id="person-form" class="person-form">
+      <div class="field">
+        <label class="field-label" for="person-name">Name</label>
+        <input type="text" id="person-name" required maxlength="80" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <span class="field-label">Relationship Circle</span>
+        <div class="chip-group" id="circle-group" role="radiogroup" aria-label="Relationship circle"></div>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Current Season</span>
+        <p class="field-hint">An honest description of the present, not a rating — pick any that fit.</p>
+        <div class="chip-group" id="season-group" role="group" aria-label="Current season"></div>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Investment Intention</span>
+        <p class="field-hint">How do I want to engage with this relationship right now?</p>
+        <div class="chip-group" id="intention-group" role="radiogroup" aria-label="Investment intention"></div>
+      </div>
+
+      <div class="field">
+        <span class="field-label">How I Feel Around Them</span>
+        <p class="field-hint">Private observations, not judgments about them.</p>
+        <div class="chip-group" id="feelings-group" role="group" aria-label="How I feel around them"></div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="person-last-connection">Last Meaningful Connection</label>
+        <input type="date" id="person-last-connection">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="person-intention-text">What does loving this person well look like in this season?</label>
+        <input type="text" id="person-intention-text" maxlength="200" autocomplete="off" placeholder="e.g. Invite her to coffee.">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="person-notes">Notes</label>
+        <textarea id="person-notes" maxlength="2000" placeholder="Life updates, interests, prayer needs, birthdays…"></textarea>
+      </div>
+
+      <div class="person-form-actions">
+        <button type="submit" class="btn-primary" id="save-btn">Save</button>
+      </div>
+    </form>
+  </main>
+
+  <div class="modal-overlay" id="person-action-modal">
+    <div class="modal action-modal">
+      <div id="action-menu-view">
+        <h2 id="action-menu-title">Person</h2>
+        <button type="button" class="action-menu-item danger" id="action-delete-btn">Delete Person</button>
+        <button type="button" class="btn-secondary action-cancel" id="action-cancel-btn-1">Cancel</button>
+      </div>
+      <div id="action-confirm-view" hidden>
+        <p class="confirm-text" id="confirm-text">Delete this person?</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="action-cancel-btn-2">Cancel</button>
+          <button type="button" class="btn-danger" id="action-confirm-delete-btn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/person.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hair — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="maintenance.html" class="back-link">‹ Maintenance</a>
+
+    <header class="dashboard-header">
+      <h1>Hair</h1>
+      <p class="subtitle">Learn your hair through observation, experimentation, and reflection.</p>
+    </header>
+
+    <div class="loop-strip">
+      <span class="stage">Routine</span><span class="arrow">→</span>
+      <span class="stage">Experiment</span><span class="arrow">→</span>
+      <span class="stage">Observation</span><span class="arrow">→</span>
+      <span class="stage">Learning</span>
+    </div>
+
+    <button type="button" class="start-exp-btn" id="start-exp-btn">+ Start Experiment</button>
+
+    <div class="panel-grid" id="panel-grid"></div>
+    <p class="field-note center-note">Press and drag a panel to reorder it.</p>
+  </main>
+
+  <div class="modal-overlay" id="start-exp-modal">
+    <div class="modal">
+      <h2>Start an Experiment</h2>
+      <p class="big-question">What am I changing?</p>
+      <p class="rule-line">Everything else stays the same. Only this changes.</p>
+      <div class="field">
+        <div class="chip-group" id="start-changing-group"></div>
+        <input type="text" id="start-changing-custom" placeholder="What's changing?" hidden>
+      </div>
+      <label>
+        Question (optional) — what am I trying to answer?
+        <input type="text" id="start-question" placeholder="e.g. Does damp hair produce more definition?" autocomplete="off">
+      </label>
+      <label>
+        Success looks like (optional)
+        <input type="text" id="start-success" placeholder="What would I hope to learn?" autocomplete="off">
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="start-exp-cancel">Cancel</button>
+        <button type="button" class="btn-primary" id="start-exp-continue">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/hair.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>What I've Learned — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="hair.html" class="back-link">‹ Hair</a>
+
+    <header class="dashboard-header">
+      <h1>What I've Learned</h1>
+      <p class="subtitle">Permanent lessons, not a re-read of every experiment — your personal hair handbook.</p>
+    </header>
+
+    <div class="stack" id="lesson-list"></div>
+    <p class="subtitle" id="empty-note" hidden>Nothing yet — lessons show up here as you save them, including straight from an experiment's Observations field.</p>
+    <button type="button" class="add-row-btn" id="add-lesson-btn">+ Add a Lesson</button>
+  </main>
+
+  <div class="modal-overlay" id="add-lesson-modal">
+    <div class="modal">
+      <h2>Add a Lesson</h2>
+      <form id="add-lesson-form">
+        <label>
+          What have you learned?
+          <textarea id="l-text" rows="3" required placeholder="e.g. My hair defines best when it's very damp."></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="add-lesson-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/hairLearned.js"></script>
+</body>
+</html>

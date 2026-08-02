@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Notes & Resources — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard">
+    <a href="hair.html" class="back-link">‹ Hair</a>
+
+    <header class="dashboard-header">
+      <h1>Notes & Resources</h1>
+      <p class="subtitle">Links, videos, product recommendations, ideas, and experiments to try someday.</p>
+    </header>
+
+    <div class="stack" id="note-list"></div>
+    <p class="subtitle" id="empty-note" hidden>Nothing saved yet.</p>
+    <button type="button" class="add-row-btn" id="add-note-btn">+ Add a Note</button>
+  </main>
+
+  <div class="modal-overlay" id="add-note-modal">
+    <div class="modal">
+      <h2>Add a Note</h2>
+      <form id="add-note-form">
+        <div class="field">
+          <span class="field-label">Type</span>
+          <div class="chip-group" id="n-type"></div>
+        </div>
+        <label>
+          Note
+          <textarea id="n-text" rows="3" required placeholder="e.g. Try Mielle Rosemary Oil as a pre-poo next time"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="add-note-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/hairNotes.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Insights — InertiaADHD</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="theme-color" content="#5c8a72">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="InertiaADHD">
+</head>
+<body>
+  <main class="dashboard insights-page">
+    <a href="routines.html" class="back-link">‹ Routines</a>
+
+    <header class="dashboard-header">
+      <h1>Insights</h1>
+      <p class="subtitle">Patterns, not scores — reflection only.</p>
+    </header>
+
+    <div class="filter-tabs" id="filter-tabs" role="tablist" aria-label="Time range">
+      <button type="button" class="filter-tab" data-filter="days" role="tab">Days</button>
+      <button type="button" class="filter-tab" data-filter="weeks" role="tab">Weeks</button>
+      <button type="button" class="filter-tab" data-filter="months" role="tab">Months</button>
+      <button type="button" class="filter-tab" data-filter="years" role="tab">Years</button>
+    </div>
+
+    <p class="subtitle" id="insights-empty" hidden>
+      Nothing tracked yet for this range — complete a few routine steps and
+      check back here.
+    </p>
+    <div id="insights-sections"></div>
+  </main>
+
+  <script type="module" src="js/insights.js"></script>
+</body>
+</html>

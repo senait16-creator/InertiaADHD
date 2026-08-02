@@ -16,6 +16,25 @@
   --radius-lg: 22px;
   --radius-md: 14px;
   --shadow: 0 2px 10px rgba(43, 42, 39, 0.06);
+
+  /* Project color palette — RGB triplets so both a solid swatch and a
+     soft tinted background can be composed from the same token. */
+  --color-sage: 92, 138, 114;
+  --color-green: 107, 163, 107;
+  --color-blue: 96, 146, 196;
+  --color-amber: 199, 150, 74;
+  --color-lavender: 150, 130, 190;
+
+  /* Routine step status — a separate namespace from the identity colors
+     above. Status tints the whole card; the icon keeps its own identity
+     color regardless of status, so you can still tell which step it is.
+     Also reused for a nav board's 'status' panel kind (in progress) —
+     same meaning (currently being worked on), same color. */
+  --status-progress: 214, 165, 40;
+  /* Ready (up next, 1st tap) — reuses --text-muted's own color so it
+     reads as a neutral "queued" cue, distinct from the yellow/green that
+     follow it. */
+  --status-ready: 107, 104, 98;
 }
 
 * {
@@ -28,10 +47,28 @@ html, body {
 }
 
 body {
+  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* Routine cards already opt out of double-tap-zoom individually
+     (touch-action: none, needed for drag); this does the same
+     everywhere else so double-tapping near a card — not squarely on
+     it — doesn't zoom the page either. Scrolling and pinch-zoom still
+     work fine; only the double-tap-to-zoom gesture is affected. */
+  touch-action: manipulation;
+}
+
+/* Home screen only (see js/home.js) — a soft, time-of-day-aware gradient
+   behind the panels. Golden hour in the morning, soft dusk through
+   evening and night, plain --bg through the middle of the day. */
+.bg-golden-hour {
+  background: linear-gradient(180deg, #fdeecb 0%, #f8cf95 30%, #f0a868 55%, #e3835c 78%, #c96257 100%);
+}
+
+.bg-soft-dusk {
+  background: linear-gradient(180deg, #f7e3c9 0%, #f0bd9c 32%, #e69a8d 58%, #c47f95 80%, #9b6f96 100%);
 }
 
 a {
@@ -48,7 +85,7 @@ button {
 .dashboard {
   max-width: 900px;
   margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+  padding: 2rem 1rem calc(4rem + env(safe-area-inset-bottom));
 }
 
 .demo-banner {
@@ -83,6 +120,13 @@ button {
   margin: 0;
 }
 
+.field-note {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin: 0.3rem 0 0;
+  line-height: 1.4;
+}
+
 .project-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -102,6 +146,707 @@ button {
   }
 }
 
+/* ---------------- Home screen: entry panels ---------------- */
+/* Reuses the icon-badge/card language everywhere else in the app. The
+   first tile is dynamic (js/home.js): a direct shortcut into Morning or
+   Night Routine when relevant, otherwise a generic Routines card — same
+   tile treatment either way, just different content. */
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+}
+
+@media (min-width: 700px) {
+  .panel-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.panel-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  aspect-ratio: 1 / 0.85;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  padding: 0.9rem;
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
+}
+
+.panel-card:active {
+  transform: scale(0.96);
+  box-shadow: 0 1px 4px rgba(43, 42, 39, 0.05);
+}
+
+@media (hover: hover) {
+  .panel-card:hover {
+    box-shadow: 0 4px 16px rgba(43, 42, 39, 0.09);
+    transform: translateY(-1px);
+  }
+}
+
+.panel-card .icon-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  margin-bottom: 0;
+}
+
+.panel-card .icon-badge svg {
+  width: 26px;
+  height: 26px;
+}
+
+.panel-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ---------------- Hair (js/hair.js and friends) ---------------- */
+
+.loop-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0 0 1.3rem;
+}
+
+.loop-strip .stage {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.loop-strip .arrow {
+  opacity: 0.5;
+}
+
+.start-exp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 0.95rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  margin-bottom: 1.4rem;
+  box-shadow: var(--shadow);
+}
+
+.start-exp-btn:active {
+  transform: scale(0.98);
+}
+
+/* A draggable panel needs position:relative for .panel-stage/.drag-hint
+   to anchor to, and touch-action:none so a press-drag doesn't also
+   scroll the page — same reasoning as .routine-card. */
+.panel-card.draggable-panel {
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.panel-card.draggable-panel.is-dragging {
+  z-index: 100;
+  cursor: grabbing;
+  box-shadow: 0 10px 24px rgba(43, 42, 39, 0.18);
+  transform: scale(0.97);
+}
+
+.panel-stage {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.panel-card.draggable-panel .drag-hint {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: var(--text-muted);
+  opacity: 0.4;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+
+.center-note {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.big-question {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+}
+
+.rule-line {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 1.2rem;
+}
+
+.testing-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(var(--color-amber), 0.14);
+  border: 1px solid rgba(var(--color-amber), 0.4);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1.2rem;
+  font-size: 0.85rem;
+}
+
+.testing-banner svg {
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--color-amber));
+  flex-shrink: 0;
+}
+
+.linked-wash-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(var(--color-blue), 0.14);
+  border: 1px solid rgba(var(--color-blue), 0.4);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  margin-bottom: 1.2rem;
+  color: var(--text);
+}
+
+.linked-wash-chip svg {
+  width: 13px;
+  height: 13px;
+  color: rgb(var(--color-blue));
+}
+
+.insight-line {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  background: rgba(var(--color-sage), 0.14);
+  border: 1px solid rgba(var(--color-sage), 0.4);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.insight-line svg {
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--color-sage));
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.stat-tile-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+.link-chip {
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.checklist-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.checklist-item svg {
+  width: 14px;
+  height: 14px;
+  color: rgb(var(--color-sage));
+  flex-shrink: 0;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.gallery-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.gallery-photo {
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(135deg, rgba(var(--color-amber), 0.25), rgba(var(--color-lavender), 0.25));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  overflow: hidden;
+}
+
+.gallery-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery-photo svg {
+  width: 30px;
+  height: 30px;
+  opacity: 0.6;
+}
+
+.gallery-caption {
+  padding: 0.6rem 0.7rem;
+}
+
+.gallery-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.gallery-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.lesson-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.lesson-quote-mark {
+  color: rgba(var(--color-sage), 0.5);
+  font-size: 1.6rem;
+  line-height: 1;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.routine-step-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0.9rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.routine-step-row.is-dragging {
+  z-index: 50;
+  box-shadow: 0 8px 20px rgba(43, 42, 39, 0.18);
+}
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(var(--color-sage), 0.18);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-name {
+  flex: 1;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.drag-dots {
+  color: var(--text-muted);
+  opacity: 0.5;
+  letter-spacing: 2px;
+}
+
+.stars {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--border);
+}
+
+.star-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.star-btn.filled {
+  color: rgb(var(--color-amber));
+}
+
+.stars.small .star-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.star-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0;
+}
+
+.star-row-label {
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.short-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.short-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.7rem;
+}
+
+.short-list-item .dot {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.short-list-item [contenteditable] {
+  flex: 1;
+}
+
+.short-list-item .star-btn {
+  color: var(--text-muted);
+}
+
+.conditional-block {
+  border-left: 2px solid rgba(var(--color-blue), 0.4);
+  padding-left: 0.9rem;
+  margin: 0.9rem 0 0;
+}
+
+.section-heading {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 0.9rem;
+}
+
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0 1.3rem;
+}
+
+.segmented {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.segmented button {
+  flex: 1;
+  background: var(--bg);
+  border: none;
+  padding: 0.6rem 0.5rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+
+.segmented button:last-child {
+  border-right: none;
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--accent);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-ghost svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.add-row-btn {
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+}
+
+.add-row-btn:active {
+  transform: scale(0.98);
+}
+
+.tag {
+  font-size: 0.68rem;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.tag.accent {
+  background: rgba(var(--color-sage), 0.18);
+  color: var(--text);
+}
+
+.tag.repeat-yes {
+  background: rgba(var(--color-green), 0.2);
+  color: var(--text);
+}
+
+.tag.repeat-maybe {
+  background: rgba(var(--color-amber), 0.22);
+  color: var(--text);
+}
+
+.tag.repeat-no {
+  background: rgba(179, 85, 74, 0.16);
+  color: var(--danger);
+}
+
+.card-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem;
+}
+
+.card-row.clickable {
+  cursor: pointer;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.15rem;
+}
+
+.card-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.card-meta-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.panel-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0.95rem;
+  margin-top: 0.75rem;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: transform 0.16s ease;
+}
+
+.panel-bar:active {
+  transform: scale(0.98);
+}
+
+.panel-bar .icon-badge {
+  margin-bottom: 0;
+}
+
+.panel-bar .panel-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.bar-arrow {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+/* ---------------- Calm placeholder screens ---------------- */
+/* 2026 Vision, Reminders — visual, not functional yet. Maintenance used to
+   be one of these too, but now has its own real board (see below). */
+
+.placeholder-hero {
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+}
+
+.placeholder-hero .icon-badge-lg {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+}
+
+.placeholder-hero h2 {
+  font-size: 1.15rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.placeholder-hero p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  max-width: 32ch;
+  margin: 0 auto;
+}
+
+.preview-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: center;
+  margin-top: 1.75rem;
+}
+
+.preview-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 76px;
+  opacity: 0.8;
+}
+
+.preview-chip .icon-badge {
+  margin-bottom: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+}
+
+.preview-chip span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 /* ---------------- Project card ---------------- */
 
 .project-card {
@@ -113,21 +858,90 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  padding: 1.25rem;
+  padding: 1.1rem 1.15rem 1.15rem;
   min-height: 140px;
   cursor: pointer;
   text-align: left;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
 }
+
+/* Outline each card in a deeper version of its own icon tint, so cards
+   read as distinct without adding visual weight. */
+.project-card[data-color="sage"] { border-color: rgba(var(--color-sage), 0.4); }
+.project-card[data-color="green"] { border-color: rgba(var(--color-green), 0.4); }
+.project-card[data-color="blue"] { border-color: rgba(var(--color-blue), 0.4); }
+.project-card[data-color="amber"] { border-color: rgba(var(--color-amber), 0.4); }
+.project-card[data-color="lavender"] { border-color: rgba(var(--color-lavender), 0.4); }
 
 .project-card:active {
-  transform: scale(0.98);
+  transform: scale(0.965);
+  box-shadow: 0 1px 4px rgba(43, 42, 39, 0.05);
 }
 
-.project-icon {
-  font-size: 1.8rem;
-  line-height: 1;
-  margin-bottom: 0.75rem;
+@media (hover: hover) {
+  .project-card:hover {
+    box-shadow: 0 4px 16px rgba(43, 42, 39, 0.09);
+    transform: translateY(-1px);
+  }
+}
+
+/* Icon container — a fixed, softly tinted frame so mixed emoji still
+   read as one consistent grid. Color is optional per project. */
+
+.icon-badge,
+.icon-badge-lg {
+  background: rgba(var(--color-sage), 0.16);
+  color: var(--text);
+}
+
+.icon-badge svg,
+.icon-badge-lg svg {
+  display: block;
+}
+
+.icon-badge svg {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-badge-lg svg {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-badge[data-color="green"],
+.icon-badge-lg[data-color="green"] {
+  background: rgba(var(--color-green), 0.18);
+}
+
+.icon-badge[data-color="blue"],
+.icon-badge-lg[data-color="blue"] {
+  background: rgba(var(--color-blue), 0.18);
+}
+
+.icon-badge[data-color="amber"],
+.icon-badge-lg[data-color="amber"] {
+  background: rgba(var(--color-amber), 0.2);
+}
+
+.icon-badge[data-color="lavender"],
+.icon-badge-lg[data-color="lavender"] {
+  background: rgba(var(--color-lavender), 0.18);
+}
+
+.icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  margin-bottom: 0.6rem;
+  flex-shrink: 0;
 }
 
 .project-info {
@@ -137,13 +951,16 @@ button {
 .project-name {
   font-size: 1.05rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.42rem;
   word-break: break-word;
 }
 
-.project-status {
-  font-size: 0.85rem;
+.project-context {
+  font-size: 0.8rem;
+  font-weight: 400;
   color: var(--text-muted);
+  opacity: 0.68;
+  line-height: 1.3;
 }
 
 .project-arrow {
@@ -153,27 +970,29 @@ button {
   margin-top: 0.5rem;
 }
 
-/* Add-a-project card */
+/* Add-a-project card — visually secondary to real project cards */
 
 .add-project-card {
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: var(--surface-muted);
-  border: 2px dashed var(--border);
+  background: transparent;
+  border: 1.5px dashed #d8d2c5;
   box-shadow: none;
   color: var(--text-muted);
 }
 
 .add-icon {
-  font-size: 2rem;
+  font-size: 1.5rem;
   line-height: 1;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
+  opacity: 0.75;
 }
 
 .add-label {
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 400;
+  opacity: 0.75;
 }
 
 /* ---------------- Modal ---------------- */
@@ -199,6 +1018,8 @@ button {
   padding: 1.5rem;
   width: 100%;
   max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 12px 40px rgba(43, 42, 39, 0.2);
 }
 
@@ -214,7 +1035,8 @@ button {
   margin-bottom: 1rem;
 }
 
-.modal form input {
+.modal form input,
+.modal form select {
   display: block;
   width: 100%;
   margin-top: 0.35rem;
@@ -224,11 +1046,228 @@ button {
   font-size: 1rem;
   color: var(--text);
   background: var(--bg);
+  font-family: inherit;
 }
 
-.modal form input:focus {
+.modal form input:focus,
+.modal form select:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+.modal form .field {
+  margin-bottom: 1rem;
+}
+
+.modal form .field-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.modal form .field-checkbox input[type="checkbox"] {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+/* Row-list of toggleable behaviors in the "Edit Routine Item" modal
+   (long-press a step) — Track duration / Not today / Continues in
+   phases. Each row's icon is tinted to match what the toggle actually
+   does to the card (grey clock, blue moon, amber hourglass) so the
+   color language carries over from the board itself. */
+.row-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.row-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.row-icon.tint-neutral {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+.row-icon.tint-blue {
+  background: rgba(var(--color-blue), 0.18);
+  color: rgb(var(--color-blue));
+}
+
+.row-icon.tint-amber {
+  background: rgba(var(--color-amber), 0.2);
+  color: rgb(var(--color-amber));
+}
+
+.row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.row-title {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.row-desc {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+  line-height: 1.35;
+}
+
+.switch {
+  position: relative;
+  width: 42px;
+  height: 25px;
+  border-radius: 100px;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.18s ease;
+  padding: 0;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(43, 42, 39, 0.25);
+  transition: transform 0.18s ease;
+}
+
+.switch.on::after {
+  transform: translateX(17px);
+}
+
+.switch.on.tone-neutral {
+  background: var(--text-muted);
+}
+
+.switch.on.tone-blue {
+  background: rgb(var(--color-blue));
+}
+
+.switch.on.tone-amber {
+  background: rgb(var(--color-amber));
+}
+
+.modal form .field-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.color-picker {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: rgb(var(--color-sage));
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.color-swatch[data-color="green"] {
+  background: rgb(var(--color-green));
+}
+
+.color-swatch[data-color="blue"] {
+  background: rgb(var(--color-blue));
+}
+
+.color-swatch[data-color="amber"] {
+  background: rgb(var(--color-amber));
+}
+
+.color-swatch[data-color="lavender"] {
+  background: rgb(var(--color-lavender));
+}
+
+.color-swatch[aria-checked="true"] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
+}
+
+.color-swatch:active {
+  transform: scale(0.9);
+}
+
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.4rem;
+}
+
+.icon-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.icon-option svg {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-option[aria-checked="true"] {
+  background: rgba(var(--color-sage), 0.16);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.icon-option:active {
+  transform: scale(0.94);
 }
 
 .modal-actions {
@@ -236,6 +1275,55 @@ button {
   justify-content: flex-end;
   gap: 0.6rem;
   margin-top: 0.5rem;
+}
+
+/* ---------------- Project card action menu ---------------- */
+/* Long-press a project card → this small menu, deliberately one step away
+   from an actual native browser confirm() so an accidental long-press
+   can't delete anything by itself. */
+
+.action-modal {
+  max-width: 300px;
+  text-align: center;
+}
+
+.action-modal h2 {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+
+.action-menu-item {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  padding: 0.85rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.action-menu-item.danger {
+  color: var(--danger);
+}
+
+.action-cancel {
+  display: block;
+  width: 100%;
+  margin-top: 0.6rem;
+}
+
+.confirm-text {
+  font-size: 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.action-modal .modal-actions {
+  justify-content: center;
 }
 
 /* ---------------- Buttons ---------------- */
@@ -308,6 +1396,10 @@ button {
   width: 100%;
 }
 
+.auth-form button + button {
+  margin-top: 0.6rem;
+}
+
 .auth-status {
   margin-top: 1rem;
   color: var(--text-muted);
@@ -320,7 +1412,7 @@ button {
 .project-page {
   max-width: 600px;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 3rem;
+  padding: 1.5rem 1.25rem calc(3rem + env(safe-area-inset-bottom));
 }
 
 .back-link {
@@ -330,14 +1422,64 @@ button {
   margin-bottom: 1.5rem;
 }
 
-.project-header {
-  text-align: center;
-  padding: 1rem 0 2rem;
+.page-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.project-icon-large {
-  font-size: 3rem;
-  margin-bottom: 0.75rem;
+.page-top-row .back-link {
+  margin-bottom: 0;
+}
+
+.overflow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 0.3rem 0.65rem;
+  margin-bottom: 1.5rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* An author-stylesheet display rule at equal specificity to the
+   browser's own [hidden] { display: none } wins the tie, which would
+   otherwise defeat the hidden attribute on a hidden overflow-btn (see
+   person.html, hidden until an existing person loads). */
+.overflow-btn[hidden] {
+  display: none;
+}
+
+.overflow-btn:active {
+  background: var(--surface-muted);
+}
+
+.overflow-btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.project-header {
+  text-align: center;
+  padding: 1rem 0 1.25rem;
+}
+
+.icon-badge-lg {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 0.75rem;
 }
 
 .project-header h1 {
@@ -365,8 +1507,1570 @@ button {
   margin: 0;
 }
 
-.project-actions {
+/* ---------------- Routine board ---------------- */
+/* Icon-first, minimal-text: tap to focus, double-tap to complete, press
+   and drag to reorder. See js/routineBoard.js. */
+
+.routine-board {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* An author-stylesheet display rule at equal specificity to the
+   browser's own [hidden] { display: none } wins the tie (see the same
+   fix on .overflow-btn) — needed here since the video panel toggles
+   this board's hidden attribute to show/hide it. */
+.routine-board[hidden] {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .routine-board {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.routine-card {
+  position: relative;
   display: flex;
-  gap: 0.75rem;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 0.55rem;
+  min-width: 0;
+  aspect-ratio: 1 / 0.92;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.75rem;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.routine-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--color-sage), 0.16);
+  color: var(--text);
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.routine-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.routine-icon[data-color="green"] {
+  background: rgba(var(--color-green), 0.18);
+}
+
+.routine-icon[data-color="blue"] {
+  background: rgba(var(--color-blue), 0.18);
+}
+
+.routine-icon[data-color="amber"] {
+  background: rgba(var(--color-amber), 0.2);
+}
+
+.routine-icon[data-color="lavender"] {
+  background: rgba(var(--color-lavender), 0.18);
+}
+
+.routine-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.25;
+  color: var(--text);
+  max-width: 100%;
+}
+
+/* Optional free-text line under the title (see the long-press "Edit
+   Routine Item" modal) — e.g. which book an Audiobook step is on right
+   now. One line, truncated rather than wrapped, so a long title can't
+   push the card taller than its siblings. */
+.routine-subtitle {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routine-subtitle:empty {
+  display: none;
+}
+
+/* "Done 8:14 AM" on every completed card, plus "· 6 min" if the step
+   tracks duration (see completionSummary in js/routineBoard.js). Only
+   ever has text once complete, so an empty one takes up no space. */
+.routine-duration {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.routine-duration:empty {
+  display: none;
+}
+
+/* Ready (1st tap) -> In Progress (2nd tap, yellow) -> Complete (3rd tap,
+   green) -> back to Available. Same tinted-background treatment for all
+   three so they read as one family of states; the icon keeps its own
+   identity color throughout — status tints the card, not the icon. */
+.routine-card.is-ready {
+  background: rgba(var(--status-ready), 0.14);
+  border-color: rgba(var(--status-ready), 0.4);
+}
+
+.routine-card.is-inprogress {
+  background: rgba(var(--status-progress), 0.16);
+  border-color: rgba(var(--status-progress), 0.45);
+}
+
+.routine-card.is-complete {
+  background: rgba(var(--color-green), 0.16);
+  border-color: rgba(var(--color-green), 0.45);
+}
+
+/* "Not Today" (see setNotToday in js/routineBoard.js) — set from the
+   long-press edit modal, not part of the tap cycle above. Sinks below
+   even Complete (see statusRank), so it reads as "set aside for today"
+   rather than another status to progress through. */
+.routine-card.is-not-today {
+  background: rgba(var(--color-blue), 0.16);
+  border-color: rgba(var(--color-blue), 0.45);
+}
+
+.complete-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgb(var(--color-green));
+  color: #fff;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(43, 42, 39, 0.25);
+}
+
+.complete-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.routine-card.is-complete .complete-badge {
+  display: flex;
+}
+
+/* Only shown on a step with duration tracking turned on (see the
+   long-press "Edit Routine Item" modal) — top-left so it never collides
+   with the link/complete badges, which both sit top-right. */
+.duration-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 18px;
+  height: 18px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.duration-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.routine-card.tracks-duration .duration-badge {
+  display: flex;
+}
+
+.link-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.link-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.routine-card.is-complete .link-badge {
+  display: none;
+}
+
+/* Shown on a phased step (see the "Continues in phases" checkbox and
+   continuation_of in supabase/schema.sql) for as long as its
+   continuation card elsewhere hasn't been completed yet — bottom-right
+   so it never collides with the top-corner badges above. */
+.phase-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--color-amber));
+  opacity: 0.75;
+}
+
+.phase-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.routine-card.has-continuation .phase-badge {
+  display: flex;
+}
+
+/* The "Continue in ___" buttons on the post-completion prompt (see
+   promptContinuation in js/routineBoard.js) — one per other routine
+   project, stacked so an extra routine just adds another row. */
+.continue-routine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.continue-routine-list .btn-primary {
+  width: 100%;
+}
+
+.routine-card.is-dragging {
+  z-index: 100;
+  transform: scale(0.97);
+  box-shadow: 0 4px 10px rgba(43, 42, 39, 0.16);
+  cursor: grabbing;
+}
+
+/* ---------------- Maintenance ---------------- */
+/* Home: reuses .panel-grid/.panel-card (see routines.js) rather than a
+   dedicated style — same rectangular-tile treatment as everywhere else
+   in the app. */
+
+/* Category board (e.g. Hair): four sections, each a reorderable list of
+   short text entries. Deliberately no dates, streaks, or completion
+   state — this is a reference list, not a tracker. */
+
+.maint-section {
+  margin-bottom: 1.9rem;
+}
+
+.maint-section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.maint-section-head .maint-sec-icon {
+  color: var(--text-muted);
+  display: flex;
+}
+
+.maint-section-head .maint-sec-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.maint-section-head h2 {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.maint-row-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.maint-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.maint-row-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.maint-row-title {
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.maint-row-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.15rem;
+}
+
+.maint-row-link {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  display: flex;
+}
+
+.maint-row-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+.maint-row-edit {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  opacity: 0.55;
+  padding: 0.2rem;
+  cursor: pointer;
+  touch-action: auto;
+}
+
+.maint-row-edit svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.maint-row.is-dragging {
+  z-index: 100;
+  transform: scale(0.97);
+  box-shadow: 0 4px 10px rgba(43, 42, 39, 0.16);
+  cursor: grabbing;
+}
+
+.maint-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1.5px dashed #d8d2c5;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.maint-add-row .add-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.modal form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+/* ---------------- Navigation-hub workspace ---------------- */
+/* A project can show a tree of folder/link panels instead of the plain
+   placeholder (see js/navBoard.js). Folder panels open another screen of
+   panels; link panels open an external URL. */
+
+.nav-back {
+  display: inline-block;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.nav-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+}
+
+@media (min-width: 700px) {
+  .nav-panel-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.nav-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1.05rem 1rem;
+  min-height: 130px;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  font: inherit;
+  color: inherit;
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.nav-panel:active {
+  transform: scale(0.965);
+  box-shadow: 0 1px 4px rgba(43, 42, 39, 0.05);
+}
+
+@media (hover: hover) {
+  .nav-panel:hover {
+    box-shadow: 0 4px 16px rgba(43, 42, 39, 0.09);
+    transform: translateY(-1px);
+  }
+}
+
+.nav-panel-title {
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.nav-panel-arrow {
+  position: absolute;
+  bottom: 0.9rem;
+  right: 1.05rem;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+}
+
+/* Whole-panel soft tint + a deeper matching border, on top of the base
+   card look above — distinct from project-card, which only tints the
+   icon container. */
+.nav-panel[data-color="sage"] { background: rgba(var(--color-sage), 0.08); border-color: rgba(var(--color-sage), 0.35); }
+.nav-panel[data-color="green"] { background: rgba(var(--color-green), 0.08); border-color: rgba(var(--color-green), 0.35); }
+.nav-panel[data-color="blue"] { background: rgba(var(--color-blue), 0.08); border-color: rgba(var(--color-blue), 0.35); }
+.nav-panel[data-color="amber"] { background: rgba(var(--color-amber), 0.08); border-color: rgba(var(--color-amber), 0.35); }
+.nav-panel[data-color="lavender"] { background: rgba(var(--color-lavender), 0.08); border-color: rgba(var(--color-lavender), 0.35); }
+
+/* A 'status' kind panel (see js/navBoard.js) — tapping it cycles this
+   instead of navigating anywhere. Overrides the identity tint above
+   once a status is set; the icon keeps its own identity color either
+   way, same as the routine board. */
+.nav-panel.is-inprogress {
+  background: rgba(var(--status-progress), 0.16);
+  border-color: rgba(var(--status-progress), 0.45);
+}
+.nav-panel.is-waiting {
+  background: rgba(var(--color-blue), 0.16);
+  border-color: rgba(var(--color-blue), 0.45);
+}
+.nav-panel.is-complete {
+  background: rgba(var(--color-green), 0.16);
+  border-color: rgba(var(--color-green), 0.45);
+}
+
+/* ---------------- Insights page (see js/insights.js) ----------------
+   Reflection, not motivation: no streaks, badges, rings, or red
+   "missed" days anywhere below. Charts stay single-hue (the app's own
+   accent) rather than a rainbow per category — see the dataviz notes
+   in js/insights.js for why. */
+
+.filter-tabs {
+  display: flex;
+  gap: 0.3rem;
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+  padding: 0.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.filter-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 0.4rem;
+  border-radius: calc(var(--radius-md) - 4px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-tab[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.insight-section {
+  margin-bottom: 2.25rem;
+}
+
+.insight-section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.9rem;
+}
+
+.insight-section-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: -0.6rem 0 0.9rem;
+}
+
+.flow-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.flow-card:last-child {
+  margin-bottom: 0;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+}
+
+.stat-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-bottom: 0.3rem;
+}
+
+.stat-value {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.insight-chart {
+  display: block;
+  margin-top: 0.6rem;
+}
+
+.insight-chart rect {
+  transition: opacity 0.15s ease;
+}
+
+.overall-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.9rem;
+}
+
+.overall-card:last-child {
+  margin-bottom: 0;
+}
+
+.overall-card h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.7rem;
+}
+
+.overall-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.overall-stat-label {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.overall-stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0.9rem;
+}
+
+.item-row .icon-badge {
+  flex-shrink: 0;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.item-project {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.item-meta {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+
+.item-chart {
+  flex-shrink: 0;
+  width: 90px;
+}
+
+.item-chart .insight-chart {
+  margin-top: 0;
+}
+
+@media (max-width: 480px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .item-chart {
+    display: none;
+  }
+}
+
+/* ---------------- Relationships (relationships.html, person.html) ----------------
+   Reflection and stewardship, not a CRM: no health scores, streaks, or
+   "overdue" red flags anywhere below. */
+
+.filter-scroll {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+  margin-bottom: 1.25rem;
+  scrollbar-width: none;
+}
+
+.filter-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.person-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.person-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+
+.person-card:active {
+  transform: scale(0.99);
+}
+
+.person-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.person-avatar[data-color="sage"] { background: rgba(var(--color-sage), 0.22); }
+.person-avatar[data-color="green"] { background: rgba(var(--color-green), 0.22); }
+.person-avatar[data-color="blue"] { background: rgba(var(--color-blue), 0.22); }
+.person-avatar[data-color="amber"] { background: rgba(var(--color-amber), 0.22); }
+.person-avatar[data-color="lavender"] { background: rgba(var(--color-lavender), 0.22); }
+
+.person-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.person-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.person-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-tags {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.person-tag {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.reconnect-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.4rem;
+}
+
+.add-person-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: transparent;
+  border: 1.5px dashed #d8d2c5;
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  padding: 0.9rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.empty-note {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+/* Tap-to-select field pickers on person.html — .chip-group[data-multi]
+   allows several selected at once (Season, Feelings); without it,
+   selecting one clears the rest (Circle, Investment Intention). */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.chip[aria-checked="true"] {
+  background: rgba(var(--color-sage), 0.18);
+  border-color: rgb(var(--color-sage));
+  color: var(--text);
+}
+
+.chip:active {
+  transform: scale(0.96);
+}
+
+/* Full-page form (person.html) — same visual spec as .modal form, just
+   not nested inside a modal overlay. */
+.person-form {
+  max-width: 100%;
+}
+
+.person-form .field {
+  margin-bottom: 1.4rem;
+}
+
+.person-form .field-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.person-form .field-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: -0.3rem 0 0.6rem;
+}
+
+.person-form input[type="text"],
+.person-form input[type="date"],
+.person-form textarea {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.person-form textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.person-form input:focus,
+.person-form textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.person-form-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+}
+
+.person-form-actions .btn-primary {
+  flex: 1;
+}
+
+/* ---------------- Hair full-page forms (Product detail, Experiment
+   form — see js/hairProduct.js and js/hairExperiment.js) — same shape
+   as .person-form above, since both are plain in-page forms rather
+   than modals, just under a name that doesn't imply "a person." */
+
+.hair-form .field {
+  margin-bottom: 1.4rem;
+}
+
+.hair-form .field-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.hair-form .field-note {
+  margin: 0.4rem 0 0;
+}
+
+.hair-form input[type="text"],
+.hair-form input[type="date"],
+.hair-form input[type="number"],
+.hair-form textarea {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.hair-form textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.hair-form input:focus,
+.hair-form textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.hair-form .field-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.hair-form .field-checkbox input[type="checkbox"] {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+/* ---------------- Video panel (a 'video_panel' kind routine step, e.g.
+   Stretch — see openVideoPanel in js/routineBoard.js) ---------------- */
+
+.video-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.video-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.video-open-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.video-thumb-wrap {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+
+.video-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  color: var(--text-muted);
+}
+
+.video-thumb-placeholder svg {
+  width: 26px;
+  height: 26px;
+}
+
+.video-thumb-placeholder span {
+  font-size: 0.66rem;
+}
+
+.video-duration-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.video-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.6rem 0.7rem 0.15rem;
+  line-height: 1.3;
+}
+
+.video-note {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 0 0.7rem 0.6rem;
+}
+
+.video-edit-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.video-edit-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.add-video-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: transparent;
+  border: 1.5px dashed #d8d2c5;
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  padding: 0.9rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.field-with-button {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.modal form .field-with-button input {
+  flex: 1;
+  margin-top: 0;
+}
+
+.field-with-button button {
+  flex-shrink: 0;
+  width: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.field-with-button button svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ==================== Stickers + Active Routine + versioned history + logs ==================== */
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.sticker-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.sticker-tile .s-actions button {
+  font-size: 0.62rem;
+  padding: 0.15rem 0.4rem;
+}
+
+/* A round, photo-capable badge — the visual unit reused everywhere a
+   sticker appears (routine widget, item gallery, version history). */
+.sticker-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: rgba(var(--color-sage), 0.16);
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 4px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: none;
+  font-size: 22px;
+}
+
+.sticker-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sticker-badge.hero {
+  width: 92px;
+  height: 92px;
+  font-size: 36px;
+  border-width: 3px;
+}
+
+.sticker-badge.sm {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
+.sticker-badge.pickable {
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.sticker-badge.pickable:hover {
+  transform: translateY(-2px);
+}
+
+/* Active Routine — view mode (calm) and edit mode (builder) share the
+   same row layout, just with insert buttons and drag affordances added
+   in edit mode. */
+.routine-hero-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.routine-hero-row .plus-sep {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.routine-builder-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 20px 8px;
+  margin-top: 10px;
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  min-height: 130px;
+}
+
+.routine-step-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: grab;
+}
+
+.routine-step-chip.dragging {
+  opacity: 0.35;
+}
+
+.routine-step-chip .step-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  max-width: 76px;
+  text-align: center;
+}
+
+.insert-btn {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.insert-btn:hover {
+  background: rgba(var(--color-amber), 0.3);
+  border-color: transparent;
+  color: var(--text);
+  transform: scale(1.15);
+}
+
+.routine-section-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.routine-section-tab {
+  border: 1.5px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.routine-section-tab.active {
+  background: rgba(var(--color-lavender), 0.3);
+  color: var(--text);
+  border-color: transparent;
+}
+
+/* Item gallery — reuses .gallery-grid/.gallery-card's shape (already
+   used by Results Gallery) with a status pill added under the caption. */
+.item-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.item-gallery-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 16px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.item-gallery-card:hover {
+  border-color: rgba(var(--color-lavender), 0.5);
+}
+
+.item-gallery-card .name {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.item-gallery-card .brand {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.status-tag {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: white;
+}
+
+.status-tag.status-New,
+.status-tag.status-InUse {
+  background: rgba(var(--color-green), 0.85);
+}
+
+.status-tag.status-AlmostEmpty {
+  background: rgba(var(--color-amber), 0.9);
+  color: var(--text);
+}
+
+.status-tag.status-Empty,
+.status-tag.status-Finished,
+.status-tag.status-Archived {
+  background: var(--text-muted);
+}
+
+.status-tag.status-RepurchaseNeeded {
+  background: var(--danger);
+}
+
+.status-suggest-btn {
+  font-size: 0.66rem;
+  background: rgba(var(--color-amber), 0.2);
+  color: var(--text);
+  border: 1px solid rgba(var(--color-amber), 0.4);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* Version history timeline */
+.version-timeline {
+  margin-top: 16px;
+}
+
+.version-entry {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px dashed var(--border);
+}
+
+.version-entry:first-child {
+  border-top: none;
+}
+
+.version-rail {
+  flex: none;
+  width: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.version-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(var(--color-lavender), 0.7);
+  margin-top: 5px;
+}
+
+.version-entry.current .version-dot {
+  background: rgb(var(--color-sage));
+  box-shadow: 0 0 0 4px rgba(var(--color-sage), 0.25);
+}
+
+.version-body {
+  flex: 1;
+}
+
+.version-dates {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.version-entry.current .version-dates {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.version-sticker-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.version-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.version-choice-card {
+  flex: 1;
+  min-width: 200px;
+  text-align: left;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.version-choice-card:hover {
+  border-color: rgba(var(--color-lavender), 0.6);
+}
+
+.version-choice-card strong {
+  display: block;
+  font-size: 0.85rem;
+}
+
+.version-choice-card span {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* Log entry */
+.log-snapshot-card {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+
+.severity-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.severity-chip {
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.severity-chip[aria-checked="true"] {
+  background: rgba(var(--color-lavender), 0.3);
+  color: var(--text);
+  border-color: transparent;
+}
+
+.log-entry-row {
+  padding: 12px 0;
+  border-top: 1px dashed var(--border);
+}
+
+.log-entry-row:first-child {
+  border-top: none;
+}
+
+/* Status chip picker (Add Item form) — same .chip base as everywhere
+   else, colored per value once selected. */
+.chip[data-value="New"][aria-checked="true"],
+.chip[data-value="In Use"][aria-checked="true"] {
+  background: rgba(var(--color-green), 0.28);
+  color: var(--text);
+}
+.chip[data-value="Almost Empty"][aria-checked="true"] {
+  background: rgba(var(--color-amber), 0.3);
+  color: var(--text);
+}
+.chip[data-value="Empty"][aria-checked="true"],
+.chip[data-value="Finished"][aria-checked="true"],
+.chip[data-value="Archived"][aria-checked="true"] {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.chip[data-value="Repurchase Needed"][aria-checked="true"] {
+  background: rgba(179, 85, 74, 0.22);
+  color: var(--danger);
 }
