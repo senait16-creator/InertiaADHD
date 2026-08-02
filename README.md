@@ -261,7 +261,7 @@ Maintenance (`maintenance.html`) is a grid of self-care areas (see
 used everywhere else in the app (Routines, nav-board, ...), not a
 full-width list. Only areas with a real board built belong in that
 list at all — currently Inventory, Hair, Hair Care, Skin Care, Body
-Care, Nail Care, Jewelry, and Relationships.
+Care, Nail Care, Jewelry, Tech, Digital, and Relationships.
 
 Hair (`hair.html` and friends) is its own experimentation framework,
 not a category board — see "Hair Lab" below.
@@ -697,11 +697,15 @@ in demo mode; a nested Supabase select in real mode) — rather than the
 old flat per-area usage list, since "where does this actually live in
 my routine right now" is what that section is for.
 
-Skin Care, Body Care, Nail Care, and Jewelry
+Skin Care, Body Care, Nail Care, Jewelry, Tech, and Digital
 (`maintenance-home.html?area=skin`, etc.) share this one generic page
-over these tables. Hair Care (`maintenance-home.html?area=hair`) is the
-same generic system's fifth area, no special-casing at all — it
-reads/writes the exact same `inventory_items` rows (and, for its own
+over these tables — Tech and Digital are nothing more than two more
+keys in `js/maintenanceShared.js`'s `AREAS`, same gallery/Active
+Routine/History/Log as any other area, just holding electronics or
+software/subscriptions instead of skincare. Hair Care
+(`maintenance-home.html?area=hair`) is the same generic system's
+seventh area, no special-casing at all — it reads/writes the exact
+same `inventory_items` rows (and, for its own
 Rating/Notes/Repurchase fields, the same `maintenance_usage` rows) Hair
 Lab's own Products panel (`hair-products.html`/`hair-product.html`)
 does, just through the generic page instead of Hair Lab's
@@ -716,9 +720,10 @@ records for one product.
 
 Not every Inventory category has a Maintenance area — Shoes is
 Inventory-only (`inventory-items.html?area=shoes`, no "how do I care
-for it" routine), the first of the "eventually" list from the original
-request (clothing, tech, fitness equipment, books, ...): categories can
-exist in Inventory without ever needing a Maintenance tile.
+for it" routine), the last remaining one from the original "eventually"
+list (clothing, fitness equipment, books, ...) after Tech and Digital
+were promoted to full areas: categories can exist in Inventory without
+ever needing a Maintenance tile.
 
 Explicitly **not v1** here too: background removal beyond the labeled
 no-op checkbox above; a "Last used" date on gallery cards (no honest

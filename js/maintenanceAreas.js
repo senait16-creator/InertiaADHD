@@ -12,14 +12,16 @@
 // use; Relationships (relationships.html/person.html) has its own
 // richer per-person profile for the same reason; Inventory
 // (inventory.html and friends) answers "what do I own"; Hair Care and
-// the four Skin/Body/Nail/Jewelry Care areas answer "how do I care for
-// what I own" — a sticker-forward Active Routine (versioned, see
-// maintenance-history.html) plus an item gallery, referencing Inventory
-// items rather than duplicating them (js/maintenanceShared.js and
-// js/stickerShared.js). Hair Care is just maintenance-home.html?area=hair,
-// the exact same generic page the other four use, no special-casing
-// needed. See the README's "Inventory" and "Stickers" sections for the
-// full rationale.
+// the Skin/Body/Nail/Jewelry/Tech/Digital Care areas answer "how do I
+// care for what I own" — a sticker-forward Active Routine (versioned,
+// see maintenance-history.html) plus an item gallery, referencing
+// Inventory items rather than duplicating them (js/maintenanceShared.js
+// and js/stickerShared.js). Hair Care is just
+// maintenance-home.html?area=hair, the exact same generic page every
+// other area uses, no special-casing needed — Tech and Digital are
+// nothing more than two more keys in js/maintenanceShared.js's AREAS.
+// See the README's "Inventory" and "Stickers" sections for the full
+// rationale.
 export const MAINTENANCE_AREAS = [
   { key: "inventory", name: "Inventory", icon: "layout-grid", color: "sage", real: true, href: "inventory.html" },
   { key: "hair", name: "Hair", icon: "crown", color: "lavender", real: true, href: "hair.html" },
@@ -28,6 +30,8 @@ export const MAINTENANCE_AREAS = [
   { key: "body", name: "Body Care", icon: "dumbbell", color: "sage", real: true, href: "maintenance-home.html?area=body" },
   { key: "nail", name: "Nail Care", icon: "sparkles", color: "green", real: true, href: "maintenance-home.html?area=nail" },
   { key: "jewelry", name: "Jewelry", icon: "award", color: "lavender", real: true, href: "maintenance-home.html?area=jewelry" },
+  { key: "tech", name: "Tech", icon: "monitor", color: "blue", real: true, href: "maintenance-home.html?area=tech" },
+  { key: "digital", name: "Digital", icon: "cloud", color: "sage", real: true, href: "maintenance-home.html?area=digital" },
   { key: "relationships", name: "Relationships", icon: "users", color: "green", real: true, href: "relationships.html" },
 ];
 

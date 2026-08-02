@@ -62,16 +62,22 @@ export function initChipGroup(container, options, { multi }) {
 // area "hair". `inventoryLabel` differs slightly from `label` where the
 // natural English name isn't the same on both sides (e.g. Inventory's
 // "Nail Supplies" vs Maintenance's "Nail Care") — same area key either
-// way, just a per-context display string. Shoes is Inventory-only (no
-// Maintenance tile in js/maintenanceAreas.js) — it's "what do I own,"
-// not something with a care routine, so `label` here is just a fallback
-// in case a usage record ever references it.
+// way, just a per-context display string. Tech and Digital have full
+// Maintenance tiles too (an Active Routine can be "update firmware,
+// back up, wipe old accounts" just as much as "cleanse, tone,
+// moisturize" — the generic system doesn't care what's in it). Shoes is
+// the one Inventory-only area (no Maintenance tile in
+// js/maintenanceAreas.js) — it's "what do I own," not something with a
+// care routine, so `label` here is just a fallback in case a usage
+// record ever references it.
 export const AREAS = {
   hair: { label: "Hair Care", inventoryLabel: "Hair Products", icon: "crown", color: "lavender" },
   skin: { label: "Skin Care", inventoryLabel: "Skin Care", icon: "droplets", color: "blue" },
   body: { label: "Body Care", inventoryLabel: "Body Care", icon: "dumbbell", color: "sage" },
   nail: { label: "Nail Care", inventoryLabel: "Nail Supplies", icon: "sparkles", color: "green" },
   jewelry: { label: "Jewelry", inventoryLabel: "Jewelry", icon: "award", color: "lavender" },
+  tech: { label: "Tech", inventoryLabel: "Tech", icon: "monitor", color: "blue" },
+  digital: { label: "Digital", inventoryLabel: "Digital", icon: "cloud", color: "sage" },
   shoes: { label: "Shoes", inventoryLabel: "Shoes", icon: "footprints", color: "amber" },
 };
 
